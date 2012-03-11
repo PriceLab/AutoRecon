@@ -1,1 +1,15 @@
-test of git push
+To run:
+
+./Fba-tester [number of cores] [Likelihood XML] [input XML] [output directory]
+
+Number of cores: For K-shortest parallelization. 1 means not parallel. Must be less than the number
+of available cores on a single machine (OpenMP limitation).
+
+Likelihood XML contains reaction, metabolite, likelihood information
+Input XML contains media, biomass information.
+
+For now input XML is limited to single biomass for a single media condition.
+
+Output directory is optional. Default location is /outputs/. All information existing in
+the specified output folder is removed prior to generating new results [to prevent mixing of outputs from
+multiple runs].

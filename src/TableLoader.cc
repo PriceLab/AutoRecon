@@ -1,4 +1,5 @@
 #include "DataStructures.h"
+#include "MyConstants.h"
 #include "TableLoader.h"
 #include <cstdio>
 #include <cstring>
@@ -23,12 +24,12 @@ PROBLEM readReactionTable(const char* filename) {
   /* Do not use while while(!feof()) because it causes duplicate reading of the last line 
      which is very bad for FBA (causes duplicate entries in the matrix) and also bad in general */
   while(1) {
-    char rxnName[64];
+    char rxnName[AR_MAXNAMELENGTH];
     int rxnId;
     int net_reversible;
-    char metName[64];
+    char metName[AR_MAXNAMELENGTH];
     int metId;
-    char rxnCoeffStr[64];
+    char rxnCoeffStr[AR_MAXNAMELENGTH];
     double rxn_coeff;
     int secondary; /* 1 if the metabolite is a secondary in that reaction */
 
@@ -92,8 +93,8 @@ void readLikelihoodTable(PROBLEM &ProblemSpace, const char* filename) {
 
   FILE* fid = fopen(filename, "r");
   while(1) {
-    char rxnName[64];
-    char likelihoodString[64];
+    char rxnName[AR_MAXNAMELENGTH];
+    char likelihoodString[AR_MAXNAMELENGTH];
     double likelihood;
     int status = fscanf(fid, "%s%s", rxnName, likelihoodString);
     if(status == EOF) { break; }

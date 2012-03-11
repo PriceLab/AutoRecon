@@ -4,6 +4,8 @@
 #ifndef MYCONST_H
 #define MYCONST_H
 
+#define AR_MAXNAMELENGTH 256
+
 /* See MyConstants.cc for definitions and values for all of these switches.
    If you want to change a value you must re-compile for it to take effect */
 class DEBUGFLAGS{

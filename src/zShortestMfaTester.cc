@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
     /* Heavy penalty on the magic exits and entrances. */
     adjustLikelihoods(revSplit.rxns, 1.0f, -1000.0f, 1.1f, -3.0f, true);
 
-    char rxnNameFile[64];
+    char rxnNameFile[AR_MAXNAMELENGTH];
     sprintf(rxnNameFile, "Reaction_list_growth_%d", k);
     FILE* fid = fopen(rxnNameFile, "w");
     char rxnString[4096];

@@ -2,6 +2,14 @@
 #CFLAGS = -g -O3 -fopenmp -Wfatal-errors -fprefetch-loop-arrays -funroll-loops
 CFLAGS = -g -fopenmp 
 
+# Create /obj/ directory if none exists
+# Thanks to stackoverflow for this bit of makefile magic...
+# see http://stackoverflow.com/questions/652524/how-do-i-create-a-directory-in-a-makefile
+TOPDIR := $(shell pwd)
+OBJDIR := $(TOPDIR)/obj
+$(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
+
+# Compiler, object, library, and header definitions...
 CC = g++
 LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl`
 INCLUDES =-Isrc `pkg-config --cflags libxml-2.0`
@@ -17,6 +25,7 @@ HDRS =  src/DataStructures.h src/Grow.h src/pathUtils.h \
         src/Exchanges.h src/ETC.h src/Modularity.h src/Components.h src/genericLinprog.h \
 	src/Printers.h src/Paths2Model.h src/Annotations.h src/MyConstants.h src/score.h src/TableLoader.h
         
+
 all: FbaTester-NC FbaTester
 
 # Note - you require a "cc" file to compile into an object file using this command...will it work without one?

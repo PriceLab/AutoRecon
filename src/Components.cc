@@ -72,7 +72,7 @@ int ComponentTest(const PROBLEM &theModel){
     //Load_Stoic_Part(tempModel.synrxns.rxns,tempModel.metabolites.mets);
 
     /*Run FBA*/
-     char *matlab_str = (char *) malloc(sizeof(char) * 64);
+    char *matlab_str = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
     sprintf(matlab_str,"matlab_out_%d.mat",i);
     MATLAB_out(matlab_str,tempModel.fullrxns.rxns);
 

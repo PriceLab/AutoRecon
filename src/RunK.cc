@@ -319,7 +319,7 @@ REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* nam
 Changed to return a REACTION to make it more portable / save on memory in various places */
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name, int R){
   REACTION rxn_add;
-  char *temp = (char *) malloc(sizeof(char) * 64);
+  char *temp = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
@@ -346,7 +346,7 @@ bound AND adds a transporter. MagicExit just uses the default. Also the init_lik
 REACTION GrowthExit(const vector<REACTION> &reaction, int met_id, int reversible, double fluxBound, const char* name){
   REACTION rxn_add;
   STOICH stoich_add;
-  char* temp = (char*) malloc( sizeof(char)*64 ); 
+  char* temp = (char*) malloc( sizeof(char)*AR_MAXNAMELENGTH); 
 
   rxn_add.init_likelihood = -2;
   rxn_add.isExchange = 1;
@@ -360,7 +360,6 @@ REACTION GrowthExit(const vector<REACTION> &reaction, int met_id, int reversible
   rxn_add.id = _db.BLACKMAGICFACTOR + met_id;
   stoich_add.met_id = met_id;
   stoich_add.rxn_coeff = -1;
-  /* No need to cut off here, name same from a size-64 string and being printed into the same */
   sprintf(stoich_add.met_name,"%s",name);
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
@@ -399,7 +398,7 @@ int inOutPair(int met_id, const METSPACE &metspace){
   unsigned int i;
   int flag;
   bool isExternal = isExternalMet(metspace.metFromId(met_id).name, _db.E_tag);
-  char tempS[64] = {0};
+  char tempS[AR_MAXNAMELENGTH] = {0};
   if(isExternal){
     strncpy(tempS,metspace.metFromId(met_id).name,(int)strlen(metspace.metFromId(met_id).name)-3);
   } else {

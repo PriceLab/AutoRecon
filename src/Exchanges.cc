@@ -78,7 +78,7 @@ void FeedEnergy(PROBLEM &Model,double flux_bound){
 
 REACTION MagicExchange(METABOLITE met,double flux_bound,int dir){
   REACTION rxn_add;
-  char *temp = (char *) malloc(sizeof(char) * 64);
+  char *temp = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
@@ -171,7 +171,7 @@ REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspa
 REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, int met_id, 
 			char* name, int R, double bound){
   REACTION rxn_add;
-  char *temp = (char *) malloc(sizeof(char) * 64);
+  char *temp = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
@@ -267,7 +267,7 @@ void GetExchangeReactions(vector<int> metIdList, vector<int> dirs, const PROBLEM
 
   exchanges.clear();
 
-  char *name = (char*) malloc(sizeof(char)*64);
+  char *name = (char*) malloc(sizeof(char)*AR_MAXNAMELENGTH);
 
   for(int i=0;i<metIdList.size();i++) {
     /* Returns an existing reaction ID if possible */

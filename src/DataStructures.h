@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include "MyConstants.h"
 
 using std::vector;
 using std::map;
@@ -137,7 +138,7 @@ class GROWTH{
 
 struct MEDIA{
   int id; /* Metabolite id */
-  char name[64]; /* Metabolie name */
+  char name[AR_MAXNAMELENGTH]; /* Metabolie name */
   double rate; /* mmol/gDW/hr 
 		  (uptake rate for media, secretion rate for byproducts */
   bool operator==(const MEDIA &rhs) const;
@@ -157,7 +158,7 @@ class METABOLITE{
  public:
   /* Externally (XML/User) defined parameters */
   int id; /* Has to be big matrix row index */
-  char name[64];
+  char name[AR_MAXNAMELENGTH];
   int charge;
   int input; /* Is it an input?: 0 for no, 1 for yes */
   int output; /* Is it an output? 0 for no, 1 for yes */
@@ -165,7 +166,6 @@ class METABOLITE{
   int secondary_lone; /* 0 for no, 1 for yes */
   vector<int> secondary_pair; /* Int of the ID for each possible secondary pair */
   int noncentral; /* 0 = central (not used for ETC), 1 = noncentral (used for ETC), -1 = undefined */
-  char chemform[64];
   double modifier; /* Reserved for things that can be used to modify metabolite cost in Dijkstras algorithm, such as metabolomics data or other thigns we calculate */
   
   /* Connected reactions */
@@ -180,7 +180,7 @@ class STOICH{
   public:
   int met_id;
   double rxn_coeff;
-  char met_name[64];
+  char met_name[AR_MAXNAMELENGTH];
   
   bool operator==(const STOICH &rhs) const;
   bool operator>(const STOICH &rhs) const;
@@ -194,7 +194,7 @@ class REACTION{
   
   int id;
   int synthesis; /* ID for metabolite that the REACTION synthesizes - if any (-1 otherwise) */
-  char name[64];
+  char name[AR_MAXNAMELENGTH];
   vector<STOICH> stoich; /* Full chemical reaction */
 
   /* stoich, but without the secondary metabolties (Load_Stoic_Part deals with this) */

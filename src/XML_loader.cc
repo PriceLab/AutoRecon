@@ -92,12 +92,6 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
       strcpy(tempm.name,(char*)key);
       xmlFree(key);
     }
-    if ((!xmlStrcmp(cur->name, (const xmlChar *)"chemform"))) {
-      key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("chemform: %s\n", key); */
-      strcpy(tempm.chemform,(char*)key);
-      xmlFree(key);
-    }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"secondary"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
       /* printf("secondary_lone: %s\n", key); */
