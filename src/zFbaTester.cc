@@ -46,34 +46,6 @@ int main(int argc, char *argv[]) {
   FILE* fid = fopen("FULL_SYNRXNS", "w");
   FILE* fid2 = fopen("RXN_LIKELIHOODS", "w");
   RXNSPACE &tmpfull = ProblemSpace.fullrxns;
-  /*  char fullString[4086];
-  char partString[4086];
-  for(int i=0; i<tmpfull.rxns.size(); i++) {
-    fullString[0] = '\0';
-    partString[0] = '\0';
-    printRxnFormula(tmpfull.rxns[i], fullString, true);
-    printRxnFormula(tmpfull.rxns[i], partString, false);
-    fprintf(fid, "%s\t%d\t%1.3f\t%s\t%s\n", 
-	    tmpfull.rxns[i].name, tmpfull.rxns[i].net_reversible, tmpfull.rxns[i].current_likelihood,
-	    fullString, partString);
-	    } */
-
-  /* Make a computer-friendly format so I can easily curate, add/remove things */
-  for(int i=0; i<tmpfull.rxns.size(); i++) {
-    for(int j=0; j<tmpfull.rxns[i].stoich.size(); j++) {
-      bool keep = false;
-      for(int k=0; k<tmpfull.rxns[i].stoich_part.size(); k++) {
-	if(tmpfull.rxns[i].stoich[j].met_id == tmpfull.rxns[i].stoich_part[k].met_id) { keep = true; break; }
-      }
-      /* Reaction name - Reaction ID - Reversibility - Metabolite name - Metabolite ID - reaction coefficient - Secondary or not [1 = secondary] */
-      fprintf(fid, "%s\t%d\t%d\t%s\t%d\t%1.8f\t%d\n",
-	      tmpfull.rxns[i].name, tmpfull.rxns[i].id, tmpfull.rxns[i].net_reversible, 
-	      tmpfull.rxns[i].stoich[j].met_name, tmpfull.rxns[i].stoich[j].met_id, tmpfull.rxns[i].stoich[j].rxn_coeff, keep?0:1);
-      fprintf(fid2, "%s\t%1.4f\n", tmpfull.rxns[i].name, tmpfull.rxns[i].init_likelihood);
-    }
-  }
-
-  fclose(fid); fclose(fid2);
 
   printSynRxns(ProblemSpace.synrxns, ProblemSpace.fullrxns);
 
@@ -120,11 +92,6 @@ int main(int argc, char *argv[]) {
      adjust the rxnsInvolved to use fullrxns, not the synrxns */
   calcMetRxnRelations(ProblemSpace.fullrxns, ProblemSpace.metabolites);
 
-  /* Convert to the "Flat" convention. Flat pathsummary contains pointers to the original PATHSUMMARY in psum */
-  //  vector<PATHSUMMARY> flat, flat_temp;
-  //  flat_temp = flattenPsum(psum);
-  //  flat = uniquePsum(flat_temp);
-
   /* This is just temporary...I use it to help with filling magic bridges but beyond that it isn't really
      needed. Elsewhere, we should just use the unsynPsum below */
   vector<PATHSUMMARY> flat = flattenPsum(psum);
@@ -147,10 +114,17 @@ int main(int argc, char *argv[]) {
 
   printf("Making pre-gapfill results files...\n");
   /* Visualize if requested */
-  if(_db.VISUALIZEPATHS) {  visualizePathSummary2File("./outputs/UnSynPaths", "UnSynPaths", flat_unsyn, ProblemSpace, false);  }
+  if(_db.VISUALIZEPATHS) {  
+    char outpath[1028];
+    sprintf(outpath, "./%s/UnSynPaths", _myoutputdir);
+    visualizePathSummary2File(outpath, "UnSynPaths", flat_unsyn, ProblemSpace, false); 
+  }
   if(_db.OUTPUTPATHRESULTS) {
-    PATHS_rxns_out("./outputs/PATH_rxns_report", flat_unsyn, ProblemSpace);
-    PATHS_mets_out("./outputs/PATH_mets_report", flat_unsyn, ProblemSpace);
+    char outpath[1028];
+    sprintf(outpath, "./%s/PATH_rxns_report", _myoutputdir);
+    PATHS_rxns_out(outpath, flat_unsyn, ProblemSpace);
+    sprintf(outpath, "./%s/PATH_mets_report", _myoutputdir);
+    PATHS_mets_out(outpath, flat_unsyn, ProblemSpace);
   }
   printf("...done\n");
 

@@ -11,6 +11,7 @@
 #include "XML_loader.h"
 
 #include <algorithm>
+#include <cassert>
 #include <climits>
 #include <cstdio>
 #include <cstdlib>
@@ -33,11 +34,25 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
     exit(0);}
   if(argc == 5) { 
     sprintf(_myoutputdir, "%s", argv[4]);
-  } else { sprintf(_myoutputdir, "%s", "output"); }
-  /* TODO: If the last character is a "/", strip it off */
+    printf("Directing output files to directory %s\n", _myoutputdir);
+  } else {
+    printf("No Output directory specified. Default directory is 'output'\n");
+    sprintf(_myoutputdir, "%s", "output");
+  }
   
+  /* If the last character is a "/", strip it off (prevents invalid paths) */
+  int len = strlen(_myoutputdir);
+  if(len == 0) { printf("ERROR: User provided invalid output directory name \n"); assert(false); }
+  if(_myoutputdir[len-1] == '/') {  _myoutputdir[len-1] = '\0';  }
 
+  /* Create specified directory (if it does not already exist) */
+  char cmdline[1028];
+  sprintf(cmdline, "[ -d \"%s\" ] || mkdir -p \"%s\"", _myoutputdir, _myoutputdir);
+  system(cmdline);
+
+  /* Set number of threads specified in user inputs */
   omp_set_num_threads(atoi(argv[1]));
+
   /* likelihoods.xml */
   char* docName = argv[2];
   /* input.xml */
@@ -169,9 +184,9 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int 
   if(_db.VISUALIZEPATHS) {
     #pragma omp parallel for
     for(int j=0;j<kpaths.size();j++){
-      char s[128];
-      sprintf(s, "./outputs/path_%s_k%d.dot", ProblemSpace.metabolites.metFromId(outputId).name, j);
-      VisualizePath2File(s, s, kpaths[j], ProblemSpace, 1);
+      char outpath[2056];
+      sprintf(outpath, "./%s/path_%s_k%d.dot", _myoutputdir, ProblemSpace.metabolites.metFromId(outputId).name, j);
+      VisualizePath2File(outpath, outpath, kpaths[j], ProblemSpace, 1);
     }
   }
 

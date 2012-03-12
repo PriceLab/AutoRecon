@@ -497,7 +497,9 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
   vector<GAPFILLRESULT> result;
   vector<int> obj(1, _db.BIOMASS); vector<double> coeff(1, 1.0f);
 
-  if(_db.PRINTSHOULDGROW) { MATLAB_out("./outputs/Pre_gapfind", model.fullrxns.rxns); }
+  char outpath[1028];
+  sprintf(outpath, "./%s/Pre_gapfind", _myoutputdir);
+  if(_db.PRINTSHOULDGROW) { MATLAB_out(outpath, model.fullrxns.rxns); }
 
   GLPKDATA datainit(model.fullrxns, model.metabolites, obj, coeff, 1);
 
@@ -527,7 +529,10 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
     }
   }
 
-  if(_db.PRINTSHOULDGROW) { MATLAB_out("./outputs/Pre_gapfill", model.fullrxns.rxns); }
+  if(_db.PRINTSHOULDGROW) {
+    sprintf(outpath, "./%s/Pre_gapfill", _myoutputdir);
+    MATLAB_out(outpath, model.fullrxns.rxns);
+  }
 
   /* DATA struct with the exits actually turned off */
   GLPKDATA data2(model.fullrxns, model.metabolites, obj, coeff, 1);

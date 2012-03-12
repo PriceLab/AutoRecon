@@ -110,10 +110,17 @@ int main(int argc, char *argv[]) {
 
   printf("Making pre-gapfill results files...\n");
   /* Visualize if requested */
-  if(_db.VISUALIZEPATHS) {  visualizePathSummary2File("./outputs/UnSynPaths", "UnSynPaths", flat_unsyn, ProblemSpace, false);  }
+  if(_db.VISUALIZEPATHS) {  
+    char outpath[1028];
+    sprintf(outpath, "./%s/UnSynPaths", _myoutputdir);
+    visualizePathSummary2File(outpath, "UnSynPaths", flat_unsyn, ProblemSpace, false); 
+  }
   if(_db.OUTPUTPATHRESULTS) {
-    PATHS_rxns_out("./outputs/PATH_rxns_report", flat_unsyn, ProblemSpace);
-    PATHS_mets_out("./outputs/PATH_mets_report", flat_unsyn, ProblemSpace);
+    char outpath[1028];
+    sprintf(outpath, "./%s/PATH_rxns_report", _myoutputdir);
+    PATHS_rxns_out(outpath, flat_unsyn, ProblemSpace);
+    sprintf(outpath, "./%s/PATH_mets_report", _myoutputdir);
+    PATHS_mets_out(outpath, flat_unsyn, ProblemSpace);
   }
   printf("...done\n");
 

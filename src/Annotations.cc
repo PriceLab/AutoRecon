@@ -66,7 +66,9 @@ map<string, vector<VALUESTORE> > GeneAnnotations(RXNSPACE &rxnspace, double cut,
     }
   }
   if(_db.SAVEANNOTATIONS) {
-    ANNOTATIONS_out("./outputs/reaction_annotations", small_list);
+    char pathname[500];
+    sprintf(pathname, "./%s/reaction_annotations", _myoutputdir);
+    ANNOTATIONS_out(pathname, small_list);
   }
 
   return gene_map;

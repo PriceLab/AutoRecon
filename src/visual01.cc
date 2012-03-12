@@ -377,7 +377,9 @@ void VisualizePath2File(const char *fileName, const char *label, const PATH &pat
 void visualizePathSummary2File(const char* fileBase, const char* label, const vector<PATHSUMMARY> &psum, const PROBLEM &ProblemSpace, int useSyn) {
   
   for(int i=0; i<psum.size(); i++) {
-    char fileName[128]; sprintf(fileName, "%s%s.dot", fileBase, ProblemSpace.metabolites.metFromId(psum[i].outputId).name);
+    char fileName[2056];
+    sprintf(fileName, "%s%s.dot", fileBase, ProblemSpace.metabolites.metFromId(psum[i].outputId).name);
+
     FILE* dotput = fopen(fileName, "w");
 
     vector<PATHSUMMARY> tmpP; tmpP.push_back(psum[i]);
