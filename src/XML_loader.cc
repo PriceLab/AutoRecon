@@ -73,44 +73,42 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
   xmlChar *key;
   METABOLITE tempm;
   cur = cur->xmlChildrenNode;
+  bool namenull = false;
   while (cur != NULL) {
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"met_id"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("id: %s\n", key); */
-      tempm.id = atoi((char*)key);
-      xmlFree(key);
-    }
-    if ((!xmlStrcmp(cur->name, (const xmlChar *)"charge"))) {
-      key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("charge: %s\n", key); */
-      tempm.charge = atoi((char*)key);
+      if(key != NULL) { tempm.id = atoi((char*)key); }
+      else { printf("ERROR: Identified empty or non-numeric ID. All metabolites in the XML file must have a unique numeric ID.\n"); assert(false); }
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"name"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("name: %s\n", key); */
-      strcpy(tempm.name,(char*)key);
+      if(key != NULL) {	strcpy(tempm.name,(char*)key); }
+      else { namenull = true; }
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"secondary"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("secondary_lone: %s\n", key); */
       tempm.secondary_lone = atoi((char*)key);
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"cofactor"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("secondary_pair: %s\n", key); */
       tempm.secondary_pair.push_back(atoi((char*)key));
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"noncentral"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("secondary_pair: %s\n", key); */
       tempm.noncentral = atoi((char*)key);
       xmlFree(key);
     }
     cur = cur->next;
+  }
+
+  /* Handle NULL names */
+  if(namenull) { 
+    printf("WARNING: Metabolite %d had no name associated. Will assign name based on ID\n", tempm.id);
+    sprintf(tempm.name, "%d", tempm.id);
   }
 
   metspace.addMetabolite(tempm);
@@ -124,7 +122,7 @@ void parseSTOICH (xmlDocPtr doc, xmlNodePtr cur, vector<STOICH> &stoich){
   while (cur != NULL) {
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"met_id"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("met_id: %s\n", key); */
+      if(key == NULL) { printf("ERROR: Empty ID found in a STOICH. All STOICH must have a numeric ID matching a metabolite\n"); assert(false); }
       temps.met_id = atoi((char*)key);
       xmlFree(key);
     }
@@ -150,6 +148,7 @@ void parseANNOTE (xmlDocPtr doc, xmlNodePtr cur, vector<ANNOTATION> &annote){
   while (cur != NULL) {
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"gene"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+      if(key==NULL) { printf("ERROR: Gene assigned with no name! (in parseANNOTE)\n"); assert(false); }
       /* printf("met_id: %s\n", key); */
       temps.genename = (char*)key;
       xmlFree(key);
@@ -169,29 +168,26 @@ void parseANNOTE (xmlDocPtr doc, xmlNodePtr cur, vector<ANNOTATION> &annote){
 void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
   xmlChar *key;
   REACTION tempr;
+  bool namenull = false;
   cur = cur->xmlChildrenNode;
   while (cur != NULL) {
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"id"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
+      if(key == NULL) { printf("ERROR: All REACTIONs must have a (numeric) ID\n"); assert(false); }
       /* printf("id: %s\n", key); */
       tempr.id = atoi((char*)key);
-	xmlFree(key);
+      xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"name"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      /* printf("name: %s\n", key); */ 
-      strcpy(tempr.name,(char*)key);
+      if(key == NULL) { namenull = true; }
+      else { strcpy(tempr.name,(char*)key); }
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"s"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
       parseSTOICH (doc, cur, tempr.stoich);
       //tempr.numMets += 1;
-      xmlFree(key);
-    }
-    if ((!xmlStrcmp(cur->name, (const xmlChar *)"exchange"))) {
-      key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      tempr.isExchange = atoi((char*)key);
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"rev"))) {
@@ -227,11 +223,19 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
     }
     cur = cur->next;
   }
+
+  if(namenull) {
+    printf("WARNING: Reaction %d has no name assigned. Will use %d as the name...\n", tempr.id, tempr.id);
+    sprintf(tempr.name, "%d", tempr.id);
+  }
+
   /* MATT CHANGE (6-27-11)
      Only bother including this reaction if there is anything present in S. Otherwise it's a dud... */
   if(!tempr.stoich.empty()) {
     rxnspace.addReaction(tempr);
   }
+
+
   return;
 }
 

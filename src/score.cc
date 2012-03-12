@@ -228,7 +228,7 @@ void optimizeAMs(vector<ANSWER> &ans, PROBLEM &ProblemSpace, double init_AM){
       if(status == GSL_SUCCESS){
 	printf("converged to minimum at\n");}
       printf ("%5d %10.3e %10.3e f() = %7.3f size = %.3f\n",
-	      iter,
+	      (int)iter,
 	      gsl_vector_get (s->x, 0),
 	      gsl_vector_get (s->x, 1),
 	      s->fval, size);

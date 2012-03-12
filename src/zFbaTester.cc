@@ -42,11 +42,6 @@ int main(int argc, char *argv[]) {
   InputSetup(argc,argv,ProblemSpace);
   printf("...done \n");fflush(stdout);
 
-  /* Generate a list of fullrxn and synrxn information to curate */
-  FILE* fid = fopen("FULL_SYNRXNS", "w");
-  FILE* fid2 = fopen("RXN_LIKELIHOODS", "w");
-  RXNSPACE &tmpfull = ProblemSpace.fullrxns;
-
   printSynRxns(ProblemSpace.synrxns, ProblemSpace.fullrxns);
 
   /* I tried to move this to inputSetup as well but it gave me a compile error

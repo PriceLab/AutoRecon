@@ -17,6 +17,7 @@ vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
 METABOLITE::METABOLITE() {
+  name = {0};
   input = 0;
   output = 0;
   biomass = 0;

@@ -159,16 +159,23 @@ class METABOLITE{
   /* Externally (XML/User) defined parameters */
   int id; /* Has to be big matrix row index */
   char name[AR_MAXNAMELENGTH];
-  int charge;
+
+  /* All of these are for visualization only */
   int input; /* Is it an input?: 0 for no, 1 for yes */
   int output; /* Is it an output? 0 for no, 1 for yes */
   int biomass; /* Is it a biomass component? 0 for no, 1 for yes */
+
+  /* Used to identify synrxns (will soon be obsolete in favor of reaction-specific removals) */
   int secondary_lone; /* 0 for no, 1 for yes */
   vector<int> secondary_pair; /* Int of the ID for each possible secondary pair */
+
+  /* ETC */
   int noncentral; /* 0 = central (not used for ETC), 1 = noncentral (used for ETC), -1 = undefined */
+
+
   double modifier; /* Reserved for things that can be used to modify metabolite cost in Dijkstras algorithm, such as metabolomics data or other thigns we calculate */
   
-  /* Connected reactions */
+  /* Connected reactions (computed) */
   vector<int> rxnsInvolved_nosec;
   
   METABOLITE();

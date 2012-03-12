@@ -100,7 +100,6 @@ void printRxnFormula(const REACTION &rxn, char* rxnString, bool printStoichPart)
 void printMETABOLITEinputs(const METABOLITE &metabolite){
   printf("\tid: %05d\n",metabolite.id);
   printf("\tname: %s\n",metabolite.name);
-  printf("\tcharge: %d\n",metabolite.charge);
   printf("\tinput: %d  ",metabolite.input);
   if(metabolite.input==0){ printf("(NO)\n");} else{printf("(YES)\n");}
   printf("\toutput: %d  ",metabolite.output);
