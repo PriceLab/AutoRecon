@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include "MyConstants.h"
 
+char _myoutputdir[AR_MAXNAMELENGTH] = {0};
+
 DEBUGFLAGS::DEBUGFLAGS() {
 
   /* Test new methods for synthesis reactions- if FALSE we ignore the synthesis tag */

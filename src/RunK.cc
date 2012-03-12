@@ -28,9 +28,14 @@ using std::set;
 void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
 
   if(_db.DEBUGSYN){printf("entering InputSetup\n");}
-  if(argc!=4){
-    printf("Usage: ./a.out num_threads likelihoods.xml input.xml\n");
+  if(argc < 4 || argc > 5){
+    printf("Usage: ./a.out num_threads likelihoods.xml input.xml [outdir (optional)] \n");
     exit(0);}
+  if(argc == 5) { 
+    sprintf(_myoutputdir, "%s", argv[4]);
+  } else { sprintf(_myoutputdir, "%s", "output"); }
+  /* TODO: If the last character is a "/", strip it off */
+  
 
   omp_set_num_threads(atoi(argv[1]));
   /* likelihoods.xml */
