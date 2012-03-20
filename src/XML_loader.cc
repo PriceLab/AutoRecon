@@ -216,11 +216,6 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
       parseANNOTE(doc, cur, tempr.annote);
       xmlFree(key);
     }
-    if ((!xmlStrcmp(cur->name, (const xmlChar *)"synthesis"))) {
-      key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      tempr.synthesis = atoi((char*)key);
-      xmlFree(key);
-    }
     cur = cur->next;
   }
 
@@ -422,7 +417,7 @@ void identifyFreeReactions(vector<REACTION> &reactions) {
   for(int i=0; i<reactions.size(); i++) {
 
     /* Exclude exchange reactions */
-    if(reactions[i].isExchange == 1) { continue; }
+    if(reactions[i].isExchange()) { continue; }
 
     bool hasReactant = false;
     bool hasProduct = false;
@@ -445,16 +440,16 @@ void identifyFreeReactions(vector<REACTION> &reactions) {
     switch(reactions[i].init_reversible) {
     case -1:
       if(hasReactant) {
-	reactions[i].freeMakeFlag = 1;
+	reactions[i].freeMakeFlag = true;
       }
       break;
     case 0:
       /* reversible: No matter which way, we consider it free */
-      reactions[i].freeMakeFlag = 1;
+      reactions[i].freeMakeFlag = true;
       break;
     case 1:
       if(hasProduct) {
-	reactions[i].freeMakeFlag = 1;
+	reactions[i].freeMakeFlag = true;
       }
       break;
     }
@@ -516,12 +511,8 @@ void Load_Stoic_Part(vector<REACTION> &reaction,
       vector<int>::iterator iter = find(singleSecondary_ID.begin(), singleSecondary_ID.end(), reaction[i].stoich[j].met_id);
       if(iter != singleSecondary_ID.end()) {
 	/* NEW 1-17-2012 - skip over it if it is considered a synthesis reaction for that metabolite */
-	if(_db.TEST_SYNTHESIS) {
-	  if(reaction[i].synthesis != reaction[i].stoich[j].met_id) { continue; }
-	} else {
-	  continue; 
-	}
-      };
+	continue; 
+      }
       
       /* Otherwise just copy it */
       tempPart.met_id = reaction[i].stoich[j].met_id;

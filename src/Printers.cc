@@ -157,9 +157,6 @@ void printREACTIONintermediates(const REACTION &reaction, int print_type){
   if(reaction.net_reversible==0){ printf("(YES)\n");}
   if(reaction.net_reversible==-1){ printf("(NO - BACKWARDS)\n");}
   if(reaction.net_reversible==1){ printf("(NO - FORWARDS)\n");}
-  printf("\tSynthesis reaction:");
-  if(reaction.synthesis == -1) { printf("(NO)\n"); }
-  else { printf("YES - metabolite %d\n", reaction.synthesis); }
 
   printf("\t [lb: %f; ub: %f]\n", reaction.lb, reaction.ub);
   printf("\ttransporter: %d  ",reaction.transporter);
@@ -241,10 +238,6 @@ void printREACTIONinputs(const REACTION &reaction, int print_type){
 
   printf("\tFree make: %d ", reaction.freeMakeFlag);
   if(reaction.freeMakeFlag == 1) { printf("(YES)\n"); } else { printf("(NO)\n"); }
-
-  printf("\tSynthesis reaction:");
-  if(reaction.synthesis == -1) { printf("(NO)\n"); }
-  else { printf("YES - metabolite %d\n", reaction.synthesis); }
 
   printf("\tnet_reversible: %d \n", reaction.net_reversible);
   printf("\tLower bound: %f\n", reaction.lb);

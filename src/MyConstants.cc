@@ -7,9 +7,6 @@ char _myoutputdir[AR_MAXNAMELENGTH] = {0};
 
 DEBUGFLAGS::DEBUGFLAGS() {
 
-  /* Test new methods for synthesis reactions- if FALSE we ignore the synthesis tag */
-  TEST_SYNTHESIS = true;
-
   /******************* K-shortest parameters *********/
   INITIAL_K = 1;
   GAPFILL_K = 3;

@@ -343,7 +343,6 @@ REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* nam
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
-  rxn_add.isExchange = 1;
   rxn_add.net_reversible = R;
   rxn_add.id = _db.BLACKMAGICFACTOR + met_id;
 
@@ -357,6 +356,8 @@ REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* nam
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
 
+  free(temp);
+
   return rxn_add;
 }
 
@@ -369,12 +370,10 @@ REACTION GrowthExit(const vector<REACTION> &reaction, int met_id, int reversible
   char* temp = (char*) malloc( sizeof(char)*AR_MAXNAMELENGTH); 
 
   rxn_add.init_likelihood = -2;
-  rxn_add.isExchange = 1;
 
   /* could be an issue in case of long met names */
   sprintf(temp, "%s%s", "GrowthExit_", name); 
   strcpy(rxn_add.name,temp);
- //printf("Made GrowthExit: %s\n",rxn_add.name);
   rxn_add.init_reversible = reversible;
   rxn_add.net_reversible = reversible;
   rxn_add.id = _db.BLACKMAGICFACTOR + met_id;
@@ -415,7 +414,6 @@ REACTION MakeBiomassFromGrowth(const GROWTH &growth){
 /* Given an metabolite with id met_id, finds the corresponding 
    metabolite in the opposite compartment. Returns the matching met ID or -1 if it fails to find a match */
 int inOutPair(int met_id, const METSPACE &metspace){ 
-  unsigned int i;
   int flag;
   bool isExternal = isExternalMet(metspace.metFromId(met_id).name, _db.E_tag);
   char tempS[AR_MAXNAMELENGTH] = {0};
@@ -426,7 +424,7 @@ int inOutPair(int met_id, const METSPACE &metspace){
     strcat(tempS,_db.E_tag);
   }
 
-  for(i=0;i<metspace.mets.size();i++){
+  for(int i=0;i<metspace.mets.size();i++){
     if(strcmp(tempS,metspace.mets[i].name)==0){
       return metspace.mets[i].id;
     } 
@@ -466,7 +464,7 @@ void GoodReversible(PROBLEM &ProblemSpace){
   ProblemSpace.synrxnsR.rxns.reserve(ProblemSpace.synrxns.rxns.size()*2);
   ProblemSpace.synrxnsR.addReactionVector(ProblemSpace.synrxns.rxns);
   for(int i=0;i<ProblemSpace.synrxns.rxns.size();i++){
-    if(ProblemSpace.synrxnsR.rxns[i].isExchange==0){
+    if(!ProblemSpace.synrxnsR.rxns[i].isExchange()){
       if(ProblemSpace.synrxnsR.rxns[i].init_reversible != 0) {
 	/* BLACK MAGIC [this causes secondKpass to 
 	 give a significant likelihood penalty to reactions that have

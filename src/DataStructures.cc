@@ -80,11 +80,11 @@ bool REACTION::operator<(const REACTION &rhs) const{
   return (this[0].id < rhs.id);
 }
 
+
 REACTION::REACTION(){
-  freeMakeFlag = 0;
-  isExchange = 0;
-  transporter = 0;
-  synthesis = -1;
+  freeMakeFlag = false;
+  transporter = false;
+  transportedMetabolite = -1;
   /* Default likelihood is -5 [NOT FOUND] */
   init_likelihood = -5;
   current_likelihood = init_likelihood;
@@ -95,10 +95,15 @@ REACTION::REACTION(){
   else { lb = 0.0f; ub = 1000.0f; }
 }
 
+/* Exchange reaction is just defined as a reaction with exactly one metabolite (regardless of direction)*/
+bool REACTION::isExchange() const {
+  if(this->stoich.size() == 1 && this->id != _db.BIOMASS) { return true; }
+  else { return false; }
+}
+
 void REACTION::reset() {
-  freeMakeFlag = 0;
-  isExchange = 0;
-  transporter = 0;
+  freeMakeFlag = false;
+  transporter = false;
   init_likelihood = -5;
   current_likelihood = init_likelihood;
   init_reversible = 0;
@@ -477,7 +482,7 @@ PROBLEM::PROBLEM(){
 PROBLEM::PROBLEM(const RXNSPACE &x, const PROBLEM &ProblemSpace){
   for(int i=0;i<x.rxns.size();i++){
     fullrxns.addReaction(x.rxns[i]);
-    if(x.rxns[i].isExchange == 1) {
+    if(x.rxns[i].isExchange()) {
       exchanges.addReaction(x.rxns[i]);
     }
   }

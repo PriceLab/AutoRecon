@@ -719,7 +719,7 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
   /* Turn off exchange reactions (aside from those that are magic exits / entrances) */
   for(int i=0; i<model.fullrxns.rxns.size(); i++) {
     if(model.fullrxns.rxns[i].id >= _db.BLACKMAGICFACTOR && model.fullrxns.rxns[i].id < _db.BLACKMAGICFACTOR + _db.MINFACTORSPACING) {  continue;    }
-    if(model.fullrxns.rxns[i].isExchange) {
+    if(model.fullrxns.rxns[i].isExchange()) {
       model.fullrxns.rxns[i].lb = 0;
       model.fullrxns.rxns[i].net_reversible = 1;
     }

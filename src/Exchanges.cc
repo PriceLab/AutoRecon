@@ -33,7 +33,7 @@ void LoadAllExchanges(PROBLEM &ProblemSpace){
 // Zeros out the exchanges (reset)
 void ResetFood(vector<REACTION> &reactions){
   for(int i=0;i<reactions.size();i++){
-    if(reactions[i].isExchange==1){
+    if(reactions[i].isExchange()){
       if(reactions[i].stoich[i].rxn_coeff<0){
 	reactions[i].net_reversible = 1;
       }
@@ -82,7 +82,6 @@ REACTION MagicExchange(METABOLITE met,double flux_bound,int dir){
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
-  rxn_add.isExchange = 1;
   rxn_add.net_reversible = dir;
   rxn_add.id = _db.MISSINGEXCHANGEFACTOR + met.id;
 
@@ -97,8 +96,6 @@ REACTION MagicExchange(METABOLITE met,double flux_bound,int dir){
 
   if(dir <= 0) {  rxn_add.lb = -flux_bound; } else { rxn_add.lb = 0.0f; }
   if(dir >= 0) {  rxn_add.ub = flux_bound;  } else { rxn_add.ub = 0.0f; }
-  //Problem here is that there are sometimes transporters that involve multiple metabolites.
-  //So I want to force the flux to use those if it has to rather than rely on the MagicTrans reactions
   free(temp);
   return rxn_add;
 }
@@ -332,8 +329,7 @@ void GetExchangeReactions_oneMedia(const GROWTH &growth, const PROBLEM &ProblemS
    Does not depend on the "isExchange" property */
 int FindExchange4Metabolite(const vector<REACTION> &reaction, int met_id){
   for(int i=0;i<reaction.size();i++){
-     if(reaction[i].stoich[0].met_id==met_id && reaction[i].stoich.size()==1 && reaction[i].id!=_db.BIOMASS){ 
-       return reaction[i].id;}
+    if(reaction[i].stoich[0].met_id==met_id && reaction[i].isExchange()) {  return reaction[i].id; }
   }
   return -1; /* Exchange not found in database */
 }
