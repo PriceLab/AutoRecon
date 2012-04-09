@@ -55,6 +55,8 @@ void modifyRxnsForMagicBridge(PROBLEM &problemSpace, int bridgeId, vector<int> &
 void modifyGAM(ANSWER &model, double amountToChange);
 void modifyNGAM(ANSWER &model, double newAtpm);
 
+RXNSPACE splitReactions(const RXNSPACE &rxnspace);
+
 /* For template classes to work for anything but built-in types (int, double, etc), 
    the definition of the function has to be in the same file as the prototype.
    So I put them here... */

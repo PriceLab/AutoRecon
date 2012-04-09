@@ -456,6 +456,54 @@ void turnOffMagicExits(RXNSPACE &rxnspace, const vector<int> &exitsToKeep) {
   }
 }
 
+/* Split all reactions in inputSpace into forward and reverse parts
+   so that all fluxes are strictly positive. */
+RXNSPACE splitReactions(const RXNSPACE &rxnspace) {
+  RXNSPACE revSplit;
+  for(int i=0; i<rxnspace.rxns.size(); i++) {
+    REACTION tmp = rxnspace.rxns[i];
+    tmp.revPair = -1;
+    /* FIXME - should I attempt to put the opposite direction of all the other rxns here too? (with a penalty) */
+    if(tmp.init_reversible == 1) {
+      revSplit.addReaction(tmp);
+    }
+    /* Ensure that the reaction only goes in one direction */
+    if(tmp.init_reversible == -1) {
+      REACTION newRxn = tmp;
+      newRxn.id += _db.REVFACTOR;
+      newRxn.stoich = tmp.stoich;
+      for(int j=0; j<newRxn.stoich.size(); j++) {
+        newRxn.stoich[j].rxn_coeff *= -1;
+      }
+      newRxn.ub = -newRxn.lb;
+      newRxn.lb = 0.0f;
+      revSplit.addReaction(newRxn);
+    }
+
+    if(tmp.init_reversible == 0) {
+      REACTION newRxn = tmp;
+      newRxn.revPair = tmp.id;
+      newRxn.id += _db.REVFACTOR;
+      newRxn.stoich = tmp.stoich;
+      for(int j=0; j<newRxn.stoich.size(); j++) {
+        newRxn.stoich[j].rxn_coeff *= -1;
+      }
+      newRxn.ub = -newRxn.lb;
+      newRxn.lb = 0.0f;
+      revSplit.addReaction(newRxn);
+      /* Also put in the forward reaction, but constrained to only go forward
+        I only assign the revPair to ONE of the reactions so that we don't get
+        duplicate constraints (makes GLPK's life easier) */
+      newRxn = tmp;
+      newRxn.lb = 0.0f;
+      revSplit.addReaction(newRxn);
+    }
+  }
+
+  return revSplit;
+}
+
+
 /* Modify the NGAM associated with the model PROBLEM
    NGAM is modified by changing the lower bound and upper bound of the reaction with name given by db.ATPM_name
    FIXME: Need to make sure to add the ATPM reaction to the model */

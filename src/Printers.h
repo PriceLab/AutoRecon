@@ -54,6 +54,7 @@ void PrintGapfillResult(const vector<GAPFILLRESULT> &res, const PROBLEM &problem
 void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns);
 void PATHS_rxns_out(const char* filename, const vector<PATHSUMMARY> &psum, const PROBLEM &problem);
 void PATHS_mets_out(const char* filename, const vector<PATHSUMMARY> &psum, const PROBLEM &problem);
+void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBLEM &problem);
 void ANNOTATIONS_out(const char* filename, const vector<REACTION> &annotated_reaction_list);
 
 #endif

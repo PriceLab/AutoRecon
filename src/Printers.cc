@@ -588,6 +588,31 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
   fclose(output);
 }
 
+/* After un-synonymizing: Output an adjacency-list for the data in the PSUM:
+   Reaction   metabolite  direction  edge weight [default: current_likelihood] 
+direction is 0 if it is a reversible edge, -1 means metabolite --> reaction, and +1 means reaction --> metabolite */
+void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBLEM &problem) {
+  FILE* output = fopen(fileName, "w");
+  fprintf(output, "%s\t%s\t%s\t%s\n", "REACTION", "METABOLITE", "DIRECTION", "EDGEWEIGHT");
+  for(int i=0; i<psum.rxnDirIds.size(); i++) {
+    REACTION tmprxn = problem.fullrxns.rxnFromId(abs(psum.rxnDirIds[i]));
+    for(int j=0; j<tmprxn.stoich.size(); j++) {
+      int dir;
+      if(tmprxn.net_reversible == 0) {
+	dir = 0;
+      } else if (tmprxn.net_reversible * tmprxn.stoich[j].rxn_coeff > 0.0f) { 
+	/* A --> B: Stoich coeff for B is 1 and net_reversible = 1, we want the arrow pointing towards B so dir = 1*/
+	/* B <-- A: Stoich coeff for B is -1 but net_reversible = -1, we want thearrow pointing towards B so dir = 1 */
+	dir = 1;
+      } else { dir = -1; }
+      fprintf(output, "%s\t%s\t%d\t%1.4f\n", 
+	      tmprxn.name, tmprxn.stoich[j].met_name, dir, tmprxn.current_likelihood);
+    }
+  }
+  fflush(output);
+  fclose(output);
+}
+
 /* Report list of metabolites in each PATH. The reaction names in psum
  must correspond to the reactions in rxnspace (i.e. for un-synnonymized RXNSPACE, the RXNSPACE should be fullrxns,
  and for the synonymized version from Dijkstras it should be synrxns, etc.

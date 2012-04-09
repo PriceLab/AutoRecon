@@ -64,8 +64,6 @@ void parseALL(char* file1, char* file2, PROBLEM &ProblemSpace){
      If the metabolite is "free" the "freeMakeFlag" is set to 1. */
   identifyFreeReactions(ProblemSpace.fullrxns.rxns);
 
-  //  addBridgeMetabolites(ProblemSpace);
-
   return;
 }
 
@@ -83,7 +81,11 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"name"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      if(key != NULL) {	strcpy(tempm.name,(char*)key); }
+      if(key != NULL) {
+	/* Avoid buffer overflows... */
+	assert(strlen((char*)key) <= AR_MAXNAMELENGTH);
+	strcpy(tempm.name,(char*)key); 
+      }
       else { namenull = true; }
       xmlFree(key);
     }
@@ -181,7 +183,9 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"name"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
       if(key == NULL) { namenull = true; }
-      else { strcpy(tempr.name,(char*)key); }
+      else {
+	assert(strlen((char*)key) <= AR_MAXNAMELENGTH);
+	strcpy(tempr.name,(char*)key); }
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"s"))) {
