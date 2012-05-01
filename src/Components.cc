@@ -42,7 +42,7 @@ int ComponentTest(const PROBLEM &theModel){
   }
   */
 
-  vector<int> inputIds;
+  vector<METID> inputIds;
   vector<int> dirs;
   for(int j=0;j<baseModel.growth[0].media.size();j++){
     inputIds.push_back(baseModel.growth[0].media[j].id);
@@ -64,7 +64,7 @@ int ComponentTest(const PROBLEM &theModel){
 
     /*Load one component Model*/
     STOICH tmpS = biomass.stoich[i]; vector<STOICH> tmpStoich; tmpStoich.push_back(tmpS);
-    int outputId = tmpS.met_id;
+    METID outputId = tmpS.met_id;
     REACTION tmpRxn = MakeObjRxn(tmpStoich);
     tempModel.fullrxns.addReaction(tmpRxn);
     tempModel.synrxns.addReaction(tmpRxn);
@@ -133,7 +133,7 @@ void Load_Stoich_Part_With_Cofactors(PROBLEM &Model){
   for(int i=0;i<Model.fullrxns.rxns.size();i++){
     Model.fullrxns.rxns[i].stoich_part.clear();
     for(int j=0;j<Model.fullrxns.rxns[i].stoich.size();j++){
-      int metID = Model.fullrxns.rxns[i].stoich[j].met_id;
+      METID metID = Model.fullrxns.rxns[i].stoich[j].met_id;
       if(Model.metabolites.metFromId(metID).secondary_lone!=1){
 	Model.fullrxns.rxns[i].stoich_part.push_back(Model.fullrxns.rxns[i].stoich[j]);
       }
@@ -167,7 +167,7 @@ PROBLEM reportFlux(PROBLEM& Model, vector<double> &fbaSolution, double cutoff){
     }
   }
   if(reporter.fullrxns.rxns.size()>0){
-    vector<int> metList;
+    vector<METID> metList;
     for(int i=0;i<reporter.fullrxns.rxns.size();i++){
       for(int j=0;j<reporter.fullrxns.rxns[i].stoich_part.size();j++){
 	metList.push_back(reporter.fullrxns.rxns[i].stoich_part[j].met_id);

@@ -112,7 +112,7 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
 
     vector<GRAPHSTORE> temporaryList(currentRxnList.size(), currentGraph);
 
-#pragma omp parallel for shared(L, currentRxnList, temporaryList) firstprivate(tmp, onePath, tmpRxn)
+#pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
       set<BADIDSTORE> dum;
       int dir = truedir.rxnFromId(currentRxnList[i]).net_reversible;
@@ -242,7 +242,7 @@ void kShortest(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, MET
 
     vector<GRAPHSTORE> temporaryList(currentRxnList.size(), currentGraph);
 
-    #pragma omp parallel for shared(L, currentRxnList, temporaryList) firstprivate(tmp, onePath, tmpRxn)
+#pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
       set<BADIDSTORE> dum;
       tmp.excludedRxnIds.push_back(currentRxnList[i]);

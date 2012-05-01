@@ -23,8 +23,8 @@ PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMM
 vector<int> fillMagicBridges(const PATHSUMMARY &psum, const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, int id);
 
 /* Random utility functions */
-void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<int> &metIds, const vector<int> &dirs);
-void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, const REACTION &biomass, const vector<int> &magicIds, const vector<int> &magicDirs,
+void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<METID> &metIds, const vector<int> &dirs);
+void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, const REACTION &biomass, const vector<METID> &magicIds, const vector<int> &magicDirs,
                           PROBLEM &working, int &baseNum);
 
 

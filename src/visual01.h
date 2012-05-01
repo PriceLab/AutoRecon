@@ -14,5 +14,5 @@ void visualizePathSummary2File(const char* fileBase, const char* label, const ve
 
 void VisualizeProblem(PROBLEM &small_model, const int i);
 void VisualizeAllSolutions(const PROBLEM &ProblemSpace, const vector< vector< PATH> > &paths, int useSyns);
-bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, int met_id);
+bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, METID met_id);
 #endif

@@ -281,7 +281,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 
 /* Test if reaction RXN has metablite metId and its opposite, it is not a magic bridge fix, 
    AND it is not a magic bridge. This indicates ones that we want to REMOVE */
-bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, int met_id) {
+bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, METID met_id) {
 
   if(rxn.id >= _db.MAGICBRIDGEFACTOR && rxn.id < _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING) { return false; }
 

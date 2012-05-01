@@ -9,10 +9,19 @@
 #include <string>
 #include <vector>
 #include "MyConstants.h"
+#include <boost/serialization/strong_typedef.hpp>
 
 using std::vector;
 using std::map;
 using std::string;
+
+/*Basic typedefs*/
+BOOST_STRONG_TYPEDEF(int,METID);
+BOOST_STRONG_TYPEDEF(int,METIDX);
+BOOST_STRONG_TYPEDEF(int,RXNID);
+BOOST_STRONG_TYPEDEF(int,RXNIDX);
+BOOST_STRONG_TYPEDEF(int,GROWID);
+BOOST_STRONG_TYPEDEF(int,GROWIDX);
 
 /* Input data classes */
 struct MEDIA;
@@ -83,21 +92,21 @@ class METSPACE{
 
   METSPACE();
   METSPACE(const vector<METABOLITE> &metVec);
-  METSPACE(const METSPACE &existingSpace, const vector<int> &idSubset);
+  METSPACE(const METSPACE &existingSpace, const vector<METID> &idSubset);
   METSPACE(const RXNSPACE &rxnspace, const METSPACE &largeMetSpace);
 
   void clear();
   void removeMetFromBack();
   void addMetabolite(const METABOLITE &met);
-  METABOLITE metFromId(int id) const;
-  METABOLITE* metPtrFromId(int id);
-  int idxFromId(int id) const;
-  bool idIn(int id) const;
+  METABOLITE metFromId(METID id) const;
+  METABOLITE* metPtrFromId(METID id);
+  int idxFromId(METID id) const;
+  bool idIn(METID id) const;
   void metMap();
 
   METSPACE operator=(const METSPACE& init);
   METABOLITE & operator[](int idx);
-  map<int, int> Ids2Idx;
+  map<int, METID> Ids2Idx;
 
  private:
   int numMets;
@@ -137,7 +146,7 @@ class GROWTH{
 };
 
 struct MEDIA{
-  int id; /* Metabolite id */
+  METID id; /* Metabolite id */
   char name[AR_MAXNAMELENGTH]; /* Metabolie name */
   double rate; /* mmol/gDW/hr 
 		  (uptake rate for media, secretion rate for byproducts */
@@ -157,7 +166,7 @@ struct KNOCKOUT{
 class METABOLITE{
  public:
   /* Externally (XML/User) defined parameters */
-  int id; /* Has to be big matrix row index */
+  METID id; /* Has to be big matrix row index */
   char name[AR_MAXNAMELENGTH];
 
   /* All of these are for visualization only */
@@ -167,7 +176,7 @@ class METABOLITE{
 
   /* Used to identify synrxns (will soon be obsolete in favor of reaction-specific removals) */
   int secondary_lone; /* 0 for no, 1 for yes */
-  vector<int> secondary_pair; /* Int of the ID for each possible secondary pair */
+  vector<METID> secondary_pair; /* Int of the ID for each possible secondary pair */
 
   /* ETC */
   int noncentral; /* 0 = central (not used for ETC), 1 = noncentral (used for ETC), -1 = undefined */
@@ -184,7 +193,7 @@ class METABOLITE{
 
 class STOICH{
   public:
-  int met_id;
+  METID met_id;
   double rxn_coeff;
   char met_name[AR_MAXNAMELENGTH];
   /* Will this be a char or a char []? */
@@ -260,15 +269,15 @@ class NETREACTION{
 
 class PATH{
  public:
-  int outputId; /* The Path by definition is trying to reach a specific output. This lists that 
+  METID outputId; /* The Path by definition is trying to reach a specific output. This lists that 
 		   output */
-  vector<int> inputIds; /* Inputs that were needed to reach the output */
+  vector<METID> inputIds; /* Inputs that were needed to reach the output */
   vector<int> rxnIds; /* Reactions in the path */
   vector<int> rxnDirection; /* Dijkstras will return this... which direction is the rxn going in 
 			       the particular path? */
-  vector<int> metsConsumedIds; /* Metabolites that are nodes on the path tree for this particular 
+  vector<METID> metsConsumedIds; /* Metabolites that are nodes on the path tree for this particular 
 				  path */
-  vector<int> deadEndIds; /* Dead end metabolites on the way to reach the specified output 
+  vector<METID> deadEndIds; /* Dead end metabolites on the way to reach the specified output 
 			     (EMPTY if no path is found) */
   vector<int> rxnPriority; /* Priority for particular reaction [higher priority means the reaction was closer to the beginning of the pathway] - useful for gapfind */
   double totalLikelihood; /* Sum of provided likelihoods for a given path */
@@ -278,7 +287,7 @@ class PATH{
 class PATHSUMMARY{
  public:
   long int id;
-  int outputId; /* Output (target component) for the given path - needed to run FBA / magic 
+  METID outputId; /* Output (target component) for the given path - needed to run FBA / magic 
 		   exits */
   vector<int> growthIdx; /* Which growth does it correspond to? - MB - did we decide on an Id or Idx for 
 		    this? I guess since we'll number the growth ourselves and probably just 
@@ -286,11 +295,11 @@ class PATHSUMMARY{
   int k_number; /* I assume this is whether this is the 1st, 2nd or kth path in a list */
   vector<int> rxnDirIds;
   vector<int> rxnPriority;
-  vector<int> deadEndIds;
-  vector<int> metsConsumed;
+  vector<METID> deadEndIds;
+  vector<METID> metsConsumed;
   double likelihood;
   PATHSUMMARY();
-  bool metIn(int metId) const;
+  bool metIn(METID metId) const;
   bool operator==(const PATHSUMMARY &rhs1);
   PATHSUMMARY clear();
   PATHSUMMARY operator=(PATH &onepath);
@@ -301,7 +310,7 @@ class PATHSUMMARY{
    we can keep track of index but still use the priority queue to make minimization more efficient. */
 class VALUESTORE{
  public:
-  int id;
+  METID id;
   double value;
   /* The > is not a typo - we are looking for the MINIMUM and not the MAXIMUM so we need to switch the sign
      to make it work with priority_queue... 
@@ -320,7 +329,7 @@ class GRAPHSTORE{
 
 class GAPFILLRESULT{
  public:  
-  int deadMetId; /* ID of any essential magic exits given the specified combination of PATHSUMMARY */
+  METID deadMetId; /* ID of any essential magic exits given the specified combination of PATHSUMMARY */
   vector< vector<int> > deadEndSolutions; /* Dijkstras solutions for metabolite deadMetId - deadEndSolutions[i] is the i'th shortest gapfill solution */
 };
 

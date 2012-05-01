@@ -65,7 +65,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   /* Ensure that exchangers and transprots exist for everything in the GROWTH conditions (media and byproducts) */
   vector<GROWTH> &growth = ProblemSpace.growth;
   vector<int> dirs;
-  vector<int> metsToCheck;
+  vector<METID> metsToCheck;
   for(int i=0;i<growth.size();i++) {
     for(int j=0;j<growth[i].media.size();j++) {
       dirs.push_back(0); /* Note we want to allow media to be imported OR exported... (especially important for H+ because transporters depend on it) */
@@ -155,9 +155,9 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
 }
 
 /* Function for finding shortest paths to an output */
-void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int outputId, int K, vector<PATHSUMMARY> &result, int direction, int growthIdx){
+void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METID outputId, int K, vector<PATHSUMMARY> &result, int direction, int growthIdx){
 
-  vector<int> inputIds;
+  vector<METID> inputIds;
   vector<PATH> kpaths;
   int Kq(K);
 
@@ -167,8 +167,8 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int 
 
   if(_db.DEBUGRUNK) {
     printf("Number of reactions passed to Run_K: %d\n", (int)rxnspace.rxns.size());
-    printf("Output ID: %d\n", outputId);
-    printf("Input IDs:"); printIntVector(inputIds);
+    printf("Output ID: %d\n", (int)outputId);
+    printf("Input IDs:"); printVector(inputIds);
   }
 
   METSPACE inputs(ProblemSpace.metabolites, inputIds);  
@@ -214,10 +214,10 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int 
 /* Function for finding shortest paths to an output using kShortest2
    Again, bad practice to copy a function over like this, but it gives
    me a completely separate space to work in. */
-void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, int startingK,
+void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, METID outputId, int K, int startingK,
 	    vector<PATHSUMMARY> &result, int direction, int growthIdx){
   //printf("enter\n");fflush(stdout);
-  vector<int> inputIds;
+  vector<METID> inputIds;
   vector<PATH> kpaths;
   int Kq(K);
   RXNSPACE &rxnspace = ProblemSpace.synrxnsR;
@@ -228,8 +228,8 @@ void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, in
 
   if(_db.DEBUGRUNK) {
     printf("Number of reactions passed to Run_K2: %d\n", (int)rxnspace.rxns.size());
-    printf("Output ID: %d\n", outputId);
-    printf("Input IDs:"); printIntVector(inputIds);
+    printf("Output ID: %d\n", (int)outputId);
+    printf("Input IDs:"); printVector(inputIds);
   }
 
   METSPACE inputs(ProblemSpace.metabolites, inputIds);  
@@ -265,7 +265,7 @@ void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, in
 void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> > > &psum){
    /* K-Shortest ROUND 1*/
   for(int i=0;i<ProblemSpace.growth.size();i++){
-    vector<int> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
+    vector<METID> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
     vector<vector<PATHSUMMARY> > tempP2;
     for(int j=0;j<outputIds.size();j++){
       if(_db.DEBUGPATHS) {
@@ -287,7 +287,7 @@ void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> 
 void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> > > &psum){
 
   /* Output List */
-  vector<vector<int> > outputIds;
+  vector<vector<METID> > outputIds;
   vector<GROWTH> &growth         = ProblemSpace.growth;
 
   /* Note - the likelihoods have been modified here to penalize those reactions with modified reversibilities.
@@ -299,7 +299,7 @@ void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY>
   vector<int> dum;
   
   for(int i=0;i<growth.size();i++){
-    vector<int> outputId = Load_Outputs_From_Growth(ProblemSpace, i);
+    vector<METID> outputId = Load_Outputs_From_Growth(ProblemSpace, i);
     outputIds.push_back(outputId);
   }
 
@@ -413,7 +413,7 @@ REACTION MakeBiomassFromGrowth(const GROWTH &growth){
 
 /* Given an metabolite with id met_id, finds the corresponding 
    metabolite in the opposite compartment. Returns the matching met ID or -1 if it fails to find a match */
-int inOutPair(int met_id, const METSPACE &metspace){ 
+METID inOutPair(METID met_id, const METSPACE &metspace){ 
   int flag;
   bool isExternal = isExternalMet(metspace.metFromId(met_id).name, _db.E_tag);
   char tempS[AR_MAXNAMELENGTH] = {0};
@@ -430,15 +430,15 @@ int inOutPair(int met_id, const METSPACE &metspace){
     } 
   }
 
-  return -1;
+  return (METID) -1;
 }
 
-vector<int> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex) {
+vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex) {
   /* Load outputs from a GROWTH
      START = -1 means pull out everything 
      Put this into a function and call it to avoid possible consistency problems between Dijkstra runs */
   const GROWTH &growth = parentSpace.growth[growthIndex];
-  vector<int> outputIds;
+  vector<METID> outputIds;
   for(int j=0;j<growth.biomass.size();j++) {
     outputIds.push_back(growth.biomass[j].met_id);}
   for(int j=0;j<growth.byproduct.size();j++) {
@@ -450,8 +450,8 @@ vector<int> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex
   return outputIds;
 }
 
-vector<int> Load_Inputs_From_Growth(const GROWTH &growth) {
-  vector<int> inputIds;
+vector<METID> Load_Inputs_From_Growth(const GROWTH &growth) {
+  vector<METID> inputIds;
   for(int j=0; j<growth.media.size(); j++) {
     inputIds.push_back(growth.media[j].id);
   }

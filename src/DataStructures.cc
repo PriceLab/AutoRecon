@@ -17,7 +17,7 @@ vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
 METABOLITE::METABOLITE() {
-  name = {0};
+  //name = {0};
   input = 0;
   output = 0;
   biomass = 0;
@@ -367,7 +367,7 @@ METSPACE::METSPACE(const vector<METABOLITE> &metVec) {
 }
 
 /* Initialize metabolite list to be a subset of a larger metabolite list */
-METSPACE::METSPACE(const METSPACE& existingSpace, const vector<int> &idSubset) {
+METSPACE::METSPACE(const METSPACE& existingSpace, const vector<METID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
     mets.push_back(existingSpace.metFromId(idSubset[i]));
     Ids2Idx[idSubset[i]] = i;
@@ -377,7 +377,7 @@ METSPACE::METSPACE(const METSPACE& existingSpace, const vector<int> &idSubset) {
 
 /* Initializes a list of mets based on stoich (NOT stoich_part) for a given RXNSPACE */
 METSPACE::METSPACE(const RXNSPACE &rxnspace, const METSPACE &largeMetSpace) {
-  vector<int> metIds;
+  vector<METID> metIds;
   for(int i=0; i<rxnspace.rxns.size(); i++) {
     for(int j=0; j<rxnspace.rxns[i].stoich.size(); j++) {
       metIds.push_back(rxnspace.rxns[i].stoich[j].met_id);
@@ -416,26 +416,26 @@ void METSPACE::removeMetFromBack() {
   numMets--;
 }
 
-METABOLITE METSPACE::metFromId(int id) const {
+METABOLITE METSPACE::metFromId(METID id) const {
   return mets[idxFromId(id)];
 }
 
-METABOLITE* METSPACE::metPtrFromId(int id) {
+METABOLITE* METSPACE::metPtrFromId(METID id) {
   int idx = this->idxFromId(id);
   return &mets[idx];
 }
 
 
-int METSPACE::idxFromId(int id) const {
-  map<int,int>::const_iterator it = Ids2Idx.find(id);
+int METSPACE::idxFromId(METID id) const {
+  map<int,METID>::const_iterator it = Ids2Idx.find(id);
   if(it == Ids2Idx.end()) {
-    printf("FAIL: Attempted to access metabolite %d that is not present in the metabolite struct...\n", id);
+    printf("FAIL: Attempted to access metabolite %d that is not present in the metabolite struct...\n", (int)id);
     assert(it != Ids2Idx.end() );
   }
   return (it -> second);
 }
 
-bool METSPACE::idIn(int id) const {
+bool METSPACE::idIn(METID id) const {
   if(Ids2Idx.count(id) > 0) { return true; }
   else { return false; }
 }
@@ -487,7 +487,7 @@ PROBLEM::PROBLEM(const RXNSPACE &x, const PROBLEM &ProblemSpace){
     }
   }
 
-  vector<int> mets;
+  vector<METID> mets;
   for(int i=0;i<fullrxns.rxns.size();i++){
     for(int j=0;j<fullrxns.rxns[i].stoich.size();j++){
       mets.push_back(fullrxns.rxns[i].stoich[j].met_id);
@@ -544,7 +544,7 @@ PATHSUMMARY::PATHSUMMARY() {
   k_number = -1;
 };
 
-bool PATHSUMMARY::metIn(int metId) const{
+bool PATHSUMMARY::metIn(METID metId) const{
   for(int i=0;i<this->deadEndIds.size();i++){
     if(this->deadEndIds[i]==metId){ return 1;}
   }

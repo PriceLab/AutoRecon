@@ -35,7 +35,7 @@ ANSWER gapfillWrapper(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pL
 /* Note - workingRxns and workingMets are purposely passed by value for now...if I can get the add/subtracting exactly right I may be able to avoid it  */
 vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace, int gapfillK);
 vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, 
-					  PROBLEM &wholeProblem, int toFix, 
+					  PROBLEM &wholeProblem, METID toFix, 
 					  int direction, int gapfillK);
 void addGapfillResultToProblem(PROBLEM &model, const PROBLEM &problemSpace, 
 			       const GAPFILLRESULT &gapfillResult, int whichK);

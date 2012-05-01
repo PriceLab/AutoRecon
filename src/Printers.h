@@ -12,6 +12,7 @@ using std::set;
 
 /* Basic printers */
 void printIntVector(vector<int> intVector);
+void printVector(vector<METID> intVector);
 void printDoubleVector(vector<double> doubleVector);
 void printIntSet(const set<int> &mySet);
 void printIntMap(map<int, int> intMap);

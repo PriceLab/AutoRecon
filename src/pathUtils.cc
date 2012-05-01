@@ -80,13 +80,46 @@ vector<int> setdiff2(vector<int> A, vector<int> B) {
   return diff;
 }
 
+vector<METID> setdiff2(vector<METID> A, vector<METID> B) {
+  if(B.size()<1){
+    return A;}
+  int i, j(0);	
+  
+  sort(A.begin(), A.end());
+  sort(B.begin(), B.end());
+  custom_unique(A);
+  custom_unique(B);
+  vector<METID>::iterator iter;
+  vector<METID> result(A.size()+B.size());
+
+  iter = set_difference(A.begin(), A.end(), B.begin(), B.end(), result.begin());
+
+  vector<METID> diff(iter-result.begin());
+  for(i=0;i<diff.size();i++) {
+    diff[i]=result[i];
+  }
+
+  return diff;
+}
+
 void setdiff(vector<int> &A, vector<int> &B, vector<int> &diff) {
+  diff = setdiff2(A, B);
+  return;
+}
+
+void setdiff(vector<METID> &A, vector<METID> &B, vector<METID> &diff) {
   diff = setdiff2(A, B);
   return;
 }
 
 void setdiff1(vector<int> &A, const vector<int> &B) {
   vector<int> diff = setdiff2(A, B);
+  A = diff;
+  return;
+}
+
+void setdiff1(vector<METID> &A, const vector<METID> &B) {
+  vector<METID> diff = setdiff2(A, B);
   A = diff;
   return;
 }
@@ -100,13 +133,13 @@ int instoich(int id, const vector<STOICH> &list){
 }
 
 /* Convert a metabolite name to an ID. Returns -1 on failure */
-int Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name){
+METID Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name){
   for(int i=0;i<metabolite.size();i++){
     if(strcmp(met_name,metabolite[i].name)==0){
       return metabolite[i].id;
     }
   }
-  return -1;
+  return (METID) -1;
 }
 
 int Name2Ids(const vector<REACTION> &reaction, const char *rxn_name) {
@@ -178,7 +211,7 @@ void pullOutRxnsbyIds(const PROBLEM &ProblemSpace, const vector<int> &rxnsToSear
    (the result is a subset of "metspace"). Asserts an error if any metabolites in rxnspace are not in the metspace.*/
 void pullOutMets(const RXNSPACE &rxnspace, const METSPACE &metspace, METSPACE &result) {
   result.clear();
-  vector<int> metIds;
+  vector<METID> metIds;
   const vector<REACTION> &rxnList = rxnspace.rxns; 
   for(int i=0;i<rxnList.size();i++) {
     for(int j=0;j<rxnList[i].stoich.size();j++) {
@@ -294,7 +327,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
 
 /* Version of getProducts for a single REACTION rather than a vector of REACTIONS
  Returns product IDs (not indexes) and empty upon not finding reactant "reactantId" in the reaction */
-void getProducts(const REACTION &rxn, int reactantId, vector<int> &res) {
+void getProducts(const REACTION &rxn, int reactantId, vector<METID> &res) {
   res.clear();
   int sgn(0);
   unsigned int i;

@@ -126,14 +126,14 @@ void convert(NETREACTION &net, REACTION add, int rxnDirId){
 }
 
 /* Lists cofactor pairs present in fromnet. PairOfIds[i] is the i'th cofactor pair present there */
-vector<vector<int> > PossiblePairs(const vector<STOICH> &fromnet,  const METSPACE &cofactors){
-  vector<vector<int> > PairOfIds;
+vector<vector<METID> > PossiblePairs(const vector<STOICH> &fromnet,  const METSPACE &cofactors){
+  vector<vector<METID> > PairOfIds;
   for(int i=0;i<fromnet.size();i++){
     if(cofactors.idIn(fromnet[i].met_id)){
       for(int j=i+1;j<fromnet.size();j++){
     	if(cofactors.metFromId(fromnet[i].met_id).secondary_pair[0]==fromnet[j].met_id){
 	  if(rougheq(fromnet[i].rxn_coeff,-fromnet[j].rxn_coeff)){
-	    vector<int> tempI;
+	    vector<METID> tempI;
 	    tempI.push_back(fromnet[i].met_id);
 	    tempI.push_back(fromnet[j].met_id);
 	    PairOfIds.push_back(tempI);
@@ -164,8 +164,8 @@ int netrxn(NETREACTION &net, const PROBLEM &ProblemSpace, int rxnDirId){
   if(fromnet.size()<2){return 2;}
 
   /* Lists of cofactor pairs in the NETREACTION and the query reaction */
-  vector<vector<int> > PairsNet = PossiblePairs(fromnet, ProblemSpace.cofactors);
-  vector<vector<int> > PairsAdd = PossiblePairs(fromadd, ProblemSpace.cofactors);
+  vector<vector<METID> > PairsNet = PossiblePairs(fromnet, ProblemSpace.cofactors);
+  vector<vector<METID> > PairsAdd = PossiblePairs(fromadd, ProblemSpace.cofactors);
 
   /* Find overlapping pairs of cofactors between the NETRACTION and the query reaction */
   vector<vector<int> > PairsOverlap;
@@ -255,7 +255,7 @@ NETREACTION ETC_add(const PROBLEM &ProblemSpace, NETREACTION net, vector<NETREAC
     printRxnsFromIntVector(net.rxnDirIds,rxnspace);fflush(stdout);}
 
   vector<STOICH> fromnet = net.rxn.stoich;
-  vector<vector<int> > PairsNet = PossiblePairs(fromnet,cofspace);
+  vector<vector<METID> > PairsNet = PossiblePairs(fromnet,cofspace);
 
   /* Terminate if we have reached the point where no more reactions are connected */
   if(PairsNet.size() < 1){

@@ -37,7 +37,7 @@ map<int,double> getSecretionRates(const ANSWER &ans1, const GROWTH &growth1,
 
   //indexed by the order they appear in growth
   for(int i=0;i<growth1.byproduct.size();i++){
-    int met_id = growth1.byproduct[i].id;
+    METID met_id = growth1.byproduct[i].id;
     int rxn_id = FindExchange4Metabolite(ans1.reactions.rxns,met_id);
     int rxn_idx= ans1.reactions.idxFromId(rxn_id);
     result[met_id] = fba_solution[rxn_idx];

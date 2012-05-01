@@ -28,14 +28,14 @@ PROBLEM readReactionTable(const char* filename) {
     int rxnId;
     int net_reversible;
     char metName[AR_MAXNAMELENGTH];
-    int metId;
+    METID metId;
     char rxnCoeffStr[AR_MAXNAMELENGTH];
     double rxn_coeff;
     int secondary; /* 1 if the metabolite is a secondary in that reaction */
 
     /* Note to self - when using fscanf do NOT attempt to specify a precision or it will get very confused */
     int status = fscanf(fid, "%s%d%d%s%d%s%d",
-	   rxnName, &rxnId, &net_reversible, metName, &metId, rxnCoeffStr, &secondary);
+			rxnName, &rxnId, &net_reversible, metName, (int*)&metId, rxnCoeffStr, &secondary);
     if(status == EOF) { break; }
 
     rxn_coeff = atof(rxnCoeffStr);

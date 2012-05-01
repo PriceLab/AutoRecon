@@ -92,7 +92,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
     for(int i=0; i<reactionList.size();i++) {
       vector<int> modifiedMetIdx;
-      vector<int> products;
+      vector<METID> products;
       double reactantValue(0.0f);
       const REACTION* currentRxn = rxnspace.rxnPtrFromId(reactionList[i]);
 
@@ -173,9 +173,9 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
   } /* While nodeList.size() > 0 */
 
   /* Trace the path back */
-  queue<int> dfsList; dfsList.push(output.id);
+  queue<METID> dfsList; dfsList.push(output.id);
   vector<int> rxnIds;
-  vector<int> inputIdList;
+  vector<METID> inputIdList;
   vector<int> rxnDirections; /* -1 if used in negative direction and +1 in positive direction */
   /* Note - at the end of this, "explored" should be TRUE for anything in the path and FALSE for everything else */
 
@@ -202,7 +202,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
   }
 
   /* Identify dead ends */
-  vector<int> allMets;
+  vector<METID> allMets;
   for(int i=0; i<tracedPath.rxnIds.size(); i++) {
     const REACTION* rxn = rxnspace.rxnPtrFromId(tracedPath.rxnIds[i]);
     for(int j=0; j < rxn->stoich_part.size(); j++) {
@@ -210,7 +210,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
     }
   }
 
-  vector<int> toRemove = tracedPath.metsConsumedIds;
+  vector<METID> toRemove = tracedPath.metsConsumedIds;
   /* Also remove the output ID (inputs should already be in metsConsumed) */
   toRemove.push_back(output.id);
   tracedPath.deadEndIds = setdiff2(allMets, toRemove);
@@ -227,15 +227,15 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
  Note that if we get an indexing out of bounds here that indicates I messed up the code... */
 
-void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>  &precursorRxnIds, map<int, bool> &metsExplored, vector<int> &rxnIds, vector<int> &inputIds, 
-	       vector<int> &rxnDirections, queue<int> &nodeList) {
+void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>  &precursorRxnIds, map<int, bool> &metsExplored, vector<int> &rxnIds, vector<METID> &inputIds, 
+	       vector<int> &rxnDirections, queue<METID> &nodeList) {
 
   /* Termination condition - nothing left in the queue! */
   if(nodeList.size() == 0) { 
     return; 
   }
 
-  int currentNodeId = nodeList.front();
+  METID currentNodeId = nodeList.front();
   nodeList.pop();
   int currentEdgeId = precursorRxnIds[currentNodeId];
 
@@ -259,7 +259,7 @@ void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>
   }
 
   /* Note - sgn should now always be -1 or +1 */
-  vector<int> oppositeIds = opposite(rxn, currentNodeId, sgn);
+  vector<METID> oppositeIds = opposite(rxn, currentNodeId, sgn);
 
   rxnDirections.push_back(sgn);
   rxnIds.push_back(currentEdgeId);
@@ -277,9 +277,9 @@ void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>
 
 /* Find metabolites opposite of metId in a reaction (based on stoich_part) */
 /* 6-14-11: CONFIRMED working by printout */
-vector<int> opposite(const REACTION* rxn, int metId, int sgn) {
+vector<METID> opposite(const REACTION* rxn, METID metId, int sgn) {
 
-    vector<int> finalList;
+    vector<METID> finalList;
     for(int i=0; i<rxn->stoich_part.size();i++) {
       if(sgn*rxn->stoich_part[i].rxn_coeff < 0) {
 	finalList.push_back(rxn->stoich_part[i].met_id);

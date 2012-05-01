@@ -380,7 +380,7 @@ PROBLEM setUpGapfill(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pLi
   rxnList.push_back(_db.BIOMASS);
 
   /* Set up a map from ID to direction to avoid duplicates */
-  map<int, int> metId2Dir;
+  map<METID, int> metId2Dir;
   for(int i=0; i<rxnList.size(); i++) {
     REACTION tmpRxn = problemSpace.fullrxns.rxnFromId(rxnList[i]);
     for(int j=0; j<tmpRxn.stoich.size(); j++) {
@@ -395,9 +395,9 @@ PROBLEM setUpGapfill(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pLi
   }
 
   /* Set up making magic exits for every metabolite in the model */
-  vector<int> exitIds;
+  vector<METID> exitIds;
   vector<int> dirs;
-  for(map<int, int>::iterator it=metId2Dir.begin(); it!=metId2Dir.end(); it++) {
+  for(map<METID, int>::iterator it=metId2Dir.begin(); it!=metId2Dir.end(); it++) {
     exitIds.push_back(it->first);
     dirs.push_back(it->second);
   }
@@ -510,7 +510,7 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
 
   vector<int> idVector;
   int status  = data.gapFindLinprog(idVector);
-  set<int> idList; for(int i=0; i<idVector.size(); i++) { idList.insert(model.fullrxns.rxnFromId(idVector[i]).stoich[0].met_id); }
+  set<METID> idList; for(int i=0; i<idVector.size(); i++) { idList.insert(model.fullrxns.rxnFromId(idVector[i]).stoich[0].met_id); }
 
   /* Skip over the turning off of magic exits if gapfinding failed */
   if(status == -1) { printf("Gap pruning failed! Will attempt to recover using ALL possible exits...\n"); 
@@ -519,7 +519,7 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
       /* Only work on magic exits */
       if(model.fullrxns.rxns[i].id < _db.BLACKMAGICFACTOR || model.fullrxns.rxns[i].id > _db.BLACKMAGICFACTOR + _db.MINFACTORSPACING) { continue; }    
       /* Turn off the exit if it's not on the list we obtained from gapFindLinprog() */
-      set<int>::iterator it = idList.find(model.fullrxns.rxns[i].stoich[0].met_id);
+      set<METID>::iterator it = idList.find(model.fullrxns.rxns[i].stoich[0].met_id);
       if(it == idList.end()) {
 	model.fullrxns.change_Lb_and_Ub(model.fullrxns.rxns[i].id, 0.0f, 0.0f);
 	if(_db.DEBUGGAPFILL) { printf("Turned off reaction %s\n", model.fullrxns.rxns[i].name); }
@@ -544,7 +544,7 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
   PROBLEM tmpProblem = problemSpace;
 
   /* Come up with a list of gapfill solutions */
-  for(set<int>::iterator it=idList.begin(); it != idList.end(); it++) {
+  for(set<METID>::iterator it=idList.begin(); it != idList.end(); it++) {
     /* completeList[i] is the list of reactions composing the i'th potentially viable solution to a particular gapfill problem */
     vector< vector<int> > completeList;
     /* WE ONLY try to fill the gap with Dijkstras. The reasoning is that there could be a very likely solution with multiple reactions that is missed
@@ -591,7 +591,7 @@ After running Dijkstras, it checks if the solution allowed a growth to occur. If
 Returns a list of lists reaction IDs that fills the gap or 
 empty vector if nothing fills the gap and lets it grow.
  */
-vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, PROBLEM &wholeProblem, int toFix, int direction, int K) {
+vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, PROBLEM &wholeProblem, METID toFix, int direction, int K) {
 
   /* Cutoff - if the total cost of a gap becomes more than badCut * the shortest path, we just throw it out */
   double badCut = 2;
@@ -608,7 +608,7 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
   int meId = FindExchange4Metabolite(workingRxns.rxns, toFix);
   double oldLb(-1.0f), oldUb(-1.0f);
   if(meId == -1) {
-     printf("WARNING: metabolite %d was passed to fillGapWithDijkstras but does not have an exchange reaction to turn off in workingRxns\n", toFix);
+    printf("WARNING: metabolite %d was passed to fillGapWithDijkstras but does not have an exchange reaction to turn off in workingRxns\n", (int)toFix);
   } else {
     oldLb = workingRxns.rxnPtrFromId(meId)->lb;  oldUb = workingRxns.rxnPtrFromId(meId)->ub;
     workingRxns.rxnPtrFromId(meId)->lb = 0.0f;  workingRxns.rxnPtrFromId(meId)->ub = 0.0f;
@@ -666,7 +666,7 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
       
       workingRxns.addReaction(allRxns.rxnFromId(currentSolution[j]));
       for(int k=0; k<workingRxns.rxns.back().stoich.size(); k++) {
-	int metId = workingRxns.rxns.back().stoich[k].met_id;
+	METID metId = workingRxns.rxns.back().stoich[k].met_id;
 	workingMets.addMetabolite(allMets.metFromId(metId));
       }
     }

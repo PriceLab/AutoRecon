@@ -1,6 +1,6 @@
 #CFLAGS = -O3 -fopenmp -fprefetch-loop-arrays -funroll-loops 
 #CFLAGS = -g -O3 -fopenmp -Wfatal-errors -fprefetch-loop-arrays -funroll-loops
-CFLAGS = -g -fopenmp 
+CFLAGS = -g -fopenmp -Wfatal-errors 
 
 # Create /obj/ directory if none exists
 # Thanks to stackoverflow for this bit of makefile magic...
@@ -12,7 +12,7 @@ $(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
 # Compiler, object, library, and header definitions...
 CC = g++
 LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl`
-INCLUDES =-Isrc `pkg-config --cflags libxml-2.0`
+INCLUDES =-Isrc `pkg-config --cflags libxml-2.0` -I /opt/local/include/
 OBJS = obj/DataStructures.o obj/XML_loader.o \
        obj/shortestPath.o obj/kShortest.o obj/pathUtils.o \
        obj/RunK.o obj/visual01.o obj/Grow.o obj/Exchanges.o \

@@ -15,8 +15,8 @@ using std::set;
 using std::vector;
 
 PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const METSPACE &inputs, const METABOLITE &output, set<BADIDSTORE> &badIds);
-void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>  &precursorRxnIds, map<int, bool> &metsExplored, vector<int> &rxnIds, vector<int> &inputIds,
-               vector<int> &rxnDirections, queue<int> &nodeList);
-vector<int> opposite(const REACTION* rxn, int metId, int sgn);
+void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>  &precursorRxnIds, map<int, bool> &metsExplored, vector<int> &rxnIds, vector<METID> &inputIds,
+               vector<int> &rxnDirections, queue<METID> &nodeList);
+vector<METID> opposite(const REACTION* rxn, METID metId, int sgn);
 
 #endif

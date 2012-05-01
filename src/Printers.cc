@@ -31,6 +31,13 @@ void printIntVector(vector<int> intVector) {
   return;
 }
 
+void printVector(vector<METID> intVector) {
+  if(intVector.empty()) {printf("EMPTY\n"); return;}
+  for(int i=0;i<intVector.size();i++)  { printf("%d ", (int)intVector[i]);  }
+  printf("\n");
+  return;
+}
+
 void printDoubleVector(vector<double> doubleVector) {
   if(doubleVector.empty()) {printf("EMPTY\n"); return;}
   for(int i=0;i<doubleVector.size();i++)    {
@@ -98,7 +105,7 @@ void printRxnFormula(const REACTION &rxn, char* rxnString, bool printStoichPart)
 
 
 void printMETABOLITEinputs(const METABOLITE &metabolite){
-  printf("\tid: %05d\n",metabolite.id);
+  printf("\tid: %05d\n",(int)metabolite.id);
   printf("\tname: %s\n",metabolite.name);
   printf("\tinput: %d  ",metabolite.input);
   if(metabolite.input==0){ printf("(NO)\n");} else{printf("(YES)\n");}
@@ -110,7 +117,7 @@ void printMETABOLITEinputs(const METABOLITE &metabolite){
   if(metabolite.secondary_lone==0){ printf("(NO)\n");} else{printf("(YES)\n");}
   if(metabolite.secondary_pair.size()>0){
     for(int j=0;j<metabolite.secondary_pair.size();j++){
-      printf("\tsecondary_pair: %d  ",metabolite.secondary_pair[j]);
+      printf("\tsecondary_pair: %d  ",(int)metabolite.secondary_pair[j]);
     }
   }
   else{printf("(YES - PARTNER ID# GIVEN)\n");}
@@ -121,11 +128,11 @@ void printGROWTHinputs(const GROWTH &growth){
   int i;
   printf("GROWTH MEDIA:\n");
   for(i=0;i<growth.media.size();i++){
-    printf("\t%05d\t%1.3f\n",growth.media[i].id,growth.media[i].rate);
+    printf("\t%05d\t%1.3f\n",(int)growth.media[i].id,growth.media[i].rate);
   }
   printf("\nBYPRODUCTS:\n");
   for(i=0;i<growth.byproduct.size();i++){
-    printf("\t%05d\t%1.3f\n",growth.byproduct[i].id,
+    printf("\t%05d\t%1.3f\n",(int)growth.byproduct[i].id,
            growth.byproduct[i].rate);
   }
   printf("\nMUTATIONS:\n");
@@ -296,7 +303,7 @@ void printRxnsFromIntSet(const set<int> &intSet, const RXNSPACE &rxnspace) {
   return;
 }
 
-void printMetsFromIntVector(const vector<int> &intVector, const PROBLEM &ProblemSpace) {
+void printMetsFromIntVector(const vector<METID> &intVector, const PROBLEM &ProblemSpace) {
   if(intVector.empty()) {printf("EMPTY\n"); return;}
   for(int i=0;i<intVector.size();i++){
     printf("%s ", ProblemSpace.metabolites.metFromId(intVector[i]).name);
@@ -367,10 +374,10 @@ void PrintPathSummary_verbose(const PATHSUMMARY &psum) {
   printf("RxnDirIds:");
   printIntVector(psum.rxnDirIds);
   printf("deadEndIds:");
-  printIntVector(psum.deadEndIds);
+  printVector(psum.deadEndIds);
   printf("AllMetsConsumed:");
-  printIntVector(psum.metsConsumed);
-  printf("Output ID: %d\n", psum.outputId);
+  printVector(psum.metsConsumed);
+  printf("Output ID: %d\n", (int)psum.outputId);
   printf("Growth Index: %d\n", psum.growthIdx[0]);
   printf("K number: %d\n", psum.k_number);
 }
@@ -391,9 +398,9 @@ void PrintPathSummary(const vector<vector<vector<PATHSUMMARY> > > &psum){
 
 void printPathResults(const vector<PATH> &path) {
   for(unsigned int i=0;i<path.size();i++) {
-    printf("Path number: %d corresponding to output %d...\n", i, path[i].outputId);
+    printf("Path number: %d corresponding to output %d...\n", i, (int)path[i].outputId);
     printf("Inputs required to reach output: ");
-    printIntVector(path[i].inputIds);
+    printVector(path[i].inputIds);
     printf("Number of reactions: ");
     printf("%d\n", (int)path[i].rxnIds.size());
     printf("Reactions required: ");
@@ -402,7 +409,7 @@ void printPathResults(const vector<PATH> &path) {
     printIntVector(path[i].rxnDirection);
     printf("Total likelihood: %4.3f \n\n", path[i].totalLikelihood);
     printf("Dead ends: ");
-    printIntVector(path[i].deadEndIds);
+    printVector(path[i].deadEndIds);
     printf("---------------------------------------------------------------------\n\n");
   }
 }
@@ -410,7 +417,7 @@ void printPathResults(const vector<PATH> &path) {
 /* Prints the metabolite names in addition to just the IDs */
 void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace) {
   for(unsigned int i=0;i<path.size();i++) {
-    printf("Path number: %d corresponding to output %d...\n", i, path[i].outputId);
+    printf("Path number: %d corresponding to output %d...\n", i, (int)path[i].outputId);
     printf("Inputs required to reach output: "); 
     printMetsFromIntVector(path[i].inputIds,ProblemSpace);
     printf("Number of reactions: ");

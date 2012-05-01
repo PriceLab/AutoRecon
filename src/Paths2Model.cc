@@ -96,7 +96,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
   REACTION bridge = ProblemSpace.synrxns.rxnFromId(abs(bridgeToFill));
   
   /* We want the filling reaction to contain [metToConsume --> metToProduce] */
-  int metToProduce; int metToConsume;
+  METID metToProduce; METID metToConsume;
   for(int i=0; i<bridge.stoich_part.size(); i++) {
     if(bridgeToFill < 0) { 
       if(bridge.stoich_part[i].rxn_coeff < 0) { metToProduce = bridge.stoich_part[i].met_id;   }
@@ -192,7 +192,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
   } else {  suggestedRxnIds = tmpSuggested;  }
 
   if(suggestedRxnIds.empty()) {
-    vector<int> inputs = Load_Inputs_From_Growth(ProblemSpace.growth[currentPsum.growthIdx[0]]);
+    vector<METID> inputs = Load_Inputs_From_Growth(ProblemSpace.growth[currentPsum.growthIdx[0]]);
     /* This is the difference from the paths we had before... 
      We are now adding the metabolite we're trying to consume to our list */
     inputs.push_back(metToConsume);
@@ -408,7 +408,7 @@ void addR(vector<vector<vector<PATHSUMMARY> > > &psum, PROBLEM &ProblemSpace) {
    so we can just iterate until the end) */
 
 void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, const REACTION &biomass, 
-			  const vector<int> &magicIds, const vector<int> &magicDirs, PROBLEM &working, int &baseNum) {
+			  const vector<METID> &magicIds, const vector<int> &magicDirs, PROBLEM &working, int &baseNum) {
 
   working.clear();
   const METSPACE &BaseMets = ProblemSpace.metabolites;
@@ -435,7 +435,7 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
 
   /* I use a map here because we are interested in making sure that we don't duplicate metabolite ID's with different directions.
      When in doubt, make it 0 */
-  map<int, int> id2Dir;
+  map<METID, int> id2Dir;
 
   for(int i=0; i<growthIdx.size(); i++) {
     int currentIdx = growthIdx[i];
@@ -450,8 +450,9 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
     }
   }
 
-  vector<int> metIds,  byDirs;
-  for(map<int, int>::iterator it=id2Dir.begin(); it!=id2Dir.end(); it++) {
+  vector<METID> metIds;
+  vector<int> byDirs;
+  for(map<METID, int>::iterator it=id2Dir.begin(); it!=id2Dir.end(); it++) {
     metIds.push_back(it->first);
     byDirs.push_back(it->second);
   }
@@ -478,7 +479,7 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
     }
   }
 
-  vector<int> newMagic = magicIds;
+  vector<METID> newMagic = magicIds;
   vector<int> newDirs;
   /* Decide the direction of the magic stuff */
   custom_unique(newMagic);
@@ -515,7 +516,7 @@ This should elminiarte the need for the warning in the transport reaction adder 
 If you call this with "fullrxns" or "synrxns" as both arguments it will just add the magic stuff to the reactions
 that is necessary - useful for updating the fullreactions. However, I'm not sure that would work with a pass by reference... 
 you may need to make an extra copy in the calling function. */
-void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<int> &metsToCheck, 
+void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<METID> &metsToCheck, 
 				   const vector<int> &dirsToCheck) {
 
   RXNSPACE &workingRxns = working.fullrxns;
@@ -532,15 +533,15 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
   // Existence check for metabolites in metsToCheck - add things that are missing to the metabolite list 
   for(int i=0; i<metsToCheck.size();i++) {
     if(!workingMets.idIn(metsToCheck[i])) {
-      if(!allMets.idIn(metsToCheck[i])) { printf("ERROR: Metaboilte %d not found in allMets although it was in metsToCheck in checkReactionsAndTransporters.\n", metsToCheck[i]);	throw;   }
+      if(!allMets.idIn(metsToCheck[i])) { printf("ERROR: Metaboilte %d not found in allMets although it was in metsToCheck in checkReactionsAndTransporters.\n", (int)metsToCheck[i]);	throw;   }
       workingMets.addMetabolite(allMets.metFromId(metsToCheck[i]));
     }
 
     // Also add the pair (in case for example a metabolite that wasn't needed was included in the media 
     // Could cause issues if someone passes both a metabolite and its pair as mets to check so we check for that 
     // condition here  
-    int pairId = inOutPair(metsToCheck[i], allMets);
-    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets.metFromId(metsToCheck[i]).name, metsToCheck[i]); throw; }
+    METID pairId = inOutPair(metsToCheck[i], allMets);
+    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets.metFromId(metsToCheck[i]).name, (int)metsToCheck[i]); throw; }
     if(!workingMets.idIn(pairId)) {
       workingMets.addMetabolite(allMets.metFromId(pairId));
     }

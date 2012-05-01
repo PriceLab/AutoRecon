@@ -94,7 +94,7 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"cofactor"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      tempm.secondary_pair.push_back(atoi((char*)key));
+      tempm.secondary_pair.push_back((METID)atoi((char*)key));
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"noncentral"))) {
@@ -107,8 +107,8 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
 
   /* Handle NULL names */
   if(namenull) { 
-    printf("WARNING: Metabolite %d had no name associated. Will assign name based on ID\n", tempm.id);
-    sprintf(tempm.name, "%d", tempm.id);
+    printf("WARNING: Metabolite %d had no name associated. Will assign name based on ID\n", (int)tempm.id);
+    sprintf(tempm.name, "%d", (int)tempm.id);
   }
 
   metspace.addMetabolite(tempm);
@@ -617,7 +617,7 @@ void makeMagicBridges(PROBLEM &ProblemSpace) {
 
   vector<REACTION> &reaction = ProblemSpace.synrxns.rxns;
   vector<METABOLITE> &metabolite = ProblemSpace.metabolites.mets;
-  map<int, int> &metId2Idx = ProblemSpace.metabolites.Ids2Idx;
+  map<int, METID> &metId2Idx = ProblemSpace.metabolites.Ids2Idx;
   
   /* Search for cofactor pairs */
   int ctr, flag;
@@ -704,7 +704,7 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
     assert(false);
   }
   /* Check that ATPM contains ATP, ADP, H2O, and PI (and possibly H) and nothing else */
-  vector<int> mustIds;
+  vector<METID> mustIds;
   mustIds.push_back(Name2Ids(ProblemSpace.metabolites.mets, db.ATP_name));
   mustIds.push_back(Name2Ids(ProblemSpace.metabolites.mets, db.ADP_name));
   mustIds.push_back(Name2Ids(ProblemSpace.metabolites.mets, db.PI_name));
@@ -778,7 +778,7 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
   for(int i=0; i<growth.size(); i++) {
     /* Check biomass */
     for(int j=0; j<growth[i].biomass.size(); j++) {
-      int growthId = growth[i].biomass[j].met_id;
+      METID growthId = growth[i].biomass[j].met_id;
       if(!metspace.idIn(growthId)) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
 	printf("Inconsistent name: %s in the biomass had no corresponding ID in the metabolite file \n", growth[i].biomass[j].met_name);
@@ -793,7 +793,7 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
 
     /* Check byproducts */
     for(int j=0; j<growth[i].byproduct.size(); j++) {
-      int growthId = growth[i].byproduct[j].id;
+      METID growthId = growth[i].byproduct[j].id;
       if(!metspace.idIn(growthId)) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
 	printf("Inconsistent name: %s in the byproducts had no corresponding ID in the metabolite file \n", growth[i].byproduct[j].name);
@@ -808,7 +808,7 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
 
     /* Check media */
     for(int j=0; j<growth[i].media.size(); j++) {
-      int growthId = growth[i].media[j].id;
+      METID growthId = growth[i].media[j].id;
       if(!metspace.idIn(growthId)) {
         printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
 	printf("Inconsistent name: %s in the media had no corresponding ID in the metabolite file \n", growth[i].media[j].name);
