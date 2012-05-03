@@ -1,122 +1,34 @@
 #include "DataStructures.h"
 #include "pathUtils.h"
+#include "Metabolite.h"
+#include "Reaction.h"
+#include "Stoich.h"
 
 #include <assert.h>
 #include <cstring>
 #include <cstdio>
 #include <map>
 #include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <stdio.h>		// for perror()
 
 using std::map;
 using std::vector;
 using std::strcpy;
 using std::sprintf;
+using namespace std;
 
 vector<NETREACTION> ANSWER::etc;
 vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
-METABOLITE::METABOLITE() {
-  name = {0};
-  input = 0;
-  output = 0;
-  biomass = 0;
-  secondary_lone = 0;
-  noncentral = 0;
-  modifier = 1.0f;
-}
-
-void METABOLITE::reset() {
-  rxnsInvolved_nosec.clear();
-  input = 0;
-  output = 0;
-  biomass = 0;
-  secondary_lone = 0;
-  noncentral = 0;
-  modifier = 1.0f;
-  secondary_pair.clear();
-}
-
-int METABOLITE::isSecondary() const {
-  if(1 == this->secondary_lone) return 1;
-  if(this->secondary_pair.size() > 0) return 1;
-  return 0;
-}
-
-bool STOICH::operator==(const STOICH &rhs) const{
-  return (this[0].rxn_coeff == rhs.rxn_coeff);
-}
-
-bool STOICH::operator>(const STOICH &rhs) const{
-  return (this[0].rxn_coeff > rhs.rxn_coeff);
-}
-
-bool STOICH::operator<(const STOICH &rhs) const{
-  return (this[0].rxn_coeff < rhs.rxn_coeff);
-}
-
 bool ANNOTATION::operator<(const ANNOTATION &rhs)const {
   return this->probability > rhs.probability;
 }
 
-STOICH::STOICH() {
-  met_id = -1;
-  //met_name;
-  rxn_coeff = 999;
-}
 
-void STOICH::reset() {
-  met_id = -1;
-  rxn_coeff = 999;
-}
-
-bool REACTION::operator==(const REACTION &rhs) const{
-  return (this[0].id == rhs.id);
-}
-bool REACTION::operator>(const REACTION &rhs) const{
-  return (this[0].id > rhs.id);
-}
-bool REACTION::operator<(const REACTION &rhs) const{
-  return (this[0].id < rhs.id);
-}
-
-
-REACTION::REACTION(){
-  freeMakeFlag = false;
-  transporter = false;
-  transportedMetabolite = -1;
-  /* Default likelihood is -5 [NOT FOUND] */
-  init_likelihood = -5;
-  current_likelihood = init_likelihood;
-  init_reversible = 0;
-  net_reversible = init_reversible; /*Note - Dijkstras uses this one */
-  if(net_reversible == 0) { lb = -1000.0f; ub = 1000.0f; }
-  else if(net_reversible < 0) { lb = -1000.0f; ub = 0.0f; }
-  else { lb = 0.0f; ub = 1000.0f; }
-}
-
-/* Exchange reaction is just defined as a reaction with exactly one metabolite (regardless of direction)*/
-bool REACTION::isExchange() const {
-  if(this->stoich.size() == 1 && this->id != _db.BIOMASS) { return true; }
-  else { return false; }
-}
-
-void REACTION::reset() {
-  freeMakeFlag = false;
-  transporter = false;
-  init_likelihood = -5;
-  current_likelihood = init_likelihood;
-  init_reversible = 0;
-  net_reversible = init_reversible; /*Note - Dijkstras uses this one */
-  if(net_reversible == 0) { lb = -1000.0f; ub = 1000.0f; }
-  else if(net_reversible < 0) { lb = -1000.0f; ub = 0.0f; }
-  else { lb = 0.0f; ub = 1000.0f; }
-
-  stoich.clear();
-  stoich_part.clear();
-  syn.clear();
-  annote.clear();
-}
 
 bool NETREACTION::operator==(const NETREACTION &rhs) const{
   unsigned int i;
@@ -518,93 +430,82 @@ void PROBLEM::clear() {
   growth.clear();
 }
 
-PATH::PATH() {
-  /* This flag is how you can tell if there was actually a path found or not - total likelihood
-     will be > 0 if a path is found */
-  totalLikelihood = INT_MAX;
-  outputId = -1;
-}
+// Write out metabolites, reactions, and stoich values in json format:
+void PROBLEM::to_jsonfile(const char* filename) {
+  ofstream jsonfile;
 
-
-PATHSUMMARY PATHSUMMARY::clear(){
-  this->rxnDirIds.clear();
-  this->deadEndIds.clear();
-  this->metsConsumed.clear();
-  this->outputId = -1;
-  this->likelihood = -1;
-  this->growthIdx.clear();
-  this->k_number = -1;
-  this->rxnPriority.clear();
-  return *this;
-}
-
-PATHSUMMARY::PATHSUMMARY() {
-  outputId = -1;
-  likelihood = -1;
-  k_number = -1;
-};
-
-bool PATHSUMMARY::metIn(int metId) const{
-  for(int i=0;i<this->deadEndIds.size();i++){
-    if(this->deadEndIds[i]==metId){ return 1;}
+  // Metabolites:
+  stringstream met_fname;
+  met_fname << filename << ".mets.json";
+  jsonfile.open(met_fname.str().c_str());	// what if can't???
+  if (!jsonfile.is_open()) {
+    cerr << "unable to open " << met_fname << " for some reason." << endl;
+    perror("Is this the error? :");
+    exit(1);
   }
-  for(int i=0;i<this->metsConsumed.size();i++){
-    if(this->metsConsumed[i]==metId){ return 1;}
+
+  vector<METABOLITE> mets=this->metabolites.mets;
+  vector<METABOLITE>::iterator mets_it=mets.begin();
+  jsonfile << "[" << endl;
+  while (mets_it != mets.end()) {
+    string json=mets_it->as_json();
+    jsonfile << json;
+    mets_it++;
+    if (mets_it != mets.end()) {
+      jsonfile << ",";
+    }
+    jsonfile << endl;
   }
-  return 0;
-};
+  jsonfile << "]" << endl;
+  jsonfile.close();
+  cerr << met_fname.str() << " written" <<endl;
 
+  // Reactions & stoich values:
+  stringstream rxn_fname;
+  rxn_fname << filename << ".rxns.json";
+  ofstream rxnfile;
+  rxnfile.open(rxn_fname.str().c_str());
 
-bool PATHSUMMARY::operator==(const PATHSUMMARY &rhs1){
-  PATHSUMMARY rhs = rhs1;
-  PATHSUMMARY lhs = *this;
-  if(this->outputId!=rhs.outputId){ return false;}
-  if(this->rxnDirIds.size()!=rhs.rxnDirIds.size()){ return false;}
-  sort(lhs.rxnDirIds.begin(), lhs.rxnDirIds.end());
-  sort(rhs.rxnDirIds.begin(), rhs.rxnDirIds.end());
-  for(int i=0;i<lhs.rxnDirIds.size();i++){
-    if(lhs.rxnDirIds[i]!=rhs.rxnDirIds[i]){ return false; }
+  stringstream stoich_fname;
+  stoich_fname << filename << ".stoich.json";
+  ofstream stoichfile;
+  stoichfile.open(stoich_fname.str().c_str());
+  stoichfile << "[" << endl;
+
+  vector<REACTION> rxns=this->fullrxns.rxns;
+  vector<REACTION>::iterator rxn_it=rxns.begin();
+  rxnfile << "[" << endl;
+  while (rxn_it != rxns.end()) {
+    rxnfile << rxn_it->as_json();
+    
+    // write out stoich values:
+    vector<STOICH>::iterator stoich_it=rxn_it->stoich.begin();
+    while (stoich_it != rxn_it->stoich.end()) {
+      if (stoich_it->rxn_id != rxn_it->id) {
+	cerr << "mismatched rxn_ids: stoich->rxn_id=" << stoich_it->rxn_id <<
+	  ", rxn.id=" << rxn_it->id << endl;
+      }
+      stoich_it->rxn_id=rxn_it->id; // just to be sure
+      stoichfile << stoich_it->as_json() << "," << endl;
+      stoich_it++;
+    }
+
+    rxn_it++;
+    if (rxn_it != rxns.end()) {
+      rxnfile << "," << endl;
+    }
   }
-  return true;
+
+  rxnfile << "[" << endl;
+  rxnfile.close();
+
+  stoichfile << "]" << endl;
+  stoichfile.close();
+  cerr << rxn_fname.str() << " written" <<endl;
+  cerr << stoich_fname.str() << " written" <<endl;
 }
 
-PATHSUMMARY PATHSUMMARY::operator=(PATH &onepath){
-  this->rxnDirIds.clear();
-  this->deadEndIds.clear();
-  this->metsConsumed.clear();
-  this->rxnPriority.clear();
-  for(int i=0;i<onepath.rxnIds.size();i++){
-    this->rxnDirIds.push_back(onepath.rxnIds[i] * onepath.rxnDirection[i]);}
-  for(int i=0;i<onepath.deadEndIds.size();i++){
-    this->deadEndIds.push_back(onepath.deadEndIds[i]);}
-  for(int i=0;i<onepath.metsConsumedIds.size();i++){
-    this->metsConsumed.push_back(onepath.metsConsumedIds[i]);}
-  for(int i=0; i<onepath.rxnPriority.size(); i++) {
-    this->rxnPriority.push_back(onepath.rxnPriority[i]);  }
-
-  this->likelihood = onepath.totalLikelihood;
-  this->outputId = onepath.outputId;
-  return *this;
-}
-
-PATHSUMMARY PATHSUMMARY::operator/(PATH &onepath){
-  this->rxnDirIds.clear();
-  this->deadEndIds.clear();
-  this->metsConsumed.clear();
-  this->rxnPriority.clear();
-  for(int i=0;i<onepath.rxnIds.size();i++){
-    this->rxnDirIds.push_back(-onepath.rxnIds[i] * onepath.rxnDirection[i]);}
-  for(int i=0;i<onepath.deadEndIds.size();i++){
-    this->deadEndIds.push_back(onepath.deadEndIds[i]);}
-  for(int i=0;i<onepath.metsConsumedIds.size();i++){
-    this->metsConsumed.push_back(onepath.metsConsumedIds[i]);}
-  for(int i=0; i<onepath.rxnPriority.size(); i++) {
-    this->rxnPriority.push_back(onepath.rxnPriority[i]);  }  
-
-  this->likelihood = onepath.totalLikelihood;
-  this->outputId = onepath.outputId;
-  return *this;
-}
+/***********************************************************************/
 
 BADIDSTORE::BADIDSTORE() {  badRxnId = -1; }
 
@@ -663,6 +564,65 @@ bool INNERPOPSTORE::operator==(const INNERPOPSTORE &rhs) const {
 
 ANSWER::ANSWER(){
 
+}
+
+
+//copy constructor
+ANSWER::ANSWER(const ANSWER &source){
+    /* These aren't necessary because these variables are declared as STATIC so they have the same value automatically
+       as any other ANSWER */
+    /*    this->annoteToRxns = source.annoteToRxns;
+    this->etc = source.etc;
+    this->pList = source.pList; */
+
+    this->reactions = source.reactions;
+    this->metabolites = source.metabolites;
+    this->knockoutResults = source.knockoutResults;
+    this->optLocalScore = source.optLocalScore;
+
+    /* This should be OK since passedPaths is a STATIC it should always be in the same memory location... */
+    this->passedPaths = source.passedPaths;
+
+    /* Since the reactions and metabolites are NOT static (by design)
+       we need to move the pointers to the new answer */
+    for(int i=0; i<source.fixedGaps.size(); i++) { this->fixedGaps.push_back( this->metabolites.metPtrFromId( source.fixedGaps[i]->id )); }
+    for(int i=0; i<source.fixes.size(); i++) {
+      vector<const REACTION*> tmp;
+      for(int j=0; j<source.fixes[i].size(); j++) {
+	tmp.push_back(this->reactions.rxnPtrFromId( source.fixes[i][j]->id ));
+      }
+      this->fixes.push_back(tmp);
+    }
+    for(int i=0; i<source.essentialMagicExits.size(); i++) { this->essentialMagicExits.push_back( this->reactions.rxnPtrFromId( source.essentialMagicExits[i]->id )); }
+    for(int i=0; i<source.etcIds.size(); i++) { this->etcIds.push_back( this->reactions.rxnPtrFromId( source.etcIds[i]->id )); }
+    for(int i=0; i<source.etcConnect.size(); i++) { this->etcConnect.push_back( this->reactions.rxnPtrFromId( source.etcConnect[i]->id )); }
+  }
+
+
+// Write out pathsummaries, other stuff?
+void ANSWER::to_jsonfile(const char* filename) {
+  stringstream fname;
+  fname << filename << ".psum.json";
+  ofstream jsonfile;
+  jsonfile.open(fname.str().c_str());
+
+  jsonfile << "[" << endl;
+  int i, j, k;		// growth, metabolite, k
+  for (i=0; i < pList.size(); i++) {
+    for (j=0; j < pList[i].size(); j++) {
+      for (k=0; k < pList[i][j].size(); k++) {
+	jsonfile << pList[i][j][k].as_json();
+	if (i!=pList.size()-1 && j!=pList[i].size()-1 && k!=pList[i][j].size()-1) {
+	  jsonfile << ",";
+	}
+	jsonfile << endl;
+      }
+    }
+  }
+  jsonfile << "]" << endl;
+
+  jsonfile.close();
+  cerr << fname.str() << " written" << endl;
 }
 
 void initializeAnswer(const vector<NETREACTION> &myEtc, const vector<vector<vector<PATHSUMMARY> > > &myPlist, const map<string, vector<VALUESTORE> > &annoteToRxn) {

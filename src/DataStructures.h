@@ -8,11 +8,16 @@
 #include <map>
 #include <string>
 #include <vector>
-#include "MyConstants.h"
 
 using std::vector;
 using std::map;
 using std::string;
+
+#include "Metabolite.h"
+#include "Reaction.h"
+#include "Stoich.h"
+#include "Annotation.h"
+#include "PathStuff.h"
 
 /* Input data classes */
 struct MEDIA;
@@ -21,7 +26,6 @@ struct ANNOTATION;
 class STOICH;
 class REACTION;
 class GROWTH;
-class METABOLITE;
 class RXNSPACE;
 class METSPACE;
 
@@ -119,6 +123,8 @@ class PROBLEM{
   PROBLEM(const RXNSPACE &x, const PROBLEM &ProblemSpace);
   PROBLEM();
   void clear();
+
+  void to_jsonfile(const char* filename);
 };
 
 class GROWTH{
@@ -138,7 +144,7 @@ class GROWTH{
 
 struct MEDIA{
   int id; /* Metabolite id */
-  char name[AR_MAXNAMELENGTH]; /* Metabolie name */
+  char name[64]; /* Metabolie name */
   double rate; /* mmol/gDW/hr 
 		  (uptake rate for media, secretion rate for byproducts */
   bool operator==(const MEDIA &rhs) const;
@@ -154,100 +160,9 @@ struct KNOCKOUT{
   double act_coef; /* percentage of maximum growth rate achieved with knockout (0 = lethal knockout, 1 = wild type growth rate) */
 };
 
-class METABOLITE{
- public:
-  /* Externally (XML/User) defined parameters */
-  int id; /* Has to be big matrix row index */
-  char name[AR_MAXNAMELENGTH];
 
-  /* All of these are for visualization only */
-  int input; /* Is it an input?: 0 for no, 1 for yes */
-  int output; /* Is it an output? 0 for no, 1 for yes */
-  int biomass; /* Is it a biomass component? 0 for no, 1 for yes */
 
-  /* Used to identify synrxns (will soon be obsolete in favor of reaction-specific removals) */
-  int secondary_lone; /* 0 for no, 1 for yes */
-  vector<int> secondary_pair; /* Int of the ID for each possible secondary pair */
 
-  /* ETC */
-  int noncentral; /* 0 = central (not used for ETC), 1 = noncentral (used for ETC), -1 = undefined */
-
-  double modifier; /* Reserved for things that can be used to modify metabolite cost in Dijkstras algorithm, such as metabolomics data or other thigns we calculate */
-  
-  /* Connected reactions (computed) */
-  vector<int> rxnsInvolved_nosec;
-  
-  METABOLITE();
-  void reset();
-  int isSecondary() const;
-};
-
-class STOICH{
-  public:
-  int met_id;
-  double rxn_coeff;
-  char met_name[AR_MAXNAMELENGTH];
-  /* Will this be a char or a char []? */
-  char compartment;
-  
-  bool operator==(const STOICH &rhs) const;
-  bool operator>(const STOICH &rhs) const;
-  bool operator<(const STOICH &rhs) const;
-  STOICH();
-  void reset();
-};
-
-class REACTION{
- public:
-  
-  int id; /* ID */
-  bool transporter; /* TRUE if it is a transport reaction */
-  int transportedMetabolite; /* Metabolite ID for transported metabolite */
-  char name[AR_MAXNAMELENGTH];
-  vector<STOICH> stoich; /* Full chemical reaction */
-
-  /* stoich, but without the secondary metabolties (Load_Stoic_Part deals with this) */
-  /* This is the one used by Dijkstras - if you want to use fullrxns with dijkstras you need to copy it over first */
-  vector<STOICH> stoich_part;
-
-  double init_likelihood; /* based on user input:
-			     1>x>0 PROBABILITY INCLUSION
-			     -1 DO NOT INCLUDE (100% sure)
-			     -2 HARD INCLUDE (100% sure)
-			     -3 BLACK MAGIC
-			     -4 SPONTANEOUS REACTION
-			     -5 NOT ON HIT LIST
-			  */
-
-  int init_reversible; /* -1 backwards only, 0 reversible, 1 forward only */
-  vector<ANNOTATION> annote; /* List of gene annotations */
-
-  /***** Calculated quantities ******/
-  bool freeMakeFlag;
-  vector<int> syn;    /* Special vector for storing reactions in the same reaction-class */
-  int revPair; /* The iD of the reaction gonig the other way in the network (if there is one) and -1 if none */
-  double current_likelihood;   /* Likelihood used by Dijkstras - after modifying them, put them here */
-  double old_likelihood; /* Temporary storage used by K-shortest to save old likelihood when setting new one to -1 */
-  int net_reversible;   /* Reversibility used by Dijkstras and Simplex */
-  double lb;  double ub; /* LB and UB (should be consistent with net_reversible - net_reversible < 0 means lb < 0 and ub = 0) */
-  
-  bool operator==(const REACTION &rhs) const;
-  bool operator>(const REACTION &rhs) const;
-  bool operator<(const REACTION &rhs) const;
-  REACTION();
-  void reset();
-
-  /* Trivially calculatable properties */
-  bool isExchange() const;
-
-};
-
-struct ANNOTATION{
-  double probability;
-  string genename;
-  /* THis compares > because we want to go in opposite order.. when sorting these. */
-  bool operator<(const ANNOTATION &rhs) const;
-};
 
 class NETREACTION{
  public:
@@ -256,45 +171,6 @@ class NETREACTION{
   /* The NETREACTION itself */
   REACTION rxn;
   bool operator==(const NETREACTION &rhs) const;
-};
-
-class PATH{
- public:
-  int outputId; /* The Path by definition is trying to reach a specific output. This lists that 
-		   output */
-  vector<int> inputIds; /* Inputs that were needed to reach the output */
-  vector<int> rxnIds; /* Reactions in the path */
-  vector<int> rxnDirection; /* Dijkstras will return this... which direction is the rxn going in 
-			       the particular path? */
-  vector<int> metsConsumedIds; /* Metabolites that are nodes on the path tree for this particular 
-				  path */
-  vector<int> deadEndIds; /* Dead end metabolites on the way to reach the specified output 
-			     (EMPTY if no path is found) */
-  vector<int> rxnPriority; /* Priority for particular reaction [higher priority means the reaction was closer to the beginning of the pathway] - useful for gapfind */
-  double totalLikelihood; /* Sum of provided likelihoods for a given path */
-  PATH();
-};
-
-class PATHSUMMARY{
- public:
-  long int id;
-  int outputId; /* Output (target component) for the given path - needed to run FBA / magic 
-		   exits */
-  vector<int> growthIdx; /* Which growth does it correspond to? - MB - did we decide on an Id or Idx for 
-		    this? I guess since we'll number the growth ourselves and probably just 
-		    enumerate it will be the same thing */
-  int k_number; /* I assume this is whether this is the 1st, 2nd or kth path in a list */
-  vector<int> rxnDirIds;
-  vector<int> rxnPriority;
-  vector<int> deadEndIds;
-  vector<int> metsConsumed;
-  double likelihood;
-  PATHSUMMARY();
-  bool metIn(int metId) const;
-  bool operator==(const PATHSUMMARY &rhs1);
-  PATHSUMMARY clear();
-  PATHSUMMARY operator=(PATH &onepath);
-  PATHSUMMARY operator/(PATH &onepath);
 };
 
 /* This is to be used only for the purposes of the priority queue. I put it this way so that
@@ -374,7 +250,7 @@ class ANSWER {
 
   static map<string, vector<VALUESTORE> > annoteToRxns;
   static vector<NETREACTION> etc;
-  static vector<vector<vector<PATHSUMMARY> > > pList;
+  static vector<vector<vector<PATHSUMMARY> > > pList; /* indexed by growth cond, metabolite, k */
 
   RXNSPACE reactions;
   METSPACE metabolites;
@@ -394,38 +270,11 @@ class ANSWER {
   //optimum scoring answer
   SCORE1 optLocalScore;
 
+  void to_jsonfile(const char* filename);
+
+
   ANSWER();
-
-  //copy constructor
-  ANSWER(const ANSWER &source){
-    /* These aren't necessary because these variables are declared as STATIC so they have the same value automatically
-       as any other ANSWER */
-    /*    this->annoteToRxns = source.annoteToRxns;
-    this->etc = source.etc;
-    this->pList = source.pList; */
-
-    this->reactions = source.reactions;
-    this->metabolites = source.metabolites;
-    this->knockoutResults = source.knockoutResults;
-    this->optLocalScore = source.optLocalScore;
-
-    /* This should be OK since passedPaths is a STATIC it should always be in the same memory location... */
-    this->passedPaths = source.passedPaths;
-
-    /* Since the reactions and metabolites are NOT static (by design)
-       we need to move the pointers to the new answer */
-    for(int i=0; i<source.fixedGaps.size(); i++) { this->fixedGaps.push_back( this->metabolites.metPtrFromId( source.fixedGaps[i]->id )); }
-    for(int i=0; i<source.fixes.size(); i++) {
-      vector<const REACTION*> tmp;
-      for(int j=0; j<source.fixes[i].size(); j++) {
-	tmp.push_back(this->reactions.rxnPtrFromId( source.fixes[i][j]->id ));
-      }
-      this->fixes.push_back(tmp);
-    }
-    for(int i=0; i<source.essentialMagicExits.size(); i++) { this->essentialMagicExits.push_back( this->reactions.rxnPtrFromId( source.essentialMagicExits[i]->id )); }
-    for(int i=0; i<source.etcIds.size(); i++) { this->etcIds.push_back( this->reactions.rxnPtrFromId( source.etcIds[i]->id )); }
-    for(int i=0; i<source.etcConnect.size(); i++) { this->etcConnect.push_back( this->reactions.rxnPtrFromId( source.etcConnect[i]->id )); }
-  }
+  ANSWER(const ANSWER &source);
 
 };
 

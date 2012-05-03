@@ -10,6 +10,7 @@ using std::vector;
 using std::map;
 using std::string;
 
+
 map< string, vector<VALUESTORE>  > GeneAnnotations(RXNSPACE &small_list, double cut, double cut2);
 void removeAnnotation(RXNSPACE &rxnspace, const string &genename, const VALUESTORE &val);
 

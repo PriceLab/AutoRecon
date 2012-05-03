@@ -10,6 +10,7 @@
 #include <iterator>
 #include <map>
 #include <vector>
+#include <math.h>
 
 using std::vector;
 using std::map;
@@ -543,7 +544,7 @@ void modifyGAM(ANSWER &model, double amountToChange) {
   }
 
   /* Actually modify the coeffs */
-  if(abs(amountToChange - mostCanModify) > 0.01){
+  if(fabs(amountToChange - mostCanModify) > 0.01){
     printf("Requested GAM modified by %4.3f...\n", amountToChange);
     printf("Actually modifying NGAM by %4.3f.\n", mostCanModify);
   }

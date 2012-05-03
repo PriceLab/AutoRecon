@@ -579,8 +579,15 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
   for(int i=0; i<psum.size(); i++) {
     for(int j=0; j<psum[i].rxnDirIds.size(); j++) {
       fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%d\t%4.3f\n",
-	      psum[i].id, psum[i].growthIdx[0], metspace.metFromId(psum[i].outputId).name, psum[i].k_number, rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).name, psum[i].rxnDirIds[j], 
-	      rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).init_likelihood);
+	      psum[i].id, 	                                              // 110
+	      psum[i].growthIdx[0],                                           // 0
+	      metspace.metFromId(psum[i].outputId).name,                      // 26dap_M
+	      psum[i].k_number,				                      // 0
+	      rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).name,             // R00307
+	      psum[i].rxnDirIds[j],				              // 3893
+	      rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).init_likelihood); // 0.436
+      // 110	0	26dap_M	0	R00307	3893	0.436
+
     }
   }
 
@@ -599,7 +606,7 @@ void PATHS_mets_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
   /* Reactions */
   FILE* output = fopen(fileName, "w");
 
-  fprintf(output, "%s\t%s\t%s\t%s\t%s\n",
+  fprintf(output, "%s\t%s\t%s\t%s\t%s\t%s\n",
 	  "PSUM ID", "GROWTH CONDITION", "TARGET METABOLITE", "K (#th shortest)", "METABOLITE", "REACTION containing metabolite");
 
   for(int i=0; i<psum.size(); i++) {
