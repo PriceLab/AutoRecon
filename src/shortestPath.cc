@@ -39,7 +39,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
   for(int i=0; i<metspace.mets.size();i++) {
     VALUESTORE tmp;
     tmp.id = metspace.mets[i].id;
-    if(inputs.idIn(tmp.id)) {
+    if(inputs.isIn(tmp.id)) {
       /* Input */
       tmp.value = 0.0f;
       precursorRxnIds[tmp.id] = -1; /* -1 signifies the end of a pathway when we're backtracing*/

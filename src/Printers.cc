@@ -303,10 +303,11 @@ void printRxnsFromIntSet(const set<int> &intSet, const RXNSPACE &rxnspace) {
   return;
 }
 
-void printMetsFromIntVector(const vector<METID> &intVector, const PROBLEM &ProblemSpace) {
-  if(intVector.empty()) {printf("EMPTY\n"); return;}
-  for(int i=0;i<intVector.size();i++){
-    printf("%s ", ProblemSpace.metabolites.metFromId(intVector[i]).name);
+//change name to printMets
+void printMetsFromIntVector(const vector<METID> &Vector, const PROBLEM &ProblemSpace) {
+  if(Vector.empty()) {printf("EMPTY\n"); return;}
+  for(int i=0;i<Vector.size();i++){
+    printf("%s ", ProblemSpace.metabolites[Vector[i]].name);
   }
   printf("\n");
 }
@@ -437,7 +438,7 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace) {
 /* ALso prints reaction likelihoods from rxnspace (why do we need this if the rxnspace is also found in PROBLEMSPACE?) */
 void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace, RXNSPACE &rxnspace) {
   for(unsigned int i=0;i<path.size();i++) {
-    printf("Path number: %d corresponding to output %s...\n", i, ProblemSpace.metabolites.metFromId(path[i].outputId).name);
+    printf("Path number: %d corresponding to output %s...\n", i, ProblemSpace.metabolites[path[i].outputId].name);
     printf("Inputs required to reach output: "); 
     printMetsFromIntVector(path[i].inputIds,ProblemSpace);
     printf("Number of reactions: ");
@@ -481,7 +482,7 @@ void PrintPathSummary2(const vector<vector<vector<PATHSUMMARY> > > &psum, PROBLE
 void PrintGapfillResult(const vector<GAPFILLRESULT> &res, const PROBLEM &problemSpace, const vector<int> &kToPrint) {
   for(int j=0; j<res.size(); j++) {
     if(res[j].deadEndSolutions.size() == 0) { continue; }
-    printf("%s (k=%d) --> ", problemSpace.metabolites.metFromId(res[j].deadMetId).name, kToPrint[j]);
+    printf("%s (k=%d) --> ", problemSpace.metabolites[res[j].deadMetId].name, kToPrint[j]);
     for(int n=0; n<res[j].deadEndSolutions[kToPrint[j]].size(); n++) {
       REACTION tmp = problemSpace.fullrxns.rxnFromId(res[j].deadEndSolutions[kToPrint[j]][n]);
       printf("%s(%4.3f)\t", tmp.name, tmp.init_likelihood);
@@ -586,7 +587,7 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
   for(int i=0; i<psum.size(); i++) {
     for(int j=0; j<psum[i].rxnDirIds.size(); j++) {
       fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%d\t%4.3f\n",
-	      psum[i].id, psum[i].growthIdx[0], metspace.metFromId(psum[i].outputId).name, psum[i].k_number, rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).name, psum[i].rxnDirIds[j], 
+	      psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).name, psum[i].rxnDirIds[j], 
 	      rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).init_likelihood);
     }
   }
@@ -614,7 +615,7 @@ void PATHS_mets_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
       REACTION tmp = rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j]));
       for(int k=0; k<tmp.stoich.size(); k++) {
 	fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%s\n",
-		psum[i].id, psum[i].growthIdx[0], metspace.metFromId(psum[i].outputId).name, psum[i].k_number, metspace.metFromId(tmp.stoich[k].met_id).name, tmp.name);
+		psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, metspace[tmp.stoich[k].met_id].name, tmp.name);
       }
     }
   }

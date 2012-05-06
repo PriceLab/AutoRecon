@@ -220,7 +220,7 @@ void pullOutMets(const RXNSPACE &rxnspace, const METSPACE &metspace, METSPACE &r
   }
   custom_unique(metIds);
   for(int i=0;i<metIds.size();i++) {
-    result.addMetabolite(metspace.metFromId(metIds[i]));
+    result.addMetabolite(metspace[metIds[i]]);
   }
   return;
 }

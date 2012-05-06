@@ -64,7 +64,7 @@ PROBLEM readReactionTable(const char* filename) {
       /* Set lb and ub appropriately according to the chosen reversibility... */
       fullrxn.changeReversibility(rxnId, net_reversible);
     }
-    if(!fullmets.idIn(metId)) {
+    if(!fullmets.isIn(metId)) {
       /* Note - because we're curating now, the secondary and secondary_pair fields became useless */
       METABOLITE newmet;
       newmet.id = metId;

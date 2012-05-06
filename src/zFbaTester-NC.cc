@@ -67,7 +67,7 @@ int main(int argc, char *argv[]) {
     vector<METID> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
     for(int j=0; j<psum[i].size(); j++) { 
       if(psum[i][j].size() == 0) {
-	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", ProblemSpace.metabolites.metFromId(outputIds[j]).name, i);
+	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", ProblemSpace.metabolites[outputIds[j]].name, i);
 	ProblemSpace.metabolites.metPtrFromId(outputIds[j])->secondary_lone = 1;
       }
     }

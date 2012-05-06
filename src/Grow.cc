@@ -318,14 +318,14 @@ bool knockoutLethality(PROBLEM &modified, const string &genename) {
 void addGapfillResultToProblem(PROBLEM &model, const PROBLEM &problemSpace, const GAPFILLRESULT &gapfillResult, int whichK) {
   if( gapfillResult.deadEndSolutions.size() <= whichK ) {
     printf("ERROR: Asked for path %d for output metabolite %s but no such path exists!\n", 
-				 whichK, problemSpace.metabolites.metFromId(gapfillResult.deadMetId).name);
+	   whichK, problemSpace.metabolites[gapfillResult.deadMetId].name);
     assert(false);
   }
   for(int i=0; i<gapfillResult.deadEndSolutions[whichK].size(); i++) {
     REACTION toAdd = problemSpace.fullrxns.rxnFromId(gapfillResult.deadEndSolutions[whichK][i]);
     model.fullrxns.addReaction(toAdd);
     for(int j=0; j<toAdd.stoich.size(); j++) {
-      model.metabolites.addMetabolite(problemSpace.metabolites.metFromId(toAdd.stoich[j].met_id));
+      model.metabolites.addMetabolite(problemSpace.metabolites[toAdd.stoich[j].met_id]);
     }
   }
 }
@@ -384,7 +384,7 @@ PROBLEM setUpGapfill(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pLi
   for(int i=0; i<rxnList.size(); i++) {
     REACTION tmpRxn = problemSpace.fullrxns.rxnFromId(rxnList[i]);
     for(int j=0; j<tmpRxn.stoich.size(); j++) {
-      METABOLITE tmpMet = problemSpace.metabolites.metFromId(tmpRxn.stoich[j].met_id);
+      METABOLITE tmpMet = problemSpace.metabolites[tmpRxn.stoich[j].met_id];
       if(tmpMet.secondary_lone == 1 || (!tmpMet.secondary_pair.empty())) {
 	metId2Dir[tmpMet.id] = 0;
       } else { 
@@ -554,14 +554,14 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
       /* FIXME: Why does the fillGapWithDijkstras sometimes give us empty results at the end of vectors with non-empty results? */
       if(dijkstrasSln[j].empty()) { continue; }
       if(_db.PRINTGAPFILLRESULTS) { printf("Dijkstras solution for exit of metabolite %s (magic exit): \n", 
-					  model.metabolites.metFromId(*it).name);
+					  model.metabolites[*it].name);
 	printRxnsFromIntVector(dijkstrasSln[j], problemSpace.fullrxns);
       }
       completeList.push_back(dijkstrasSln[j]);
     }
 
     /* Fill entrances for things that can have them */
-    METABOLITE tmpMet = model.metabolites.metFromId(*it);
+    METABOLITE tmpMet = model.metabolites[*it];
     if(tmpMet.secondary_lone == 1 || !tmpMet.secondary_pair.empty()) {
       dijkstrasSln = fillGapWithDijkstras(model.fullrxns, model.metabolites, tmpProblem, *it, -1, gapfillK);
       for(int j=0; j<dijkstrasSln.size(); j++) {
@@ -641,13 +641,13 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
   for(int i=0; i<wholeProblem.growth.size(); i++) {
     for(int j=0; j<wholeProblem.growth[i].media.size(); j++) {
       if(wholeProblem.growth[i].media[j].id!=toFix) {
-	inputs.addMetabolite(allMets.metFromId(wholeProblem.growth[i].media[j].id));
+	inputs.addMetabolite(allMets[wholeProblem.growth[i].media[j].id]);
       }
     }
   }
 
   /* The target is the output metabolite */
-  METABOLITE output = allMets.metFromId(toFix);
+  METABOLITE output = allMets[toFix];
   vector<PATH> result;
   kShortest(result, allRxns, allMets, inputs, output, K);
 
@@ -667,7 +667,7 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
       workingRxns.addReaction(allRxns.rxnFromId(currentSolution[j]));
       for(int k=0; k<workingRxns.rxns.back().stoich.size(); k++) {
 	METID metId = workingRxns.rxns.back().stoich[k].met_id;
-	workingMets.addMetabolite(allMets.metFromId(metId));
+	workingMets.addMetabolite(allMets[metId]);
       }
     }
     
@@ -731,7 +731,7 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
     int meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.media[i].id);
     if(meId == 0) { 
       printf("ERROR: No exchange present for media condition %s after calling checkExchangesAndTransports \n", 
-	     model.metabolites.metFromId(growth.media[i].id).name);
+	     model.metabolites[growth.media[i].id].name);
       assert(false);
     }
     model.fullrxns.rxnPtrFromId(meId) -> lb =  -growth.media[i].rate;
@@ -746,7 +746,7 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
     int meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.byproduct[i].id);
     if(meId == 0) { 
       printf("ERROR: No exchange present for byproduct %s after calling checkExchangesAndTransports \n", 
-	     model.metabolites.metFromId(growth.byproduct[i].id).name);
+	     model.metabolites[growth.byproduct[i].id].name);
       assert(false);
     }
     model.fullrxns.rxnPtrFromId(meId) -> ub =  1000.0f;
@@ -755,7 +755,7 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
       model.fullrxns.rxns[i].net_reversible = 1;
     }
     else{
-      printf("WARNING: %s both a byproduct and a media component.\n",model.metabolites.metFromId(growth.byproduct[i].id).name);
+      printf("WARNING: %s both a byproduct and a media component.\n",model.metabolites[growth.byproduct[i].id].name);
     }
   }
 }

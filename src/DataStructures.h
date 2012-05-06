@@ -22,6 +22,7 @@ BOOST_STRONG_TYPEDEF(int,RXNID);
 BOOST_STRONG_TYPEDEF(int,RXNIDX);
 BOOST_STRONG_TYPEDEF(int,GROWID);
 BOOST_STRONG_TYPEDEF(int,GROWIDX);
+BOOST_STRONG_TYPEDEF(int,REV);
 
 /* Input data classes */
 struct MEDIA;
@@ -98,15 +99,20 @@ class METSPACE{
   void clear();
   void removeMetFromBack();
   void addMetabolite(const METABOLITE &met);
-  METABOLITE metFromId(METID id) const;
+  //METABOLITE metFromId(METID id) const;
+  METABOLITE getMetObj(METID id) const;
   METABOLITE* metPtrFromId(METID id);
-  int idxFromId(METID id) const;
-  bool idIn(METID id) const;
+  METIDX idxFromId(METID id) const;
+  bool isIn(METID id) const;
+  bool isIn(METIDX idx) const;
   void metMap();
 
   METSPACE operator=(const METSPACE& init);
   METABOLITE & operator[](int idx);
-  map<int, METID> Ids2Idx;
+  METABOLITE & operator[](METIDX idx);
+  METABOLITE & operator[](METID id);
+  const METABOLITE & operator[](METID id) const;
+  map<METID, METIDX> Ids2Idx;
 
  private:
   int numMets;

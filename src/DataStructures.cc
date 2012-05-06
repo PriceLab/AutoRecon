@@ -369,7 +369,7 @@ METSPACE::METSPACE(const vector<METABOLITE> &metVec) {
 /* Initialize metabolite list to be a subset of a larger metabolite list */
 METSPACE::METSPACE(const METSPACE& existingSpace, const vector<METID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
-    mets.push_back(existingSpace.metFromId(idSubset[i]));
+    mets.push_back(existingSpace[idSubset[i]]);
     Ids2Idx[idSubset[i]] = i;
   }
   numMets = mets.size();
@@ -385,7 +385,7 @@ METSPACE::METSPACE(const RXNSPACE &rxnspace, const METSPACE &largeMetSpace) {
   }
   custom_unique(metIds);
   for(int i=0; i<metIds.size(); i++) {
-    mets.push_back(largeMetSpace.metFromId(metIds[i]));
+    mets.push_back(largeMetSpace[metIds[i]]);
     Ids2Idx[metIds[i]] = i;
   }
   numMets = metIds.size();
@@ -398,7 +398,7 @@ void METSPACE::clear() {
 }
 
 void METSPACE::addMetabolite(const METABOLITE &met) {
-  if(idIn(met.id)) {
+  if(isIn(met.id)) {
     //printf("WARNING: Attempted to pass a metabolite with id %d that was already in the METSPACE!\n", met.id);
     return;
   }
@@ -409,25 +409,25 @@ void METSPACE::addMetabolite(const METABOLITE &met) {
 
 void METSPACE::removeMetFromBack() {
   assert(mets.size() > 0);
-  int id = mets.back().id;
+  METID id = mets.back().id;
   int idx = Ids2Idx[id];
   mets.pop_back();
   Ids2Idx.erase(id);
   numMets--;
 }
 
-METABOLITE METSPACE::metFromId(METID id) const {
+METABOLITE METSPACE::getMetObj(METID id) const {
   return mets[idxFromId(id)];
 }
 
 METABOLITE* METSPACE::metPtrFromId(METID id) {
-  int idx = this->idxFromId(id);
+  METIDX idx = this->idxFromId(id);
   return &mets[idx];
 }
 
 
-int METSPACE::idxFromId(METID id) const {
-  map<int,METID>::const_iterator it = Ids2Idx.find(id);
+METIDX METSPACE::idxFromId(METID id) const {
+  map<METID,METIDX>::const_iterator it = Ids2Idx.find(id);
   if(it == Ids2Idx.end()) {
     printf("FAIL: Attempted to access metabolite %d that is not present in the metabolite struct...\n", (int)id);
     assert(it != Ids2Idx.end() );
@@ -435,15 +435,39 @@ int METSPACE::idxFromId(METID id) const {
   return (it -> second);
 }
 
-bool METSPACE::idIn(METID id) const {
+bool METSPACE::isIn(METID id) const {
   if(Ids2Idx.count(id) > 0) { return true; }
   else { return false; }
 }
 
-METABOLITE & METSPACE::operator[](int idx) {
+bool METSPACE::isIn(METIDX idx) const {
+  if(idx < mets.size()) { return true; }
+  else { return false; }
+}
+
+METABOLITE  & METSPACE::operator[](int idx) {
+  printf("Warning: int instead of METIDX\n");
   assert(idx < mets.size());
   return this->mets[idx];
 }
+
+METABOLITE & METSPACE::operator[](METIDX idx) {
+  assert(idx < mets.size());
+  return this->mets[idx];
+}
+
+METABOLITE & METSPACE::operator[](METID id) {
+  assert(this->isIn(id));
+  METIDX idx = this->idxFromId(id);
+  return this->mets[idx];
+}
+
+const METABOLITE & METSPACE::operator[](METID id) const{
+  assert(this->isIn(id));
+  METIDX idx = this->idxFromId(id);
+  return this->mets[idx];
+}
+
 
 /* Convert metabolite ID's to metabolite indicies and vice versa */
 /* You won't have to use this functino if you always make and expand/contract METSPACEs with member class functions */
@@ -496,7 +520,7 @@ PROBLEM::PROBLEM(const RXNSPACE &x, const PROBLEM &ProblemSpace){
   custom_unique(mets);
 
   for(int i=0;i<mets.size();i++){
-    metabolites.addMetabolite(ProblemSpace.metabolites.metFromId(mets[i]));
+    metabolites.addMetabolite(ProblemSpace.metabolites[mets[i]]);
     if(metabolites.mets.back().noncentral == 1) {
       cofactors.addMetabolite(metabolites.mets.back());
     }

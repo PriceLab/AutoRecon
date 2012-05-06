@@ -173,7 +173,7 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METI
 
   METSPACE inputs(ProblemSpace.metabolites, inputIds);  
   kShortest(kpaths,rxnspace,ProblemSpace.metabolites, inputs,
-	    ProblemSpace.metabolites.metFromId(outputId), Kq);
+	    ProblemSpace.metabolites[outputId], Kq);
 
 
   /* Optional Intermediate Print Statement */
@@ -185,7 +185,7 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METI
     #pragma omp parallel for
     for(int j=0;j<kpaths.size();j++){
       char outpath[2056];
-      sprintf(outpath, "./%s/path_%s_k%d.dot", _myoutputdir, ProblemSpace.metabolites.metFromId(outputId).name, j);
+      sprintf(outpath, "./%s/path_%s_k%d.dot", _myoutputdir, ProblemSpace.metabolites[outputId].name, j);
       VisualizePath2File(outpath, outpath, kpaths[j], ProblemSpace, 1);
     }
   }
@@ -234,7 +234,7 @@ void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, METID outputId, int K, 
 
   METSPACE inputs(ProblemSpace.metabolites, inputIds);  
   kShortest2(kpaths,rxnspace,ProblemSpace.metabolites, inputs,
-	     ProblemSpace.metabolites.metFromId(outputId), Kq,
+	     ProblemSpace.metabolites[outputId], Kq,
 	     ProblemSpace.synrxnsR);
 
   /* Optional Intermediate Print Statement */
@@ -270,7 +270,7 @@ void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> 
     for(int j=0;j<outputIds.size();j++){
       if(_db.DEBUGPATHS) {
 	printf("FirstKPass: growth %d of %d   output %d(%s) of %d\n",i+1,(int)ProblemSpace.growth.size(),j+1,
-	       ProblemSpace.metabolites.metFromId(outputIds[j]).name,
+	       ProblemSpace.metabolites[outputIds[j]].name,
 	       (int)outputIds.size());
       }
       vector<PATHSUMMARY> tempP1;
@@ -310,7 +310,7 @@ void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY>
     for(int j=0;j<psum[i].size();j++){
       if(_db.DEBUGPATHS) {
 	printf("SecondKPass: growth %d of %d   output %s (%d of %d)\n",i+1,(int)psum.size(),
-	       ProblemSpace.metabolites.metFromId(outputIds[i][j]).name, 
+	       ProblemSpace.metabolites[outputIds[i][j]].name, 
 	       j+1,(int)psum[i].size());
       }
 
@@ -415,12 +415,12 @@ REACTION MakeBiomassFromGrowth(const GROWTH &growth){
    metabolite in the opposite compartment. Returns the matching met ID or -1 if it fails to find a match */
 METID inOutPair(METID met_id, const METSPACE &metspace){ 
   int flag;
-  bool isExternal = isExternalMet(metspace.metFromId(met_id).name, _db.E_tag);
+  bool isExternal = isExternalMet(metspace[met_id].name, _db.E_tag);
   char tempS[AR_MAXNAMELENGTH] = {0};
   if(isExternal){
-    strncpy(tempS,metspace.metFromId(met_id).name,(int)strlen(metspace.metFromId(met_id).name)-3);
+    strncpy(tempS,metspace[met_id].name,(int)strlen(metspace[met_id].name)-3);
   } else {
-    strcat(tempS,metspace.metFromId(met_id).name);
+    strcat(tempS,metspace[met_id].name);
     strcat(tempS,_db.E_tag);
   }
 
@@ -555,7 +555,7 @@ void calcMetRxnRelations(const RXNSPACE &rxnspace, METSPACE &metspace) {
     const REACTION &currentRxn = rxnspace.rxns[i];
     for(int j=0;j<currentRxn.stoich.size();j++) {
       //      if(currentRxn.id < _db.MAGICBRIDGEFACTOR || currentRxn.id > _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING){
-      if(metspace.idIn(currentRxn.stoich[j].met_id)) {
+      if(metspace.isIn(currentRxn.stoich[j].met_id)) {
 	metspace.mets[metspace.idxFromId(currentRxn.stoich[j].met_id)].rxnsInvolved_nosec.push_back(currentRxn.id);
       }
       // }

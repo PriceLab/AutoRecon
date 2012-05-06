@@ -111,7 +111,7 @@ int ComponentTest(const PROBLEM &theModel){
 
     printf("Running kShortest: %d %d %d %s %d\n",(int)tempModel.synrxns.rxns.size(),
 	   (int)tempModel.metabolites.mets.size(),(int)inputs.mets.size(),
-	   tempModel.metabolites.metFromId(outputId).name, Kq);
+	   tempModel.metabolites[outputId].name, Kq);
     /*
     printf("tempModel: %d\n",(int)tempModel.synrxns.rxns.size());
     /*Print everything rxnModel
@@ -120,7 +120,7 @@ int ComponentTest(const PROBLEM &theModel){
     printf("synrxn Loaded\n");
     */   
     kShortest(kpaths,tempModel.synrxns,tempModel.metabolites, inputs,
-    	      tempModel.metabolites.metFromId(outputId), Kq);
+    	      tempModel.metabolites[outputId], Kq);
     printPathResults(kpaths);
     allPaths.push_back(kpaths);
   }
@@ -134,7 +134,7 @@ void Load_Stoich_Part_With_Cofactors(PROBLEM &Model){
     Model.fullrxns.rxns[i].stoich_part.clear();
     for(int j=0;j<Model.fullrxns.rxns[i].stoich.size();j++){
       METID metID = Model.fullrxns.rxns[i].stoich[j].met_id;
-      if(Model.metabolites.metFromId(metID).secondary_lone!=1){
+      if(Model.metabolites[metID].secondary_lone!=1){
 	Model.fullrxns.rxns[i].stoich_part.push_back(Model.fullrxns.rxns[i].stoich[j]);
       }
     }
@@ -179,7 +179,7 @@ PROBLEM reportFlux(PROBLEM& Model, vector<double> &fbaSolution, double cutoff){
     //printf("custom_unique\n");
     for(int i=0;i<metList.size();i++){
       //printf("* *  %d\n",metList[i]);
-      reporter.metabolites.addMetabolite(Model.metabolites.metFromId(metList[i]));
+      reporter.metabolites.addMetabolite(Model.metabolites[metList[i]]);
     }
     reporter.metabolites.metMap();
   }

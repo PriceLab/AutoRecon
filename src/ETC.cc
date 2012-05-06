@@ -129,9 +129,9 @@ void convert(NETREACTION &net, REACTION add, int rxnDirId){
 vector<vector<METID> > PossiblePairs(const vector<STOICH> &fromnet,  const METSPACE &cofactors){
   vector<vector<METID> > PairOfIds;
   for(int i=0;i<fromnet.size();i++){
-    if(cofactors.idIn(fromnet[i].met_id)){
+    if(cofactors.isIn(fromnet[i].met_id)){
       for(int j=i+1;j<fromnet.size();j++){
-    	if(cofactors.metFromId(fromnet[i].met_id).secondary_pair[0]==fromnet[j].met_id){
+    	if(cofactors[fromnet[i].met_id].secondary_pair[0]==fromnet[j].met_id){
 	  if(rougheq(fromnet[i].rxn_coeff,-fromnet[j].rxn_coeff)){
 	    vector<METID> tempI;
 	    tempI.push_back(fromnet[i].met_id);
@@ -280,8 +280,8 @@ NETREACTION ETC_add(const PROBLEM &ProblemSpace, NETREACTION net, vector<NETREAC
   for(int i=0;i<PairsNet.size();i++){
     /* Identify all reactions connected to the cofactors in the current cofactor pair 
      and then those that have both (i.e. those that have the whole pair) */
-    vector<int> rxnSet1 = cofspace.metFromId(PairsNet[i][0]).rxnsInvolved_nosec;
-    vector<int> rxnSet2 = cofspace.metFromId(PairsNet[i][1]).rxnsInvolved_nosec;
+    vector<int> rxnSet1 = cofspace[PairsNet[i][0]].rxnsInvolved_nosec;
+    vector<int> rxnSet2 = cofspace[PairsNet[i][1]].rxnsInvolved_nosec;
     vector<int> rxnSet=custom_intersect(rxnSet1,rxnSet2);
     
     vector<int> tempI;

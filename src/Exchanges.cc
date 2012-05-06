@@ -117,7 +117,7 @@ int FindTransport4Metabolite(const vector<REACTION> &reaction, const METSPACE &m
   double currentMin(-1.0f);
   pair_id = inOutPair(met_id, metspace);
 
-  if(isExternalMet(metspace.metFromId(met_id).name, _db.E_tag)) { whichExternal = met_id;  } 
+  if(isExternalMet(metspace[met_id].name, _db.E_tag)) { whichExternal = met_id;  } 
   else {  whichExternal = pair_id;  }
 
   for(int i=0;i<reaction.size();i++){
@@ -188,7 +188,7 @@ REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspa
   if(stoich_add.met_id==-1){
     printf("MagicTransport: ERROR - NO COMPLEMENTARY METABOLITE: %d %s\n",(int)met_id,name);}
   stoich_add.rxn_coeff = 1;
-  sprintf(stoich_add.met_name, "%s", metspace.metFromId(stoich_add.met_id).name);
+  sprintf(stoich_add.met_name, "%s", metspace[stoich_add.met_id].name);
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
   if(R <= 0) { rxn_add.lb = -bound; } else { rxn_add.lb = 0.0f; }
@@ -237,11 +237,11 @@ void GetTransportReactions(vector<METID> metIds, vector<int> rxnDirections, cons
   const METSPACE &metspace = ProblemSpace.metabolites;
 
   for(int i=0;i<metIds.size();i++) {
-    if(strcmp(metspace.metFromId(metIds[i]).name, _db.H_name) != 0) {
+    if(strcmp(metspace[metIds[i]].name, _db.H_name) != 0) {
       /* FindTransport4Metabolite already looks for the most likely and also will account for direction. */
       int temp = FindTransport4Metabolite(reaction,metspace,metIds[i],rxnDirections[i]);
       if(temp == -1){
-	TMPRXN = MagicTransport(reaction,metspace,metIds[i],metspace.metFromId(metIds[i]).name,0);
+	TMPRXN = MagicTransport(reaction,metspace,metIds[i],metspace.getMetObj(metIds[i]).name,0);
       } else {
 	TMPRXN = ProblemSpace.fullrxns.rxnFromId(temp);
       }
@@ -273,8 +273,8 @@ void GetExchangeReactions(vector<METID> metIdList, vector<int> dirs, const PROBL
     METABOLITE tmpMet;
 
     if(temp==-1) {
-      if(metspace.idIn(metIdList[i])) {
-	sprintf(name, "%s", ProblemSpace.metabolites.metFromId(metIdList[i]).name);
+      if(metspace.isIn(metIdList[i])) {
+	sprintf(name, "%s", ProblemSpace.metabolites[metIdList[i]].name);
 	TMPRXN = GrowthExit(rxnspace.rxns, metIdList[i], dirs[i], 1000, name); 
       } else {
 	/* Add the exchange anyway, but warn the user about possible perils... */

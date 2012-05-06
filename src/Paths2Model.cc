@@ -107,7 +107,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
     }
   }
 
-  vector<int> rxnsWithProdMet = allMets.metFromId(metToConsume).rxnsInvolved_nosec;
+  vector<int> rxnsWithProdMet = allMets[metToConsume].rxnsInvolved_nosec;
 
   vector<int> tmpSuggested;
   vector<bool> allCof;
@@ -159,9 +159,9 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
 
     bool metsIn = true;
     for(int j=0; j<tmp.stoich.size(); j++) {
-      METABOLITE tmpMet = ProblemSpace.metabolites.metFromId(tmp.stoich[j].met_id);
+      METABOLITE tmpMet = ProblemSpace.metabolites[tmp.stoich[j].met_id];
       if(tmpMet.secondary_lone == 1 | (!tmpMet.secondary_pair.empty())) { continue; }
-      if(!modelSynMets.idIn(tmpMet.id)) { metsIn = false; break; }
+      if(!modelSynMets.isIn(tmpMet.id)) { metsIn = false; break; }
     }
 
     if(!metsIn) { continue; }
@@ -175,7 +175,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
        and the only exception was accoa/coa, which was filled by PDH. */
     bool oneAllCof = true;
     for(int j=0; j<tmp.stoich.size(); j++) {
-      METABOLITE tmpMet = ProblemSpace.metabolites.metFromId(tmp.stoich[j].met_id);
+      METABOLITE tmpMet = ProblemSpace.metabolites[tmp.stoich[j].met_id];
       if(tmpMet.secondary_lone == 1 | (!tmpMet.secondary_pair.empty())) { continue; }
       oneAllCof = false;
       break;
@@ -200,7 +200,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
     METSPACE allmets = ProblemSpace.metabolites;
 
     METSPACE inputSpace(allmets, inputs);
-    METABOLITE output = allmets.metFromId(metToProduce);
+    METABOLITE output = allmets[metToProduce];
     int K = 5;
     vector<PATH> result;
 
@@ -218,14 +218,14 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
       /* Test inputs - all must be in the network (may not be a necessary check) */
       bool inputsIn = true;
       for(int j=0; j<result[i].inputIds.size(); j++) { 
-	if(!modelSynMets.idIn(result[i].inputIds[j])) { inputsIn = false; break; }
+	if(!modelSynMets.isIn(result[i].inputIds[j])) { inputsIn = false; break; }
       }
       if(!inputsIn) { continue; }
 
       /* Test dead ends (do the extra outputs lead anywhere?) - more important check */
       bool deadIn = true;
       for(int j=0; j<result[i].deadEndIds.size(); j++) {
-	if(!modelSynMets.idIn(result[i].deadEndIds[j])) { deadIn = false; break; }
+	if(!modelSynMets.isIn(result[i].deadEndIds[j])) { deadIn = false; break; }
       }
       if(!deadIn) { continue; }
 
@@ -532,18 +532,18 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
 
   // Existence check for metabolites in metsToCheck - add things that are missing to the metabolite list 
   for(int i=0; i<metsToCheck.size();i++) {
-    if(!workingMets.idIn(metsToCheck[i])) {
-      if(!allMets.idIn(metsToCheck[i])) { printf("ERROR: Metaboilte %d not found in allMets although it was in metsToCheck in checkReactionsAndTransporters.\n", (int)metsToCheck[i]);	throw;   }
-      workingMets.addMetabolite(allMets.metFromId(metsToCheck[i]));
+    if(!workingMets.isIn(metsToCheck[i])) {
+      if(!allMets.isIn(metsToCheck[i])) { printf("ERROR: Metaboilte %d not found in allMets although it was in metsToCheck in checkReactionsAndTransporters.\n", (int)metsToCheck[i]);	throw;   }
+      workingMets.addMetabolite(allMets[metsToCheck[i]]);
     }
 
     // Also add the pair (in case for example a metabolite that wasn't needed was included in the media 
     // Could cause issues if someone passes both a metabolite and its pair as mets to check so we check for that 
     // condition here  
     METID pairId = inOutPair(metsToCheck[i], allMets);
-    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets.metFromId(metsToCheck[i]).name, (int)metsToCheck[i]); throw; }
-    if(!workingMets.idIn(pairId)) {
-      workingMets.addMetabolite(allMets.metFromId(pairId));
+    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets[metsToCheck[i]].name, (int)metsToCheck[i]); throw; }
+    if(!workingMets.isIn(pairId)) {
+      workingMets.addMetabolite(allMets[pairId]);
     }
   }
 
@@ -574,8 +574,8 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
     }
     // Check for new metabolites added because of transporters and add them to the metabolite list
     for(int j=0;j<transporters[i].stoich.size();j++) {
-      if(!workingMets.idIn(transporters[i].stoich[j].met_id)) {
-	workingMets.addMetabolite(allMets.metFromId(transporters[i].stoich[j].met_id));
+      if(!workingMets.isIn(transporters[i].stoich[j].met_id)) {
+	workingMets.addMetabolite(allMets[transporters[i].stoich[j].met_id]);
       }
     }
   }

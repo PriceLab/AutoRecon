@@ -564,11 +564,11 @@ void addMetNameToStoichs(vector<REACTION> &reaction, METSPACE &metspace) {
     REACTION tmpRxn = reaction[i];
     /* Update stoich */
     for(int j=0;j<tmpRxn.stoich.size();j++) {
-      sprintf(reaction[i].stoich[j].met_name, "%s",  metspace.metFromId(tmpRxn.stoich[j].met_id).name);
+      sprintf(reaction[i].stoich[j].met_name, "%s",  metspace[tmpRxn.stoich[j].met_id].name);
     }
     /* Update stoich_part */
     for(int j=0;j<tmpRxn.stoich_part.size();j++) {
-      sprintf(reaction[i].stoich_part[j].met_name, "%s", metspace.metFromId(tmpRxn.stoich_part[j].met_id).name);
+      sprintf(reaction[i].stoich_part[j].met_name, "%s", metspace[tmpRxn.stoich_part[j].met_id].name);
     }
   }
   return;
@@ -579,7 +579,7 @@ void addMetNameToStoichs(vector<GROWTH> &growth, METSPACE &metspace) {
 
   for(int j=0;j<growth.size();j++){
     for(int i=0;i<growth[j].biomass.size();i++) {
-      sprintf(growth[j].biomass[i].met_name,"%s", metspace.metFromId(growth[j].biomass[i].met_id).name);
+      sprintf(growth[j].biomass[i].met_name,"%s", metspace[growth[j].biomass[i].met_id].name);
     }
   }
   return;
@@ -617,7 +617,7 @@ void makeMagicBridges(PROBLEM &ProblemSpace) {
 
   vector<REACTION> &reaction = ProblemSpace.synrxns.rxns;
   vector<METABOLITE> &metabolite = ProblemSpace.metabolites.mets;
-  map<int, METID> &metId2Idx = ProblemSpace.metabolites.Ids2Idx;
+  map<METID, METIDX> &metId2Idx = ProblemSpace.metabolites.Ids2Idx;
   
   /* Search for cofactor pairs */
   int ctr, flag;
@@ -661,7 +661,7 @@ void makeMagicBridges(PROBLEM &ProblemSpace) {
       tmp_stoich.reset();
       tmp_stoich.rxn_coeff = 1;
       tmp_stoich.met_id = metabolite[i].secondary_pair[j];
-      sprintf(tmp_stoich.met_name, "%s", ProblemSpace.metabolites.metFromId(metabolite[i].secondary_pair[j]).name);
+      sprintf(tmp_stoich.met_name, "%s", ProblemSpace.metabolites[metabolite[i].secondary_pair[j]].name);
       tmp_stoich_vec.push_back(tmp_stoich);
       
       tmp_rxn.stoich = tmp_stoich_vec;
@@ -750,10 +750,11 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
   for(int j=0; j<mustIds.size(); j++) {
     if(!requiredPresent[j]) { 
       STOICH tmpStoich;
-      METABOLITE tmpMet = ProblemSpace.metabolites.metFromId(mustIds[j]);
-      printf("WARNING: Biomass seems to be missing a metabolite %s that is required for NGAM calculations - adding to the biomass equation\n", tmpMet.name);
-      sprintf(tmpStoich.met_name, "%s", tmpMet.name);
-      tmpStoich.met_id = tmpMet.id;
+      //METABOLITE tmpMet = ProblemSpace.metabolites[mustIds[j]];
+      printf("WARNING: Biomass seems to be missing a metabolite %s that is required for NGAM calculations - adding to the biomass equation\n", 
+	     ProblemSpace.metabolites[mustIds[j]].name);
+      sprintf(tmpStoich.met_name, "%s", ProblemSpace.metabolites[mustIds[j]].name);
+      tmpStoich.met_id = ProblemSpace.metabolites[mustIds[j]].id;
       tmpStoich.rxn_coeff = 0.0f;
     }
   }
@@ -779,14 +780,15 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
     /* Check biomass */
     for(int j=0; j<growth[i].biomass.size(); j++) {
       METID growthId = growth[i].biomass[j].met_id;
-      if(!metspace.idIn(growthId)) {
+      if(!metspace.isIn(growthId)) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
 	printf("Inconsistent name: %s in the biomass had no corresponding ID in the metabolite file \n", growth[i].biomass[j].met_name);
 	assert(false);
       }
-      if( strcmp( metspace.metFromId(growthId).name , growth[i].biomass[j].met_name ) != 0 ) {
+      if( strcmp( metspace[growthId].name , growth[i].biomass[j].met_name ) != 0 ) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the biomass did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].biomass[j].met_name, metspace.metFromId(growthId).name);
+	printf("Inconsistent name: %s in the biomass did not correspond with %s in the metabolite file despite both having the same ID \n", 
+	       growth[i].biomass[j].met_name, metspace[growthId].name);
 	assert(false);
       }
     }
@@ -794,14 +796,15 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
     /* Check byproducts */
     for(int j=0; j<growth[i].byproduct.size(); j++) {
       METID growthId = growth[i].byproduct[j].id;
-      if(!metspace.idIn(growthId)) {
+      if(!metspace.isIn(growthId)) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
 	printf("Inconsistent name: %s in the byproducts had no corresponding ID in the metabolite file \n", growth[i].byproduct[j].name);
 	assert(false);
       }
-      if( strcmp( metspace.metFromId(growthId).name , growth[i].byproduct[j].name ) != 0 ) {
+      if( strcmp( metspace[growthId].name , growth[i].byproduct[j].name ) != 0 ) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the byproducts did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].byproduct[j].name, metspace.metFromId(growthId).name);
+	printf("Inconsistent name: %s in the byproducts did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].byproduct[j].name, 
+	       metspace[growthId].name);
 	assert(false);
       }
     }
@@ -809,14 +812,15 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
     /* Check media */
     for(int j=0; j<growth[i].media.size(); j++) {
       METID growthId = growth[i].media[j].id;
-      if(!metspace.idIn(growthId)) {
+      if(!metspace.isIn(growthId)) {
         printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
 	printf("Inconsistent name: %s in the media had no corresponding ID in the metabolite file \n", growth[i].media[j].name);
         assert(false);
       }
-      if( strcmp( metspace.metFromId(growthId).name , growth[i].media[j].name ) != 0 ) {
+      if( strcmp( metspace[growthId].name , growth[i].media[j].name ) != 0 ) {
         printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-        printf("Inconsistent name: %s in the media did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].media[j].name, metspace.metFromId(growthId).name);
+        printf("Inconsistent name: %s in the media did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].media[j].name, 
+	       metspace[growthId].name);
         assert(false);
       }
     }
