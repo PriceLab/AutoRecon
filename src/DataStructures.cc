@@ -187,6 +187,7 @@ void RXNSPACE::clear() {
   numRxns = 0;
 }
 
+/* NOTE - We need to make RXNID and RXNIDX here */
 REACTION & RXNSPACE::operator[](int idx) {
   assert(idx < rxns.size());
   return this->rxns[idx];
@@ -327,6 +328,7 @@ const REACTION* RXNSPACE::rxnPtrFromId(int id) const {
 }
 
 /* Returns a reaction index from an Id (does bounds-checking) */
+/* NOTE - this should be changed to a RXNIDX */
 int RXNSPACE::idxFromId(int id) const {
   map<int,int>::const_iterator it = Ids2Idx.find(id);
   if(it == Ids2Idx.end()) {
@@ -445,14 +447,8 @@ bool METSPACE::isIn(METIDX idx) const {
   else { return false; }
 }
 
-METABOLITE  & METSPACE::operator[](int idx) {
-  printf("Warning: int instead of METIDX\n");
-  assert(idx < mets.size());
-  return this->mets[idx];
-}
-
 METABOLITE & METSPACE::operator[](METIDX idx) {
-  assert(idx < mets.size());
+  assert(idx < mets.size() && idx >= 0);
   return this->mets[idx];
 }
 
