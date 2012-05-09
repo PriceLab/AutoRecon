@@ -272,6 +272,13 @@ class NETREACTION{
   bool operator==(const NETREACTION &rhs) const;
 };
 
+
+/* WARNING: 
+   When the new (LP-based) shortest path algorithm is implemented,
+   this class will go away!
+
+   The new algorithm will just output a PATHSUMMARY directly.
+*/
 class PATH{
  public:
   METID outputId; /* The Path by definition is trying to reach a specific output. This lists that 

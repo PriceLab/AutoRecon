@@ -538,6 +538,8 @@ void PROBLEM::clear() {
   growth.clear();
 }
 
+/* WARNING: When I implement the new shortest-path algorithm
+   this class will go away */
 PATH::PATH() {
   /* This flag is how you can tell if there was actually a path found or not - total likelihood
      will be > 0 if a path is found */
