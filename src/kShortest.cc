@@ -30,8 +30,7 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
   GRAPHSTORE tmp;
   calcMetRxnRelations_nosec(rxnspace, metspace);
 
-  set<BADIDSTORE> badIds;
-  PATH onePath = findShortestPath(rxnspace, metspace, inputs, output, badIds);
+  PATH onePath = findShortestPath(rxnspace, metspace, inputs, output);
   vector<PATH> tmpPath;
   tmpPath.push_back(onePath);
 
@@ -114,13 +113,12 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
 
 #pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
-      set<BADIDSTORE> dum;
       int dir = truedir.rxnFromId(currentRxnList[i]).net_reversible;
       if(dir!=tmp.path.rxnDirection[i] || 1){
 	tmp.excludedRxnIds.push_back(currentRxnList[i]);
 	tmpRxn.rxnPtrFromId(currentRxnList[i])->old_likelihood = tmpRxn.rxnPtrFromId(currentRxnList[i])->current_likelihood;
 	tmpRxn.rxnPtrFromId(currentRxnList[i])->current_likelihood = -1;
-	tmp.path = findShortestPath(tmpRxn, metspace, inputs, output, dum);
+	tmp.path = findShortestPath(tmpRxn, metspace, inputs, output);
       }
       else{
 	tmp.path = badPath;
@@ -168,14 +166,13 @@ void kShortest(vector<vector<PATH> > &result, RXNSPACE &rxnspace, METSPACE &mets
 
 void kShortest(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, METSPACE &inputs, METABOLITE output, int K) {
 
-  set<BADIDSTORE> badIds;
   priority_queue<GRAPHSTORE> L;
   GRAPHSTORE tmp;
   calcMetRxnRelations_nosec(rxnspace, metspace);
 
   /* The badIds will be the same all the time if they are needed [to troubleshoot no path
      found instances] so we only save the results of the first one (K=1) */
-  PATH onePath = findShortestPath(rxnspace, metspace, inputs, output, badIds);
+  PATH onePath = findShortestPath(rxnspace, metspace, inputs, output);
   int currentK = 0;
 
   /* Since this is the first one we leave the excluded reactions empty */
@@ -244,11 +241,10 @@ void kShortest(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, MET
 
 #pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
-      set<BADIDSTORE> dum;
       tmp.excludedRxnIds.push_back(currentRxnList[i]);
       tmpRxn.rxnPtrFromId(currentRxnList[i])->old_likelihood = tmpRxn.rxnPtrFromId(currentRxnList[i])->current_likelihood;
       tmpRxn.rxnPtrFromId(currentRxnList[i])->current_likelihood = -1;
-      tmp.path = findShortestPath(tmpRxn, metspace, inputs, output, dum);
+      tmp.path = findShortestPath(tmpRxn, metspace, inputs, output);
       temporaryList[i] = tmp;
       tmp.excludedRxnIds.pop_back();
       tmpRxn.rxnPtrFromId(currentRxnList[i])->current_likelihood = tmpRxn.rxnPtrFromId(currentRxnList[i])->old_likelihood;

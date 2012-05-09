@@ -626,35 +626,6 @@ PATHSUMMARY PATHSUMMARY::operator/(PATH &onepath){
   return *this;
 }
 
-BADIDSTORE::BADIDSTORE() {  badRxnId = -1; }
-
-bool BADIDSTORE::operator<(const BADIDSTORE &rhs) const {
-  BADIDSTORE lhs = *this;
-  /* order first by the reaction ID, then by the size of badMetIds, and finally by their values. */
-  if(lhs.badRxnId < rhs.badRxnId) { return true; }
-  if(lhs.badRxnId > rhs.badRxnId) { return false; }
-  /* badRxnId is equal */
-  if(lhs.badMetIds.size() < rhs.badMetIds.size() ) { return true; }
-  if(lhs.badMetIds.size() > rhs.badMetIds.size() ) { return false; }
-  /* size is equal */
-  for(int i=0; i<lhs.badMetIds.size(); i++) { 
-    if(lhs.badMetIds[i] < rhs.badMetIds[i]) { return true; }
-    if(lhs.badMetIds[i] > rhs.badMetIds[i]) { return false; }
-  }
-  /* Everything is equal (return false) */
-  return false;
-}
-
-bool BADIDSTORE::operator==(const BADIDSTORE &rhs) const {
-  BADIDSTORE lhs = *this;
-  if(lhs.badRxnId != rhs.badRxnId) { return false; }
-  if(lhs.badMetIds.size() != rhs.badMetIds.size()) { return false; }
-  for(int i=0; i<lhs.badMetIds.size(); i++) {
-    if(lhs.badMetIds[i] != rhs.badMetIds[i]) { return false; }
-  }
-  return true;
-}
-
 INNERPOPSTORE::INNERPOPSTORE() { score = 0.0f; }
 
 bool INNERPOPSTORE::operator<(const INNERPOPSTORE &rhs) const {

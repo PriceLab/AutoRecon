@@ -40,7 +40,6 @@ class PATHSUMMARY;
 
 class VALUESTORE;
 class GRAPHSTORE;
-class BADIDSTORE;
 
 class GAPFILLRESULT;
 class ANSWER;
@@ -337,20 +336,6 @@ class GAPFILLRESULT{
  public:  
   METID deadMetId; /* ID of any essential magic exits given the specified combination of PATHSUMMARY */
   vector< vector<int> > deadEndSolutions; /* Dijkstras solutions for metabolite deadMetId - deadEndSolutions[i] is the i'th shortest gapfill solution */
-};
-
-/* Setup for storage of ID's of reactions that cannot be used in Dijkstras algorithm and which metablites block them.
-   Since we use a SET to store them we need a "<" operator - I order them first by reaction ID and then by length of the met ID vectors,
-   and finally by the values in the met ID vector themselves (if they are the same)
-
-   To remove the values I also need an == operator. */
-class BADIDSTORE {
- public:
-  int badRxnId;
-  vector<int> badMetIds;
-  BADIDSTORE();
-  bool operator<(const BADIDSTORE &rhs) const;
-  bool operator==(const BADIDSTORE &rhs) const;
 };
 
 class INNERPOPSTORE {

@@ -18,9 +18,8 @@ using std::vector;
 using std::priority_queue;
 
 /* Graph is encoded in metabolite.rxnsInvolved_nosec */
-PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const METSPACE &inputs, const METABOLITE &output, set<BADIDSTORE> &badIds) {
+PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const METSPACE &inputs, const METABOLITE &output) {
 
-  badIds.clear();
   //printf("entering findShortestPath\n");
   /*Idx is basically the index of a metabolite still in Q 
     (the set of non-optimal points), and value is the
@@ -106,29 +105,6 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 	  break; 
 	}
       }
-
-      /* Note - it is NOT sufficient to just let the queue do its thing, we MUST explicitly identify all of
-	 the reactants as already having been reached optimally. Otherwise the code will incorrectly allow
-	 just one reactant to be present before labeling the products. 
-
-	 Try to keep track of reactions that we find blocked here so that we can go and try to un-block them later
-      */
-      bool notAllInputsPresent = false;
-      BADIDSTORE tmpBad;
-      for(int j=0; j<currentRxn->stoich_part.size(); j++) {
-	if(currentRxn->stoich_part[j].rxn_coeff * currentRxn->stoich_part[tmpIdx].rxn_coeff > 0.0f) {
-	  if(!isDoneAlready[metspace.idxFromId(currentRxn->stoich_part[j].met_id)]) { 
-	    notAllInputsPresent = true; 
-	    tmpBad.badRxnId = currentRxn->id;
-	    tmpBad.badMetIds.push_back(currentRxn->stoich_part[j].met_id);
-	  }
-	}
-      }
-      if(notAllInputsPresent) {
-	badIds.insert(tmpBad);
-	continue;
-      } else { badIds.erase(tmpBad); }
-
 
       for(int j=0; j<currentRxn->stoich_part.size();j++) {
 	if(currentRxn->stoich_part[j].rxn_coeff * currentRxn->stoich_part[tmpIdx].rxn_coeff > 0) { 
