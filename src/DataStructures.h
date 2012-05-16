@@ -120,7 +120,6 @@ class METSPACE{
   void clear();
   void removeMetFromBack();
   void addMetabolite(const METABOLITE &met);
-  //METABOLITE metFromId(METID id) const;
   METABOLITE getMetObj(METID id) const;
   METABOLITE* metPtrFromId(METID id);
   METIDX idxFromId(METID id) const;

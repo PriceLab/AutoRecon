@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
   vector<PATHSUMMARY> flat_unsyn = flattenPsum(unSynPsum);
   for(int i=0; i<flat_unsyn.size(); i++) {
     char fileName[1028];
-    sprintf(fileName, "./%s/%s_k%d.tsv", _myoutputdir, ProblemSpace.metabolites.metFromId(flat_unsyn[i].outputId).name, flat_unsyn[i].k_number);
+    sprintf(fileName, "./%s/%s_k%d.tsv", _myoutputdir, ProblemSpace.metabolites.getMetObj(flat_unsyn[i].outputId).name, flat_unsyn[i].k_number);
     ONEPATH_adj_list(fileName, flat_unsyn[i], ProblemSpace);
   }
 

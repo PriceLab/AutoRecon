@@ -630,7 +630,7 @@ void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBL
   FILE* output = fopen(fileName, "w");
   fprintf(output, "%s\t%s\t%s\t%s\n", "REACTION", "METABOLITE", "DIRECTION", "EDGEWEIGHT");
   for(int i=0; i<psum.rxnDirIds.size(); i++) {
-    REACTION tmprxn = problem.fullrxns.rxnFromId(abs(psum.rxnDirIds[i]));
+    REACTION tmprxn = problem.fullrxns.rxnFromId((RXNID)abs(psum.rxnDirIds[i]));
     for(int j=0; j<tmprxn.stoich.size(); j++) {
       int dir;
       if(tmprxn.net_reversible == 0) {
