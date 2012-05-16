@@ -16,9 +16,6 @@ vector<NETREACTION> ANSWER::etc;
 vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
-/* Can use this for any class that can be converted validly into an int 
-  Return type should be the second one */
-
 template <class T, class U> 
 U intTimes(const T& x, const U& y){
   int tempx = x;
