@@ -1,8 +1,8 @@
-#include <cstdio>
-#include <cstdlib>
-
 #ifndef MYCONST_H
 #define MYCONST_H
+
+#include <cstdio>
+#include <cstdlib>
 
 #define AR_MAXNAMELENGTH 256
 
@@ -46,7 +46,7 @@ class DEBUGFLAGS{
   int ETCFACTOR;
   int MINFACTORSPACING;
   int BRIDGEMETFACTOR;
-  int BIOMASS;
+  int BIOMASS; //why does RXNID not name a type when i put it here?
   /* Database conventions */
   char E_tag[8];
   char H_name[8];

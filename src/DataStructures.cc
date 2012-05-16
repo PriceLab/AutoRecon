@@ -16,6 +16,42 @@ vector<NETREACTION> ANSWER::etc;
 vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
+RXNDIRID operator*(const RXNID& x, const REV& y){
+  int tempx = x;
+  int tempy = y;
+  return (RXNDIRID) (x*y);
+}
+
+RXNDIRID operator*(const RXNDIRID& x, const REV& y){
+  int tempx = x;
+  int tempy = y;
+  return (RXNDIRID) (x*y);
+}
+
+RXNDIRID operator*(const REV& x, const RXNID& y){
+  int tempx = x;
+  int tempy = y;
+  return (RXNDIRID) (x*y);
+}
+
+REV operator*(const REV& x, const REV& y){
+  int tempx = x;
+  int tempy = y;
+  return (REV) (x*y);
+}
+
+REV convertRXNDIRID2REV(RXNDIRID x){
+  if(x > 0){return (REV)1;}
+  else{return (REV)-1;}
+}
+
+/*
+RXNID operator=(const RXNDIRID x){
+  int tempx = x;
+  return (RXNID) abs(x);
+}
+*/
+
 METABOLITE::METABOLITE() {
   //name = {0};
   input = 0;
@@ -172,7 +208,7 @@ RXNSPACE::RXNSPACE(const vector<REACTION> &rxnVec) {
   }
 }
 
-RXNSPACE::RXNSPACE(const RXNSPACE& existingSpace, const vector<int> &idSubset) {
+RXNSPACE::RXNSPACE(const RXNSPACE& existingSpace, const vector<RXNID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
     REACTION rxn = existingSpace.rxnFromId(idSubset[i]);
     rxns.push_back(rxn);
@@ -187,8 +223,7 @@ void RXNSPACE::clear() {
   numRxns = 0;
 }
 
-/* NOTE - We need to make RXNID and RXNIDX here */
-REACTION & RXNSPACE::operator[](int idx) {
+REACTION & RXNSPACE::operator[](RXNIDX idx) {
   assert(idx < rxns.size());
   return this->rxns[idx];
 }
@@ -235,14 +270,14 @@ void RXNSPACE::addReaction(const REACTION &rxn) {
 
 void RXNSPACE::removeRxnFromBack() {
   assert(rxns.size() > 0);
-  int id = rxns.back().id;
-  int idx = Ids2Idx[id];
+  RXNID  id  = rxns.back().id;
+  RXNIDX idx = Ids2Idx[id];
   rxns.pop_back();
   Ids2Idx.erase(id);
   numRxns--;
 }
 
-void RXNSPACE::changeId(int oldId, int newId) {
+void RXNSPACE::changeId(RXNID oldId, RXNID newId) {
   if(idIn(newId)) { printf("ERROR: Request to change ID to an ID already taken by a reaction in the RXNSPACE (in RXNSPACE::changeID)\n"); assert(false); }
   int idx = idxFromId(oldId);
   rxns[idx].id = newId;
@@ -260,7 +295,7 @@ void RXNSPACE::changeId(int oldId, int newId) {
    easier to keep track of the large number of RXNSPACE running around.
    
 */
-void RXNSPACE::changeReversibility(int id, int new_rev) {
+void RXNSPACE::changeReversibility(RXNID id, REV new_rev) {
   REACTION* ptr = rxnPtrFromId(id);
   /* new_rev = -1: set ub = 0 */
   if(new_rev == -1) { ptr->lb = -1000.0f; ptr->ub = 0.0f;  }
@@ -272,7 +307,7 @@ void RXNSPACE::changeReversibility(int id, int new_rev) {
 /* Change the lb of the reaction to new_lb
    Change net_reversible to +1 if the lb is > 0 and
    0 if the lb is < 0 and the ub is > 0 */
-void RXNSPACE::change_Lb(int id, double new_lb) {
+void RXNSPACE::change_Lb(RXNID id, double new_lb) {
   REACTION* ptr = rxnPtrFromId(id);
   assert(new_lb <= ptr->ub - 1E-8);
 
@@ -284,7 +319,7 @@ void RXNSPACE::change_Lb(int id, double new_lb) {
 
 /* Change the ub of the reaction to new_ub
    Change the net_reversible to -1 if lb is < 0 and 0 if the reaction can now go in either direction */
-void RXNSPACE::change_Ub(int id, double new_ub) {
+void RXNSPACE::change_Ub(RXNID id, double new_ub) {
   REACTION* ptr = rxnPtrFromId(id);
   assert(new_ub >= ptr->lb + 1E-8);
 
@@ -297,7 +332,7 @@ void RXNSPACE::change_Ub(int id, double new_ub) {
 /* If you know you want to change both the LB AND the UB... you can pass both here to avoid obnoxious assertions.
    I suggest doing this INSTEAD of modifying net_reversible... although I have written functions to let you do it either way.
 */
-void RXNSPACE::change_Lb_and_Ub(int id, double new_lb, double new_ub) {
+void RXNSPACE::change_Lb_and_Ub(RXNID id, double new_lb, double new_ub) {
   assert(new_lb <= new_ub + 1E-8);
 
   REACTION* ptr = rxnPtrFromId(id);
@@ -312,34 +347,33 @@ void RXNSPACE::change_Lb_and_Ub(int id, double new_lb, double new_ub) {
 
 /* Uses "find" function from map to allow us to declare constant RXNSPACE's
 Return a reaction with a given ID */
-REACTION RXNSPACE::rxnFromId(int id) const {
+REACTION RXNSPACE::rxnFromId(RXNID id) const {
   int idx = this->idxFromId(id);
   return rxns[idx];
 }
 
-REACTION* RXNSPACE::rxnPtrFromId(int id) {
+REACTION* RXNSPACE::rxnPtrFromId(RXNID id) {
   int idx = this->idxFromId(id);
   return &rxns[idx];
 }
 
-const REACTION* RXNSPACE::rxnPtrFromId(int id) const {
+const REACTION* RXNSPACE::rxnPtrFromId(RXNID id) const {
   int idx = this->idxFromId(id);
   return &rxns[idx];
 }
 
 /* Returns a reaction index from an Id (does bounds-checking) */
-/* NOTE - this should be changed to a RXNIDX */
-int RXNSPACE::idxFromId(int id) const {
-  map<int,int>::const_iterator it = Ids2Idx.find(id);
+RXNIDX RXNSPACE::idxFromId(RXNID id) const {
+  map<RXNID,RXNIDX>::const_iterator it = Ids2Idx.find(id);
   if(it == Ids2Idx.end()) {
     printf("FAILURE: Attempt to get an index for ID %d that is not in the RXNSPACE(%d)!\n", 
-	   id,(int)this->rxns.size());
+	   (int)id,(int)this->rxns.size());
     assert(it != Ids2Idx.end() );
   }
   return (it -> second);
 }
 
-bool RXNSPACE::idIn(int id) const {
+bool RXNSPACE::idIn(RXNID id) const {
   if(Ids2Idx.count(id) > 0) { return true; }
   else { return false; }
 }
@@ -447,8 +481,14 @@ bool METSPACE::isIn(METIDX idx) const {
   else { return false; }
 }
 
+METABOLITE  & METSPACE::operator[](int idx) {
+  printf("Warning: int instead of METIDX\n");
+  assert(0);
+  return this->mets[idx];
+}
+
 METABOLITE & METSPACE::operator[](METIDX idx) {
-  assert(idx < mets.size() && idx >= 0);
+  assert(idx < mets.size());
   return this->mets[idx];
 }
 
@@ -554,7 +594,6 @@ PATHSUMMARY PATHSUMMARY::clear(){
   this->likelihood = -1;
   this->growthIdx.clear();
   this->k_number = -1;
-  this->rxnPriority.clear();
   return *this;
 }
 
@@ -592,15 +631,12 @@ PATHSUMMARY PATHSUMMARY::operator=(PATH &onepath){
   this->rxnDirIds.clear();
   this->deadEndIds.clear();
   this->metsConsumed.clear();
-  this->rxnPriority.clear();
   for(int i=0;i<onepath.rxnIds.size();i++){
     this->rxnDirIds.push_back(onepath.rxnIds[i] * onepath.rxnDirection[i]);}
   for(int i=0;i<onepath.deadEndIds.size();i++){
     this->deadEndIds.push_back(onepath.deadEndIds[i]);}
   for(int i=0;i<onepath.metsConsumedIds.size();i++){
     this->metsConsumed.push_back(onepath.metsConsumedIds[i]);}
-  for(int i=0; i<onepath.rxnPriority.size(); i++) {
-    this->rxnPriority.push_back(onepath.rxnPriority[i]);  }
 
   this->likelihood = onepath.totalLikelihood;
   this->outputId = onepath.outputId;
@@ -611,16 +647,12 @@ PATHSUMMARY PATHSUMMARY::operator/(PATH &onepath){
   this->rxnDirIds.clear();
   this->deadEndIds.clear();
   this->metsConsumed.clear();
-  this->rxnPriority.clear();
   for(int i=0;i<onepath.rxnIds.size();i++){
-    this->rxnDirIds.push_back(-onepath.rxnIds[i] * onepath.rxnDirection[i]);}
+    this->rxnDirIds.push_back(onepath.rxnIds[i] * onepath.rxnDirection[i] * (REV) -1);}
   for(int i=0;i<onepath.deadEndIds.size();i++){
     this->deadEndIds.push_back(onepath.deadEndIds[i]);}
   for(int i=0;i<onepath.metsConsumedIds.size();i++){
     this->metsConsumed.push_back(onepath.metsConsumedIds[i]);}
-  for(int i=0; i<onepath.rxnPriority.size(); i++) {
-    this->rxnPriority.push_back(onepath.rxnPriority[i]);  }  
-
   this->likelihood = onepath.totalLikelihood;
   this->outputId = onepath.outputId;
   return *this;

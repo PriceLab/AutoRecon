@@ -88,11 +88,11 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   if(_db.DEBUGSYN){
     for(int i=0; i<ProblemSpace.synrxns.rxns.size();i++) {
       if(ProblemSpace.synrxns.rxns[i].syn.size() > 1) {
-	printf("SYN %d: ", ProblemSpace.synrxns.rxns[i].id);
+	printf("SYN %d: ", (int) ProblemSpace.synrxns.rxns[i].id);
 	for(int j=0;j<ProblemSpace.synrxns.rxns[i].syn.size();j++) {
 	  printf("%s(%d) ;  ", 
 		 ProblemSpace.fullrxns.rxnFromId(ProblemSpace.synrxns.rxns[i].syn[j]).name, 
-		 ProblemSpace.synrxns.rxns[i].syn[j]);
+		 (int) ProblemSpace.synrxns.rxns[i].syn[j]);
 	}
 	printf("\n");
       }
@@ -103,7 +103,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
     printf("METRXNRELATIONS:\n");
     for(int i=0;i<ProblemSpace.metabolites.mets.size();i++) {
       printf("%s:  ", ProblemSpace.metabolites.mets[i].name);
-      printIntVector(ProblemSpace.metabolites.mets[i].rxnsInvolved_nosec);
+      printVector(ProblemSpace.metabolites.mets[i].rxnsInvolved_nosec);
     }
   }
 
@@ -476,7 +476,7 @@ void GoodReversible(PROBLEM &ProblemSpace){
 	temp.init_likelihood = -3; /* BLACK MAGIC */
 	strcat(temp.name,"_REV");
 	ProblemSpace.synrxnsR.addReaction(temp);
-	ProblemSpace.synrxnsR.changeReversibility(temp.id, temp.init_reversible * -1);
+	ProblemSpace.synrxnsR.changeReversibility(temp.id, temp.init_reversible * (REV) -1);
       }
     }
   }
@@ -486,7 +486,7 @@ void GoodReversible(PROBLEM &ProblemSpace){
 /* Reverse reversibility of all reactions (for gapfilling) */
 void ReverseReversible(vector<REACTION> &reaction){
   for(int i=0;i<reaction.size();i++){
-    reaction[i].net_reversible *= -1;
+    reaction[i].net_reversible = reaction[i].net_reversible * (REV) -1;
   }
   return;
 }
@@ -556,7 +556,7 @@ void calcMetRxnRelations(const RXNSPACE &rxnspace, METSPACE &metspace) {
     for(int j=0;j<currentRxn.stoich.size();j++) {
       //      if(currentRxn.id < _db.MAGICBRIDGEFACTOR || currentRxn.id > _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING){
       if(metspace.isIn(currentRxn.stoich[j].met_id)) {
-	metspace.mets[metspace.idxFromId(currentRxn.stoich[j].met_id)].rxnsInvolved_nosec.push_back(currentRxn.id);
+	metspace[currentRxn.stoich[j].met_id].rxnsInvolved_nosec.push_back(currentRxn.id);
       }
       // }
     }
@@ -569,19 +569,17 @@ void calcMetRxnRelations(const RXNSPACE &rxnspace, METSPACE &metspace) {
 void calcMetRxnRelations_nosec(const RXNSPACE &rxnspace, METSPACE &metspace) {
 
   unsigned int rxnSize = rxnspace.rxns.size();
-  unsigned int metSize = metspace.mets.size();
 
   /* Clear out any existing rxnsInvolved */
   //printf("Note - calcMetRxnRelations_nosec clears out any existing relationships!\n");
-  for(int i=0;i<metSize;i++) {
-    metspace.mets[i].rxnsInvolved_nosec.clear();
+  for(int i=0;i<metspace.mets.size();i++) {
+    metspace[(METIDX)i].rxnsInvolved_nosec.clear();
   }
 
   for(int i=0;i<rxnSize;i++) {
     const REACTION& currentRxn = rxnspace.rxns[i];
     for(int j=0;j<currentRxn.stoich_part.size();j++) {
-      int metIdx = metspace.idxFromId(currentRxn.stoich_part[j].met_id);
-      metspace.mets[metIdx].rxnsInvolved_nosec.push_back(currentRxn.id);
+      metspace[currentRxn.stoich_part[j].met_id].rxnsInvolved_nosec.push_back(currentRxn.id);
     }
   }
 }

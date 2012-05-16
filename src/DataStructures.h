@@ -19,10 +19,31 @@ using std::string;
 BOOST_STRONG_TYPEDEF(int,METID);
 BOOST_STRONG_TYPEDEF(int,METIDX);
 BOOST_STRONG_TYPEDEF(int,RXNID);
+
+class REV {
+ public:
+  REV(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  REV(){};
+};
+
+class RXNDIRID {
+ public:
+  RXNDIRID(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  RXNDIRID(){};
+};
+
+//BOOST_STRONG_TYPEDEF(int,RXNDIRID);
 BOOST_STRONG_TYPEDEF(int,RXNIDX);
-BOOST_STRONG_TYPEDEF(int,GROWID);
+//BOOST_STRONG_TYPEDEF(int,GROWID);
 BOOST_STRONG_TYPEDEF(int,GROWIDX);
-BOOST_STRONG_TYPEDEF(int,REV);
+REV convertRXNDIRID2REV(RXNDIRID x);
+
 
 /* Input data classes */
 struct MEDIA;
@@ -54,35 +75,35 @@ class RXNSPACE{
 
   RXNSPACE();
   RXNSPACE(const vector<REACTION> &rxnVec);
-  RXNSPACE(const RXNSPACE& existingSpace, const vector<int> &idSubset);
+  RXNSPACE(const RXNSPACE& existingSpace, const vector<RXNID> &idSubset);
 
   void clear();
 
-  void changeReversibility(int id, int new_rev);
-  void change_Lb(int id, double new_lb);
-  void change_Ub(int id, double new_ub);
-  void change_Lb_and_Ub(int id, double new_lb, double new_ub);
+  void changeReversibility(RXNID id, REV new_rev);
+  void change_Lb(RXNID id, double new_lb);
+  void change_Ub(RXNID id, double new_ub);
+  void change_Lb_and_Ub(RXNID id, double new_lb, double new_ub);
 
-  void changeId(int oldId, int newId);
+  void changeId(RXNID oldId, RXNID newId);
 
   void addReactionVector(const vector<REACTION> &rxnVec);
   void addReaction(const REACTION &rxn);
   void removeRxnFromBack();
-  REACTION rxnFromId(int id) const;
-  REACTION* rxnPtrFromId(int id);
-  const REACTION* rxnPtrFromId(int id) const;
-  int idxFromId(int id) const;
-  bool idIn(int id) const;
+  REACTION rxnFromId(RXNID id) const;
+  REACTION* rxnPtrFromId(RXNID id);
+  const REACTION* rxnPtrFromId(RXNID id) const;
+  RXNIDX idxFromId(RXNID id) const;
+  bool idIn(RXNID id) const;
   void rxnMap();
 
   RXNSPACE operator=(const RXNSPACE& init);
-  REACTION & operator[](int idx);
+  REACTION & operator[](RXNIDX idx);
   bool operator==(const RXNSPACE &rhs);
 
  private:
   /* Note - this is just a REFERENCE POINT - it always starts at 0 and all changes to ATPM are relative to whatever the user inputs */
   double currentAtpm;
-  map<int,int> Ids2Idx;
+  map<RXNID,RXNIDX> Ids2Idx;
   int numRxns;
 
 };
@@ -190,7 +211,7 @@ class METABOLITE{
   double modifier; /* Reserved for things that can be used to modify metabolite cost in Dijkstras algorithm, such as metabolomics data or other thigns we calculate */
   
   /* Connected reactions (computed) */
-  vector<int> rxnsInvolved_nosec;
+  vector<RXNID> rxnsInvolved_nosec;
   
   METABOLITE();
   void reset();
@@ -215,9 +236,9 @@ class STOICH{
 class REACTION{
  public:
   
-  int id; /* ID */
+  RXNID id; /* ID */
   bool transporter; /* TRUE if it is a transport reaction */
-  int transportedMetabolite; /* Metabolite ID for transported metabolite */
+  METID transportedMetabolite; /* Metabolite ID for transported metabolite */
   char name[AR_MAXNAMELENGTH];
   vector<STOICH> stoich; /* Full chemical reaction */
 
@@ -234,16 +255,16 @@ class REACTION{
 			     -5 NOT ON HIT LIST
 			  */
 
-  int init_reversible; /* -1 backwards only, 0 reversible, 1 forward only */
+  REV init_reversible; /* -1 backwards only, 0 reversible, 1 forward only */
   vector<ANNOTATION> annote; /* List of gene annotations */
 
   /***** Calculated quantities ******/
   bool freeMakeFlag;
-  vector<int> syn;    /* Special vector for storing reactions in the same reaction-class */
-  int revPair; /* The iD of the reaction gonig the other way in the network (if there is one) and -1 if none */
+  vector<RXNID> syn;    /* Special vector for storing reactions in the same reaction-class */
+  RXNID revPair; /* The iD of the reaction gonig the other way in the network (if there is one) and -1 if none */
   double current_likelihood;   /* Likelihood used by Dijkstras - after modifying them, put them here */
   double old_likelihood; /* Temporary storage used by K-shortest to save old likelihood when setting new one to -1 */
-  int net_reversible;   /* Reversibility used by Dijkstras and Simplex */
+  REV net_reversible;   /* Reversibility used by Dijkstras and Simplex */
   double lb;  double ub; /* LB and UB (should be consistent with net_reversible - net_reversible < 0 means lb < 0 and ub = 0) */
   
   bool operator==(const REACTION &rhs) const;
@@ -267,7 +288,7 @@ struct ANNOTATION{
 class NETREACTION{
  public:
   /* Reaction IDs that create the NETREACTION (negative numbers are used in reverse) */
-  vector<int> rxnDirIds;
+  vector<RXNDIRID> rxnDirIds;
   /* The NETREACTION itself */
   REACTION rxn;
   bool operator==(const NETREACTION &rhs) const;
@@ -278,14 +299,13 @@ class PATH{
   METID outputId; /* The Path by definition is trying to reach a specific output. This lists that 
 		   output */
   vector<METID> inputIds; /* Inputs that were needed to reach the output */
-  vector<int> rxnIds; /* Reactions in the path */
-  vector<int> rxnDirection; /* Dijkstras will return this... which direction is the rxn going in 
+  vector<RXNID> rxnIds; /* Reactions in the path */
+  vector<REV> rxnDirection; /* Dijkstras will return this... which direction is the rxn going in 
 			       the particular path? */
   vector<METID> metsConsumedIds; /* Metabolites that are nodes on the path tree for this particular 
 				  path */
   vector<METID> deadEndIds; /* Dead end metabolites on the way to reach the specified output 
 			     (EMPTY if no path is found) */
-  vector<int> rxnPriority; /* Priority for particular reaction [higher priority means the reaction was closer to the beginning of the pathway] - useful for gapfind */
   double totalLikelihood; /* Sum of provided likelihoods for a given path */
   PATH();
 };
@@ -299,8 +319,8 @@ class PATHSUMMARY{
 		    this? I guess since we'll number the growth ourselves and probably just 
 		    enumerate it will be the same thing */
   int k_number; /* I assume this is whether this is the 1st, 2nd or kth path in a list */
-  vector<int> rxnDirIds;
-  vector<int> rxnPriority;
+  vector<RXNDIRID> rxnDirIds;
+  vector<RXNID> rxnPriority; /*not even sure what this does   just making it work*/
   vector<METID> deadEndIds;
   vector<METID> metsConsumed;
   double likelihood;
@@ -328,7 +348,7 @@ class VALUESTORE{
    We exclude specific reactions from a particular PATH and then pass those onto the next iteration */
 class GRAPHSTORE{
  public:
-  vector<int> excludedRxnIds;
+  vector<RXNID> excludedRxnIds;
   PATH path;  
   bool operator<(const GRAPHSTORE &rhs) const { return this[0].path.totalLikelihood > rhs.path.totalLikelihood; }
 };
@@ -336,7 +356,7 @@ class GRAPHSTORE{
 class GAPFILLRESULT{
  public:  
   METID deadMetId; /* ID of any essential magic exits given the specified combination of PATHSUMMARY */
-  vector< vector<int> > deadEndSolutions; /* Dijkstras solutions for metabolite deadMetId - deadEndSolutions[i] is the i'th shortest gapfill solution */
+  vector< vector<RXNID> > deadEndSolutions; /* Dijkstras solutions for metabolite deadMetId - deadEndSolutions[i] is the i'th shortest gapfill solution */
 };
 
 /* Setup for storage of ID's of reactions that cannot be used in Dijkstras algorithm and which metablites block them.
@@ -347,7 +367,7 @@ class GAPFILLRESULT{
 class BADIDSTORE {
  public:
   int badRxnId;
-  vector<int> badMetIds;
+  vector<METID> badMetIds;
   BADIDSTORE();
   bool operator<(const BADIDSTORE &rhs) const;
   bool operator==(const BADIDSTORE &rhs) const;
@@ -357,7 +377,7 @@ class INNERPOPSTORE {
  public:
   double score;
   vector<int> whichK;
-  vector<int> essentialExits;
+  vector<RXNID> essentialExits;
   INNERPOPSTORE();
   bool operator<(const INNERPOPSTORE &rhs) const;
   bool operator==(const INNERPOPSTORE &rhs) const;

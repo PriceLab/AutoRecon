@@ -385,8 +385,9 @@ void visualizePathSummary2File(const char* fileBase, const char* label, const ve
     vector<PATHSUMMARY> tmpP; tmpP.push_back(psum[i]);
 
     /* Get a list of metabolites from reactions in the pList (needed later...) */
-    vector<int> allRxnIds = getAllPathRxns(tmpP);
-    for(int i=0; i<allRxnIds.size(); i++) { allRxnIds[i] = abs(allRxnIds[i]); }
+    vector<RXNDIRID> allRxnDirIds = getAllPathRxns(tmpP);
+    vector<RXNID> allRxnIds;
+    for(int i=0; i<allRxnDirIds.size(); i++) { allRxnIds.push_back((RXNID) abs(allRxnIds[i])); }
     
     RXNSPACE modelRxns; 
     switch(useSyn) {

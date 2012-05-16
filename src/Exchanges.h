@@ -20,9 +20,8 @@ void GetTransportReactions(vector<METID> metIds, vector<int> rxnDirection, const
 void GetTransportReactionsFromGrowth(const GROWTH &growth, vector<int> rxnDirection, const PROBLEM &ProblemSpace, 
 				     vector<REACTION> &Transporters);
 
-int FindExchange4Metabolite(const vector<REACTION> &reaction, METID met_id);
-int FindExchange4Metabolite(const vector<REACTION> &reaction, METID met_id);
-int FindTransport4Metabolite(const vector<REACTION> &reaction, METID met_id, int rxnDirection);
+RXNID FindExchange4Metabolite(const vector<REACTION> &reaction, METID met_id);
+RXNID FindTransport4Metabolite(const vector<REACTION> &reaction, METID met_id, REV rxnDirection);
 
 
 #endif

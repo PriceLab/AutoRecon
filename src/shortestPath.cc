@@ -30,10 +30,10 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
   /* Bookkeeping of various sorts */
   vector<bool> isDoneAlready(metspace.mets.size(), false);
   vector<double> values(metspace.mets.size(), 0.0f);
-  map<int, bool> metsExplored;
+  map<METID, bool> metsExplored;
 
   /* For tracing back - maps met ID to reaction ID */
-  map<int, int> precursorRxnIds;
+  map<METID, RXNID> precursorRxnIds;
 
   /* Initialize */
   for(int i=0; i<metspace.mets.size();i++) {
@@ -62,9 +62,9 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
   while(nodeList.size() > 0) {
 
-    vector<int> reactionList;
+    vector<RXNID> reactionList;
     VALUESTORE tmp = nodeList.top();
-    int tmpValIdx = metspace.idxFromId(tmp.id);
+    METIDX tmpValIdx = metspace.idxFromId(tmp.id);
     nodeList.pop(); /* Actually remove the highest value (since top() doens't remove it) */
 
     if(isDoneAlready[tmpValIdx]) {
@@ -91,7 +91,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
     reactionList = metspace.mets[tmpValIdx].rxnsInvolved_nosec;
 
     for(int i=0; i<reactionList.size();i++) {
-      vector<int> modifiedMetIdx;
+      vector<METIDX> modifiedMetIdx;
       vector<METID> products;
       double reactantValue(0.0f);
       const REACTION* currentRxn = rxnspace.rxnPtrFromId(reactionList[i]);
@@ -138,7 +138,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
       /* Check for other negative likelihoods. If any exist Dijkstras will die a horrible, horrible death */
       if(currentRxn->current_likelihood < 0) {
-	printf("ERROR: in Dijkstras algorithm - NEGATIVE LIKELIHOOD %1.2f for REACTION %d\n", currentRxn->current_likelihood, currentRxn->id);
+	printf("ERROR: in Dijkstras algorithm - NEGATIVE LIKELIHOOD %1.2f for REACTION %d\n", currentRxn->current_likelihood, (int) currentRxn->id);
 	assert(currentRxn->current_likelihood >= 0);
       }
 
@@ -146,7 +146,7 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
       for(int j=0; j<products.size();j++) {
 	double newValue = reactantValue + currentRxn->current_likelihood;
-	int prodIdx = metspace.idxFromId(products[j]);
+	METIDX prodIdx = metspace.idxFromId(products[j]);
         if(values[prodIdx] > newValue ) {
 	  values[prodIdx] = newValue;
 	  precursorRxnIds[products[j]] = reactionList[i];
@@ -174,9 +174,9 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
   /* Trace the path back */
   queue<METID> dfsList; dfsList.push(output.id);
-  vector<int> rxnIds;
+  vector<RXNID> rxnIds;
   vector<METID> inputIdList;
-  vector<int> rxnDirections; /* -1 if used in negative direction and +1 in positive direction */
+  vector<REV> rxnDirections; /* -1 if used in negative direction and +1 in positive direction */
   /* Note - at the end of this, "explored" should be TRUE for anything in the path and FALSE for everything else */
 
   tracePath(metspace, rxnspace, precursorRxnIds, metsExplored, rxnIds, inputIdList, rxnDirections, dfsList);
@@ -191,14 +191,9 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
   tracedPath.totalLikelihood = values[metspace.idxFromId(output.id)];
   for(int i=0; i<metsExplored.size();i++) {
     /* FIXME: We want to include inputs but NOT outputs here? */
-    if(metsExplored[i]) {
+    if(metsExplored[(METID) i]) { /*So confused, the way this cycles through, how can this be anything but a METIDX - MATT?? Yet in other places, we are placing METIDs in here */
       tracedPath.metsConsumedIds.push_back(metspace.mets[i].id);
     }
-  }
-  /* Assign priorities - the first element in the resulting list has the highest priority, the second element has the second highest, etc... 
-   Since the synthesis reaction is first in the rxnIds list and the inputs are (should be) last... we need to reverse it as seen here */
-  for(int i=rxnIds.size()-1; i>=0; i--) {
-    tracedPath.rxnPriority.push_back(rxnIds[i]);
   }
 
   /* Identify dead ends */
@@ -227,9 +222,11 @@ PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const 
 
  Note that if we get an indexing out of bounds here that indicates I messed up the code... */
 
-void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>  &precursorRxnIds, map<int, bool> &metsExplored, vector<int> &rxnIds, vector<METID> &inputIds, 
-	       vector<int> &rxnDirections, queue<METID> &nodeList) {
-
+void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, 
+	       map<METID, RXNID>  &precursorRxnIds, map<METID, bool> &metsExplored, 
+	       vector<RXNID> &rxnIds, vector<METID> &inputIds, 
+	       vector<REV> &rxnDirections, queue<METID> &nodeList) {
+  /*MATT - That's a METIDX, right?*/
   /* Termination condition - nothing left in the queue! */
   if(nodeList.size() == 0) { 
     return; 
@@ -237,7 +234,7 @@ void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>
 
   METID currentNodeId = nodeList.front();
   nodeList.pop();
-  int currentEdgeId = precursorRxnIds[currentNodeId];
+  RXNID currentEdgeId = precursorRxnIds[currentNodeId];
 
   metsExplored[currentNodeId] = true;
 
@@ -249,11 +246,11 @@ void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>
   }
   assert(currentEdgeId != -2);
 
-  int sgn(0);
+  REV sgn = (REV)0;
   const REACTION* rxn = rxnspace.rxnPtrFromId(currentEdgeId);
   for(int i=0; i<rxn->stoich_part.size();i++) {
     if(rxn->stoich_part[i].met_id == currentNodeId) {
-      if(rxn->stoich_part[i].rxn_coeff < 0) { sgn = -1; } else { sgn = 1; };
+      if(rxn->stoich_part[i].rxn_coeff < 0) { sgn = (REV) -1; } else { sgn = (REV) 1; };
       break;
     }
   }
@@ -277,11 +274,11 @@ void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, map<int, int>
 
 /* Find metabolites opposite of metId in a reaction (based on stoich_part) */
 /* 6-14-11: CONFIRMED working by printout */
-vector<METID> opposite(const REACTION* rxn, METID metId, int sgn) {
+vector<METID> opposite(const REACTION* rxn, METID metId, REV sgn) {
 
     vector<METID> finalList;
     for(int i=0; i<rxn->stoich_part.size();i++) {
-      if(sgn*rxn->stoich_part[i].rxn_coeff < 0) {
+      if((int)sgn*rxn->stoich_part[i].rxn_coeff < 0) {
 	finalList.push_back(rxn->stoich_part[i].met_id);
       }
     }

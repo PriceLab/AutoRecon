@@ -23,10 +23,30 @@ void printIntMap(map<int, int> intMap) {
   return;
 }
 
-
 void printIntVector(vector<int> intVector) {
   if(intVector.empty()) {printf("EMPTY\n"); return;}
-  for(int i=0;i<intVector.size();i++)  { printf("%d ", intVector[i]);  }
+  for(int i=0;i<intVector.size();i++)  { printf("%d ", (int) intVector[i]);  }
+  printf("\n");
+  return;
+}
+
+void printVector(vector<RXNID> intVector) {
+  if(intVector.empty()) {printf("EMPTY\n"); return;}
+  for(int i=0;i<intVector.size();i++)  { printf("%d ", (int) intVector[i]);  }
+  printf("\n");
+  return;
+}
+
+void printVector(vector<REV> intVector) {
+  if(intVector.empty()) {printf("EMPTY\n"); return;}
+  for(int i=0;i<intVector.size();i++)  { printf("%d ", (int) intVector[i]);  }
+  printf("\n");
+  return;
+}
+
+void printVector(vector<RXNDIRID> intVector) {
+  if(intVector.empty()) {printf("EMPTY\n"); return;}
+  for(int i=0;i<intVector.size();i++)  { printf("%d ", (int) intVector[i]);  }
   printf("\n");
   return;
 }
@@ -149,18 +169,18 @@ void printGROWTHinputs(const GROWTH &growth){
 
 void printSynRxns(const RXNSPACE &synrxns, const RXNSPACE &fullrxns) {
   for(int i=0; i<synrxns.rxns.size(); i++) {
-    printf("Reaction %s (rev=%d) synrxns: ", synrxns.rxns[i].name, synrxns.rxns[i].net_reversible);
+    printf("Reaction %s (rev=%d) synrxns: ", synrxns.rxns[i].name, (int)synrxns.rxns[i].net_reversible);
     for(int j=0; j<synrxns.rxns[i].syn.size(); j++) {
-      printf("%s (rev=%d); ", fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).name, fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).net_reversible);
+      printf("%s (rev=%d); ", fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).name, (int)fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).net_reversible);
     }
     printf("\n");
   }
 }
 
 void printREACTIONintermediates(const REACTION &reaction, int print_type){
-  printf("\tid: %05d\n",reaction.id);
+  printf("\tid: %05d\n",(int)reaction.id);
   printf("\tname: %s\n",reaction.name);
-  printf("\treversible: %d  ",reaction.net_reversible);
+  printf("\treversible: %d  ",(int)reaction.net_reversible);
   if(reaction.net_reversible==0){ printf("(YES)\n");}
   if(reaction.net_reversible==-1){ printf("(NO - BACKWARDS)\n");}
   if(reaction.net_reversible==1){ printf("(NO - FORWARDS)\n");}
@@ -190,7 +210,7 @@ void printREACTIONintermediates(const REACTION &reaction, int print_type){
   if(reaction.syn.size()>1){
     printf("\tSYNONYMS: ");
     for(int i=0;i<reaction.syn.size();i++){
-      printf("%05d, ",reaction.syn[i]);
+      printf("%05d, ",(int)reaction.syn[i]);
     }
     printf("\n\n--------------------\n");
   }
@@ -236,9 +256,9 @@ void printREACTIONvector(const vector<REACTION> &reaction, int print_type) {
 }
 
 void printREACTIONinputs(const REACTION &reaction, int print_type){
-  printf("\tid: %05d\n",reaction.id);
+  printf("\tid: %05d\n",(int)reaction.id);
   printf("\tname: %s\n",reaction.name);
-  printf("\tinit_reversible: %d  ",reaction.init_reversible);
+  printf("\tinit_reversible: %d  ",(int)reaction.init_reversible);
   if(reaction.init_reversible==0){ printf("(YES)\n");}
   if(reaction.init_reversible==-1){ printf("(NO - BACKWARDS)\n");}
   if(reaction.init_reversible==1){ printf("(NO - FORWARDS)\n");}
@@ -246,7 +266,7 @@ void printREACTIONinputs(const REACTION &reaction, int print_type){
   printf("\tFree make: %d ", reaction.freeMakeFlag);
   if(reaction.freeMakeFlag == 1) { printf("(YES)\n"); } else { printf("(NO)\n"); }
 
-  printf("\tnet_reversible: %d \n", reaction.net_reversible);
+  printf("\tnet_reversible: %d \n", (int)reaction.net_reversible);
   printf("\tLower bound: %f\n", reaction.lb);
   printf("\tUpper bound: %f\n", reaction.ub);
   printf("\ttransporter: %d  ",reaction.transporter);
@@ -286,17 +306,26 @@ void printREACTIONinputs(const REACTION &reaction, int print_type){
 }
 
 
-void printRxnsFromIntVector(const vector<int> &intVector, const RXNSPACE &rxnspace) {
+void printRxnsFromIntVector(const vector<RXNID> &intVector, const RXNSPACE &rxnspace) {
   if(intVector.empty()) {printf("EMPTY\n"); return;}
   for(int i=0;i<intVector.size();i++){
-    printf("%s(%4.3f) ", rxnspace.rxnFromId(abs(intVector[i])).name, rxnspace.rxnFromId(abs(intVector[i])).init_likelihood);
+    printf("%s(%4.3f) ", rxnspace.rxnFromId(intVector[i]).name, rxnspace.rxnFromId(intVector[i]).init_likelihood);
   }
   printf("\n");
 }
 
-void printRxnsFromIntSet(const set<int> &intSet, const RXNSPACE &rxnspace) {
+void printRxnsFromIntVector(const vector<RXNDIRID> &intVector, const RXNSPACE &rxnspace) {
+  if(intVector.empty()) {printf("EMPTY\n"); return;}
+  for(int i=0;i<intVector.size();i++){
+    printf("%s(%4.3f) ", rxnspace.rxnFromId((RXNID) abs(intVector[i])).name, 
+	   rxnspace.rxnFromId((RXNID) abs(intVector[i])).init_likelihood);
+  }
+  printf("\n");
+}
+
+void printRxnsFromIntSet(const set<RXNID> &intSet, const RXNSPACE &rxnspace) {
   if(intSet.empty()) { printf("EMPTY\n"); return; }
-  for(set<int>::iterator it=intSet.begin(); it!=intSet.end(); it++) {
+  for(set<RXNID>::iterator it=intSet.begin(); it!=intSet.end(); it++) {
     printf("%s(%4.3f) ", rxnspace.rxnFromId(*it).name, rxnspace.rxnFromId(*it).init_likelihood);
   }
   printf("\n");
@@ -359,7 +388,7 @@ void printNetReactionVector(const vector<NETREACTION> &netReactions, const PROBL
   for(int i=0; i<netReactions.size(); i++) {
     printf("ETC %d: ", i);
     for(int j=0; j<netReactions[i].rxnDirIds.size(); j++) {
-      REACTION tmpRxn = problemSpace.fullrxns.rxnFromId(abs(netReactions[i].rxnDirIds[j]));
+      REACTION tmpRxn = problemSpace.fullrxns.rxnFromId((RXNID)abs(netReactions[i].rxnDirIds[j]));
       printf("%s(%4.3f)\t", tmpRxn.name, tmpRxn.init_likelihood);
     }
     printf("\n");
@@ -373,7 +402,7 @@ void printNetReactionVector(const vector<NETREACTION> &netReactions, const PROBL
 void PrintPathSummary_verbose(const PATHSUMMARY &psum) {
   printf("----------------------------------------\n");
   printf("RxnDirIds:");
-  printIntVector(psum.rxnDirIds);
+  printVector(psum.rxnDirIds);
   printf("deadEndIds:");
   printVector(psum.deadEndIds);
   printf("AllMetsConsumed:");
@@ -390,7 +419,7 @@ void PrintPathSummary(const vector<vector<vector<PATHSUMMARY> > > &psum){
     for(j=0;j<psum[i].size();j++){
       for(k=0;k<psum[i][j].size();k++){
         printf("-%d-%d-%d- ",i,j,k);
-        printIntVector(psum[i][j][k].rxnDirIds);
+        printVector(psum[i][j][k].rxnDirIds);
       }
     }
   }
@@ -405,9 +434,9 @@ void printPathResults(const vector<PATH> &path) {
     printf("Number of reactions: ");
     printf("%d\n", (int)path[i].rxnIds.size());
     printf("Reactions required: ");
-    printIntVector(path[i].rxnIds);
+    printVector(path[i].rxnIds);
     printf("Reaction directionality: ");
-    printIntVector(path[i].rxnDirection);
+    printVector(path[i].rxnDirection);
     printf("Total likelihood: %4.3f \n\n", path[i].totalLikelihood);
     printf("Dead ends: ");
     printVector(path[i].deadEndIds);
@@ -426,7 +455,7 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace) {
     printf("Reactions required: ");
     printRxnsFromIntVector(path[i].rxnIds,ProblemSpace.synrxns);
     printf("Reaction directionality: ");
-    printIntVector(path[i].rxnDirection);
+    printVector(path[i].rxnDirection);
     printf("Total likelihood: %4.3f \n\n", path[i].totalLikelihood);
     printf("Dead ends: ");
     printMetsFromIntVector(path[i].deadEndIds,ProblemSpace);
@@ -450,7 +479,7 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace, RXNSPACE 
       printf("%1.2f  ",rxnspace.rxnFromId(path[i].rxnIds[j]).current_likelihood);}
     printf("\n");
     printf("Reaction directionality: ");
-    printIntVector(path[i].rxnDirection);
+    printVector(path[i].rxnDirection);
     printf("Total likelihood: %4.3f \n\n", path[i].totalLikelihood);
     printf("Dead ends: ");
     printMetsFromIntVector(path[i].deadEndIds,ProblemSpace);
@@ -466,8 +495,6 @@ void PrintPathSummary2(const vector<vector<vector<PATHSUMMARY> > > &psum, RXNSPA
 	printf("--------\n");
         printf("-%d-%d-%d- ",i,j,k);
         printRxnsFromIntVector(psum[i][j][k].rxnDirIds,rxnspace);
-	printf("Priorities: \n");
-	printRxnsFromIntVector(psum[i][j][k].rxnPriority, rxnspace);
       }
     }
   }
@@ -558,7 +585,7 @@ void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns){
     fprintf(output, "%1.5f\t%1.5f\t", InRxns[i].lb, InRxns[i].ub);
 
     /* 6th/6th column: Print out original and final reversibility */
-    fprintf(output, "%d\t%d\t", InRxns[i].init_reversible, InRxns[i].net_reversible);
+    fprintf(output, "%d\t%d\t", (int)InRxns[i].init_reversible, (int)InRxns[i].net_reversible);
 
     /* 7th/8th column: Print out initial and current likelihood */
     fprintf(output, "%1.5f\t%1.5f", InRxns[i].init_likelihood, InRxns[i].current_likelihood);
@@ -587,8 +614,8 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
   for(int i=0; i<psum.size(); i++) {
     for(int j=0; j<psum[i].rxnDirIds.size(); j++) {
       fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%d\t%4.3f\n",
-	      psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).name, psum[i].rxnDirIds[j], 
-	      rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j])).init_likelihood);
+	      (long int)psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j])).name, (int)psum[i].rxnDirIds[j], 
+	      rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j])).init_likelihood);
     }
   }
 
@@ -612,7 +639,7 @@ void PATHS_mets_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
 
   for(int i=0; i<psum.size(); i++) {
     for(int j=0; j<psum[i].rxnDirIds.size(); j++) {
-      REACTION tmp = rxnspace.rxnFromId(abs(psum[i].rxnDirIds[j]));
+      REACTION tmp = rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j]));
       for(int k=0; k<tmp.stoich.size(); k++) {
 	fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%s\n",
 		psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, metspace[tmp.stoich[k].met_id].name, tmp.name);

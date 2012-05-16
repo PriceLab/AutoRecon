@@ -8,7 +8,7 @@ char _myoutputdir[AR_MAXNAMELENGTH] = {0};
 DEBUGFLAGS::DEBUGFLAGS() {
 
   /******************* K-shortest parameters *********/
-  INITIAL_K = 2;
+  INITIAL_K = 1;
   GAPFILL_K = 3;
 
   /* Annotation cutoff - remove annotations that are less than this

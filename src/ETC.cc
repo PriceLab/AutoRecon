@@ -22,28 +22,28 @@ using std::set;
 
 /* Electron Transport Chain Functions */
 /* Ids cannot include zero */
-void decompose(const vector<int> &rxnDirIds, vector<int> &rxnIds,  vector<int> &rxnDirs){
+void decompose(const vector<RXNDIRID> &rxnDirIds, vector<RXNID> &rxnIds,  vector<REV> &rxnDirs){
   int i;
   rxnIds.clear();
   rxnDirs.clear();
   for(i=0;i<rxnDirIds.size();i++){
-    rxnIds.push_back(abs(rxnDirIds[i]));
-    if(rxnDirIds[i]>0){rxnDirs.push_back(1);}
-    else{rxnDirs.push_back(-1);}
+    rxnIds.push_back((RXNID)abs(rxnDirIds[i]));
+    if(rxnDirIds[i]>0){rxnDirs.push_back((REV)1);}
+    else{rxnDirs.push_back((REV)-1);}
   }
   return;
 }
 
-void flip(vector<int> &rxnDirs){
+void flip(vector<REV> &rxnDirs){
   for(int i=0;i<rxnDirs.size();i++){
-    rxnDirs[i] *= -1;}
+    rxnDirs[i] = rxnDirs[i] * (REV)-1;}
   return;
 }
 
 NETREACTION flip(const NETREACTION &one){
   int i;
   NETREACTION tempN;
-  vector<int> tempI;
+  vector<RXNDIRID> tempI;
   tempI = one.rxnDirIds;
   tempN.rxnDirIds = tempI;
   tempN.rxn = one.rxn;
@@ -54,7 +54,7 @@ NETREACTION flip(const NETREACTION &one){
 }
 
 /* Identify Electrion Transport Chain Reactions*/
-void identifyETCrxns(const PROBLEM &ProblemSpace, vector<int> &ETCrxnIds){
+void identifyETCrxns(const PROBLEM &ProblemSpace, vector<RXNID> &ETCrxnIds){
   ETCrxnIds.clear();
   int k;
   int HE_ids,Na_ids,NaE_ids;
@@ -104,8 +104,8 @@ void identifyETCrxns(const PROBLEM &ProblemSpace, vector<int> &ETCrxnIds){
   return;
 }
 
-void identifyETCrxns(const PROBLEM &ProblemSpace, vector<int> &ETCrxnIds, double cutoff){
-  vector<int> ETCrxnIdsTemp;
+void identifyETCrxns(const PROBLEM &ProblemSpace, vector<RXNID> &ETCrxnIds, double cutoff){
+  vector<RXNID> ETCrxnIdsTemp;
 
   const RXNSPACE &rxnspace = ProblemSpace.fullrxns;
 
@@ -119,7 +119,7 @@ void identifyETCrxns(const PROBLEM &ProblemSpace, vector<int> &ETCrxnIds, double
   return;
 }
 
-void convert(NETREACTION &net, REACTION add, int rxnDirId){
+void convert(NETREACTION &net, REACTION add, RXNDIRID rxnDirId){
   net.rxn = add;
   net.rxnDirIds.clear();
   net.rxnDirIds.push_back(rxnDirId);
@@ -148,12 +148,12 @@ vector<vector<METID> > PossiblePairs(const vector<STOICH> &fromnet,  const METSP
 /* Adds a single reaction with ID rxnDirId to the NETREACTION if there is an overlapping cofactor pair with
    compatible production / consumption ratios
    Return values: 0 if not pairable, 1 is successful pair, 2 if chain terminate, and -1 if pair has unequal ratios */
-int netrxn(NETREACTION &net, const PROBLEM &ProblemSpace, int rxnDirId){
+int netrxn(NETREACTION &net, const PROBLEM &ProblemSpace, RXNDIRID rxnDirId){
 
   const RXNSPACE &BaseRxns = ProblemSpace.fullrxns;
   const METSPACE &BaseMets = ProblemSpace.metabolites;
 
-  REACTION add = BaseRxns.rxnFromId(abs(rxnDirId));
+  REACTION add = BaseRxns.rxnFromId((RXNID)abs(rxnDirId));
 
   /* Eliminate External Non-players */
   vector<STOICH> fromnet = net.rxn.stoich;
@@ -190,8 +190,8 @@ int netrxn(NETREACTION &net, const PROBLEM &ProblemSpace, int rxnDirId){
 
   /* Identify location of the two cofactors in the NETREACTION (m1 / n1) and
      the query reaction (m2 / n2) */
-  int metId1 = PairsNet[PairsOverlap[0][0]][0];
-  int metId2 = PairsNet[PairsOverlap[0][0]][1];
+  METID metId1 = PairsNet[PairsOverlap[0][0]][0];
+  METID metId2 = PairsNet[PairsOverlap[0][0]][1];
   int m1,m2,n1,n2;
 
   for(int i=0;i<fromnet.size();i++){
@@ -234,7 +234,7 @@ int netrxn(NETREACTION &net, const PROBLEM &ProblemSpace, int rxnDirId){
   }
 
   if(ratio1>0) {  net.rxnDirIds.push_back(rxnDirId);
-  }  else if(ratio1<0){  net.rxnDirIds.push_back(-rxnDirId); }
+  }  else if(ratio1<0){  net.rxnDirIds.push_back(RXNDIRID(rxnDirId * -1)); }
 
   return 1;
 }
@@ -280,18 +280,18 @@ NETREACTION ETC_add(const PROBLEM &ProblemSpace, NETREACTION net, vector<NETREAC
   for(int i=0;i<PairsNet.size();i++){
     /* Identify all reactions connected to the cofactors in the current cofactor pair 
      and then those that have both (i.e. those that have the whole pair) */
-    vector<int> rxnSet1 = cofspace[PairsNet[i][0]].rxnsInvolved_nosec;
-    vector<int> rxnSet2 = cofspace[PairsNet[i][1]].rxnsInvolved_nosec;
-    vector<int> rxnSet=custom_intersect(rxnSet1,rxnSet2);
+    vector<RXNID> rxnSet1 = cofspace[PairsNet[i][0]].rxnsInvolved_nosec;
+    vector<RXNID> rxnSet2 = cofspace[PairsNet[i][1]].rxnsInvolved_nosec;
+    vector<RXNID> rxnSet  = custom_intersect(rxnSet1,rxnSet2);
     
-    vector<int> tempI;
-    for(int j=0;j<net.rxnDirIds.size();j++){  tempI.push_back(abs(net.rxnDirIds[j])); }
+    vector<RXNID> tempI;
+    for(int j=0;j<net.rxnDirIds.size();j++){  tempI.push_back((RXNID)abs(net.rxnDirIds[j])); }
     setdiff1(rxnSet,tempI);
 
     for(int j=0;j<rxnSet.size();j++){
       net_out = net;
       /* Try to add rxnSet[j] to the net reaction */
-      int status = netrxn(net_out,ProblemSpace,rxnSet[j]);
+      int status = netrxn(net_out,ProblemSpace,(RXNDIRID)rxnSet[j]);/*MATT*/
       if(status==1){
 	net_out = ETC_add(ProblemSpace,net_out,bigout);
       }
@@ -307,7 +307,7 @@ NETREACTION ETC_add(const PROBLEM &ProblemSpace, NETREACTION net, vector<NETREAC
    to the results of K-shortest paths later */
 void ETC(const PROBLEM &ProblemSpace, vector<NETREACTION> &bigout, double cutoff){
   NETREACTION net;
-  vector<int> ETC_start_ids;
+  vector<RXNID> ETC_start_ids;
 
   const METSPACE &BaseMets = ProblemSpace.metabolites;
   const RXNSPACE &BaseRxns = ProblemSpace.fullrxns;
@@ -316,7 +316,7 @@ void ETC(const PROBLEM &ProblemSpace, vector<NETREACTION> &bigout, double cutoff
   identifyETCrxns(ProblemSpace,ETC_start_ids,cutoff);
   /* Start searching down chains */
   for(int i=0;i<ETC_start_ids.size();i++){
-    convert(net,BaseRxns.rxnFromId(ETC_start_ids[i]),ETC_start_ids[i]);
+    convert(net,BaseRxns.rxnFromId(ETC_start_ids[i]),(RXNDIRID)ETC_start_ids[i]);/*MATT*/
     net = ETC_add(ProblemSpace,net,bigout);
   }
 
@@ -349,7 +349,8 @@ vector<NETREACTION> ETC_dir_check(const RXNSPACE &rxnspace, const vector<NETREAC
 
   for(int i=0;i<bigout.size();i++){
     /* check if it will work forwards */
-    vector<int> rxnIds,rxnDirs;
+    vector<RXNID> rxnIds;
+    vector<REV>   rxnDirs;
     decompose(bigout[i].rxnDirIds,rxnIds,rxnDirs);
 
     int numForwardGood = 0;

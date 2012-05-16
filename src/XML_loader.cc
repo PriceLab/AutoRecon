@@ -220,8 +220,8 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
   }
 
   if(namenull) {
-    printf("WARNING: Reaction %d has no name assigned. Will use %d as the name...\n", tempr.id, tempr.id);
-    sprintf(tempr.name, "%d", tempr.id);
+    printf("WARNING: Reaction %d has no name assigned. Will use %d as the name...\n", (int)tempr.id, (int)tempr.id);
+    sprintf(tempr.name, "%d", (int)tempr.id);
   }
 
   /* MATT CHANGE (6-27-11)
@@ -437,7 +437,7 @@ void identifyFreeReactions(vector<REACTION> &reactions) {
     /* Has both (so let Dijkstras try to find a path) */
     if(hasProduct && hasReactant) { continue; }
 
-    switch(reactions[i].init_reversible) {
+    switch((int)reactions[i].init_reversible) {
     case -1:
       if(hasReactant) {
 	reactions[i].freeMakeFlag = true;
@@ -696,7 +696,7 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
   DEBUGFLAGS db;
 
   /********* NGAM **************/
-  int ATPM_id = Name2Ids(ProblemSpace.fullrxns.rxns, db.ATPM_name);
+  RXNID ATPM_id = Name2Ids(ProblemSpace.fullrxns.rxns, db.ATPM_name);
   if(ATPM_id == -1) {
     /* FIXME: What should we use as the ID? */
     /* For now I just make this an error */
@@ -738,7 +738,7 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
   Note - I don't bother guessing the ATP maintenance value from teh biomass equation. Instead I just
   start at 0 and adjust it from there in the optimizer... 
   I'll just have to make sure everything stays on the correct side of the equation (i.e. no ATP generation!) */
-  REACTION biomass = ProblemSpace.fullrxns.rxnFromId(db.BIOMASS);
+  REACTION biomass = ProblemSpace.fullrxns.rxnFromId((RXNID)db.BIOMASS);
   vector<bool> requiredPresent(mustIds.size(), false);
   bool hPresent(false);
   for(int i=0; i<biomass.stoich.size(); i++) { 

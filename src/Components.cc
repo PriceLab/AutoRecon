@@ -23,13 +23,13 @@
 /* Tests Growth via FBA component by component for a growth condition */
 int ComponentTest(const PROBLEM &theModel){
   int Kq = 1;
-  REACTION biomass = theModel.fullrxns.rxnFromId(_db.BIOMASS);
+  REACTION biomass = theModel.fullrxns.rxnFromId((RXNID)_db.BIOMASS);
   PROBLEM baseModel = theModel;
   //Remove Full Biomass
-  int bIdx = baseModel.fullrxns.idxFromId(_db.BIOMASS);
+  int bIdx = baseModel.fullrxns.idxFromId((RXNID)_db.BIOMASS);
   baseModel.fullrxns.rxns.erase(baseModel.fullrxns.rxns.begin()+bIdx);
   baseModel.fullrxns.rxnMap();
-  int sIdx = baseModel.synrxns.idxFromId(_db.BIOMASS);
+  int sIdx = baseModel.synrxns.idxFromId((RXNID)_db.BIOMASS);
   baseModel.synrxns.rxns.erase(baseModel.synrxns.rxns.begin()+sIdx);
   baseModel.synrxns.rxnMap();
   //Put in Exchanges for the Biomass Components so that things can flux out
@@ -97,7 +97,7 @@ int ComponentTest(const PROBLEM &theModel){
       //Try free cofactors
       FeedEnergy(tempModel,1.0f);
       for(int j=0;j<tempModel.fullrxns.rxns.size();j++){
-	printf("== %d %d %4.0f %4.0f %s\n",j,tempModel.fullrxns.rxns[j].id,
+	printf("== %d %d %4.0f %4.0f %s\n",j,(int)tempModel.fullrxns.rxns[j].id,
 	       tempModel.fullrxns.rxns[j].lb, tempModel.fullrxns.rxns[j].ub, tempModel.fullrxns.rxns[j].name);
       }
       vector<double> fbaResult3 = FBA_SOLVE(tempModel.fullrxns.rxns,tempModel.metabolites);

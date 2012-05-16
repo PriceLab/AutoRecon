@@ -80,7 +80,7 @@ void removeAnnotation(RXNSPACE &rxnspace, const string &genename, const VALUESTO
      if I change the likelihood scores then the penalty is probably too high for these reactions, and
      we'd like to go back later and add these annotations back in if needed. */
   vector<ANNOTATION> tmpAnnotation;
-  int idx = rxnspace.idxFromId(val.id);
+  RXNIDX idx = rxnspace.idxFromId((RXNID)val.id);/*MATT - This is awkward*/
   for(int i=0; i<rxnspace.rxns[idx].annote.size(); i++) {
     /* Note - compare to 0 means they are the same... */
     if(rxnspace.rxns[idx].annote[i].genename.compare(genename) == 0) {

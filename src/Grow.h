@@ -34,16 +34,16 @@ ANSWER gapfillWrapper(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pL
 
 /* Note - workingRxns and workingMets are purposely passed by value for now...if I can get the add/subtracting exactly right I may be able to avoid it  */
 vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace, int gapfillK);
-vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, 
+vector<vector<RXNID> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, 
 					  PROBLEM &wholeProblem, METID toFix, 
 					  int direction, int gapfillK);
 void addGapfillResultToProblem(PROBLEM &model, const PROBLEM &problemSpace, 
 			       const GAPFILLRESULT &gapfillResult, int whichK);
-vector<int> minimizeExits(PROBLEM &model);
+vector<RXNID> minimizeExits(PROBLEM &model);
 
 /* [inner loop] Genetic algorithm helper functions */
-vector<int> findSolutionsMinimizingExits(const PROBLEM &baseModel, const PROBLEM &problemSpace, const vector<GAPFILLRESULT> &res, vector<int> &essential);
-double innerScore(PROBLEM &model, const PROBLEM &problemSpace, vector<int> &essentialExits);
+vector<int> findSolutionsMinimizingExits(const PROBLEM &baseModel, const PROBLEM &problemSpace, const vector<GAPFILLRESULT> &res, vector<RXNID> &essential);
+double innerScore(PROBLEM &model, const PROBLEM &problemSpace, vector<RXNID> &essentialExits);
 vector<int> randomK(const vector<GAPFILLRESULT> &res, MTRand &rng);
 int getRandomK(const GAPFILLRESULT &res, MTRand &rng);
 INNERPOPSTORE crossOver(const vector<INNERPOPSTORE> &parents, int mostFitCutoff, MTRand &rng);

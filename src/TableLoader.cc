@@ -25,8 +25,8 @@ PROBLEM readReactionTable(const char* filename) {
      which is very bad for FBA (causes duplicate entries in the matrix) and also bad in general */
   while(1) {
     char rxnName[AR_MAXNAMELENGTH];
-    int rxnId;
-    int net_reversible;
+    RXNID rxnId;
+    REV net_reversible;
     char metName[AR_MAXNAMELENGTH];
     METID metId;
     char rxnCoeffStr[AR_MAXNAMELENGTH];
@@ -35,7 +35,7 @@ PROBLEM readReactionTable(const char* filename) {
 
     /* Note to self - when using fscanf do NOT attempt to specify a precision or it will get very confused */
     int status = fscanf(fid, "%s%d%d%s%d%s%d",
-			rxnName, &rxnId, &net_reversible, metName, (int*)&metId, rxnCoeffStr, &secondary);
+			rxnName, (int*)&rxnId, (int*)&net_reversible, metName, (int*)&metId, rxnCoeffStr, &secondary);
     if(status == EOF) { break; }
 
     rxn_coeff = atof(rxnCoeffStr);
@@ -100,7 +100,7 @@ void readLikelihoodTable(PROBLEM &ProblemSpace, const char* filename) {
     if(status == EOF) { break; }
     likelihood = atof(likelihoodString);
 
-    int rxnId = rxnByName(ProblemSpace.fullrxns, rxnName);
+    RXNID rxnId = rxnByName(ProblemSpace.fullrxns, rxnName);
     if(rxnId == -1) { 
       printf("WARNING: Reaction %s from likelihood table not found in the reaction database\n", rxnName);
       continue; }
@@ -112,11 +112,11 @@ void readLikelihoodTable(PROBLEM &ProblemSpace, const char* filename) {
 }
 
 /* Find a reaction by name and return the ID (-1 if none is found) */
-int rxnByName(const RXNSPACE &rxnspace, const char* name) {
+RXNID rxnByName(const RXNSPACE &rxnspace, const char* name) {
   for(int i=0; i<rxnspace.rxns.size(); i++) {
     if(strcmp(rxnspace.rxns[i].name, name) == 0) {
       return rxnspace.rxns[i].id;
     }
   }
-  return -1;
+  return (RXNID)-1;
 }

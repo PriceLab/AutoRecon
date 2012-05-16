@@ -48,10 +48,10 @@ void ResetFood(vector<REACTION> &reactions){
 void FeedTheBeast(RXNSPACE &inModel, GROWTH &growth){
   ResetFood(inModel.rxns);
   for(int i=0;i<growth.media.size();i++){
-    int j = FindExchange4Metabolite(inModel.rxns,growth.media[i].id);
+    RXNID j = FindExchange4Metabolite(inModel.rxns,growth.media[i].id);
     assert(j!=-1);
 
-    printf("%d %d\n",(int)growth.media[i].id,j);
+    printf("%d %d\n",(int)growth.media[i].id,(int)j);
     inModel.change_Lb_and_Ub(j, -growth.media[i].rate, 1000.0f);
   }
   return;
@@ -60,15 +60,15 @@ void FeedTheBeast(RXNSPACE &inModel, GROWTH &growth){
 void FeedEnergy(PROBLEM &Model,double flux_bound){
   for(int i=0;i<Model.metabolites.mets.size();i++){
     if(Model.metabolites.mets[i].isSecondary()){
-      int j = FindExchange4Metabolite(Model.fullrxns.rxns,Model.metabolites.mets[i].id);
-      int id = j;
+      RXNID j = FindExchange4Metabolite(Model.fullrxns.rxns,Model.metabolites.mets[i].id);
+      RXNID id = j;
       if(j!=-1){
 	REACTION new_exchange = MagicExchange(Model.metabolites.mets[i],1000.0f, 0);
 	Model.fullrxns.addReaction(new_exchange);
 	Model.synrxns.addReaction(new_exchange);
 	id = new_exchange.id;
       }
-      printf("* %d %d %s*\n",(int)Model.metabolites.mets[i].id,j,
+      printf("* %d %d %s*\n",(int)Model.metabolites.mets[i].id,(int)j,
 	     Model.metabolites.mets[i].name);
       Model.fullrxns.change_Lb_and_Ub(id, -flux_bound, flux_bound);
     }
@@ -108,12 +108,12 @@ REACTION MagicExchange(METABOLITE met,double flux_bound,int dir){
    if rxn_direction = 1 we are looking for rxn_coeff*net_reversibility >= 0 
 
    Change 3-25-11: Return the most likely transporter */
-int FindTransport4Metabolite(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, 
-			     int rxn_direction){
+RXNID FindTransport4Metabolite(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, 
+			     REV rxn_direction){
   unsigned int i,j,k;
   METID pair_id;
   int whichExternal;
-  int result(-1);
+  RXNID result = (RXNID)(-1);
   double currentMin(-1.0f);
   pair_id = inOutPair(met_id, metspace);
 
@@ -239,7 +239,7 @@ void GetTransportReactions(vector<METID> metIds, vector<int> rxnDirections, cons
   for(int i=0;i<metIds.size();i++) {
     if(strcmp(metspace[metIds[i]].name, _db.H_name) != 0) {
       /* FindTransport4Metabolite already looks for the most likely and also will account for direction. */
-      int temp = FindTransport4Metabolite(reaction,metspace,metIds[i],rxnDirections[i]);
+      RXNID temp = FindTransport4Metabolite(reaction,metspace,metIds[i],rxnDirections[i]);
       if(temp == -1){
 	TMPRXN = MagicTransport(reaction,metspace,metIds[i],metspace.getMetObj(metIds[i]).name,0);
       } else {
@@ -268,7 +268,7 @@ void GetExchangeReactions(vector<METID> metIdList, vector<int> dirs, const PROBL
 
   for(int i=0;i<metIdList.size();i++) {
     /* Returns an existing reaction ID if possible */
-    int temp = FindExchange4Metabolite(rxnspace.rxns, metIdList[i]);
+    RXNID temp = FindExchange4Metabolite(rxnspace.rxns, metIdList[i]);
     REACTION TMPRXN;
     METABOLITE tmpMet;
 
@@ -327,9 +327,9 @@ void GetExchangeReactions_oneMedia(const GROWTH &growth, const PROBLEM &ProblemS
 /* Returns the ID for the exchange reaction for metabolite "met_id" in the vector<REACTION> 
    reaction, if there is one in that vector, and -1 if there is not 
    Does not depend on the "isExchange" property */
-int FindExchange4Metabolite(const vector<REACTION> &reaction, METID met_id){
+RXNID FindExchange4Metabolite(const vector<REACTION> &reaction, METID met_id){
   for(int i=0;i<reaction.size();i++){
     if(reaction[i].stoich[0].met_id==met_id && reaction[i].isExchange()) {  return reaction[i].id; }
   }
-  return -1; /* Exchange not found in database */
+  return (RXNID) -1; /* Exchange not found in database */
 }

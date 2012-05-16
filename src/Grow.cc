@@ -57,7 +57,7 @@ ANSWER gapfillWrapper(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pL
   /* Set up uptake rates and exchanges on/off for the specific growth condition passed here */
   setSpecificGrowthConditions(baseModel, growth);
   vector<GAPFILLRESULT> res = gapFindGapFill(baseModel, problemSpace, gapfillK); 
-  vector<int> allEssentialExits;
+  vector<RXNID> allEssentialExits;
   /* Identify the set of gapfill solutions that minimizes the number of essential magic exits and entrances... */
   vector<int> whichK = findSolutionsMinimizingExits(baseModel, problemSpace, res, allEssentialExits);
   custom_unique(allEssentialExits);
@@ -101,7 +101,7 @@ ANSWER gapfillWrapper(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pL
  Note - this only attempts to find ONE solution for each gap. 
  However, it is possible that the algorithm gets confused because some gaps
  could be either entrance OR exit gaps. */
-vector<int> findSolutionsMinimizingExits(const PROBLEM &baseModel, const PROBLEM &problemSpace, const vector<GAPFILLRESULT> &res, vector<int> &essential) {
+vector<int> findSolutionsMinimizingExits(const PROBLEM &baseModel, const PROBLEM &problemSpace, const vector<GAPFILLRESULT> &res, vector<RXNID> &essential) {
 
   MTRand rng;
   vector<int> bestK;
@@ -283,7 +283,7 @@ int getRandomK(const GAPFILLRESULT &res, MTRand &rng) {
  we probably want to weigh the more-likely one higher)
 
  */
-double innerScore(PROBLEM &model, const PROBLEM &problemSpace, vector<int> &essential) {
+double innerScore(PROBLEM &model, const PROBLEM &problemSpace, vector<RXNID> &essential) {
   essential = minimizeExits(model);
   int numKoCorrect = 0;
   int totalKo = 0;
@@ -331,11 +331,11 @@ void addGapfillResultToProblem(PROBLEM &model, const PROBLEM &problemSpace, cons
 }
 
 /* Minimizes magic exit usage in the model by running through them sequentially and seeing if they grow */
-vector<int> minimizeExits(PROBLEM &model) {
+vector<RXNID> minimizeExits(PROBLEM &model) {
 
-  vector<int> requiredExits;
+  vector<RXNID> requiredExits;
   vector<double> initialResult = FBA_SOLVE(model.fullrxns, model.metabolites);
-  if(initialResult[model.fullrxns.idxFromId(_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { 
+  if(initialResult[model.fullrxns.idxFromId((RXNID)_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { 
     printf("ERROR: Failure to get growth after adding gapfill reactions\n");
     assert(false);
   }
@@ -351,7 +351,7 @@ vector<int> minimizeExits(PROBLEM &model) {
       double oldLb = exit.lb; double oldUb = exit.ub;
       exit.lb = 0; exit.ub = 0;
       vector<double> newResult = FBA_SOLVE(model.fullrxns, model.metabolites);
-      if( newResult[model.fullrxns.idxFromId(_db.BIOMASS)] < _db.GROWTH_CUTOFF ) {     
+      if( newResult[model.fullrxns.idxFromId((RXNID)_db.BIOMASS)] < _db.GROWTH_CUTOFF ) {     
 	if(_db.DEBUGGAPFILL) { printf("Exit %s predicted essential\n", exit.name); }
 	exit.lb = oldLb;
 	exit.ub = oldUb;
@@ -373,14 +373,17 @@ PROBLEM setUpGapfill(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pLi
 
   PROBLEM working;
 
-  vector<int> rxnList = getAllPathRxns(pList);
-  for(int i=0;i<rxnList.size();i++){rxnList[i] = abs(rxnList[i]);}
+  vector<RXNDIRID> rxnDirList = getAllPathRxns(pList);
+  vector<RXNID> rxnList;
+  for(int i=0;i<rxnDirList.size();i++){
+    rxnList.push_back( (RXNID) abs(rxnDirList[i]) );
+  }
 
   /* In case there was no path found to a biomass metabolite, we still want to include it in the model! */
-  rxnList.push_back(_db.BIOMASS);
+  rxnList.push_back((RXNID)_db.BIOMASS);
 
   /* Set up a map from ID to direction to avoid duplicates */
-  map<METID, int> metId2Dir;
+  map<METID, REV> metId2Dir;
   for(int i=0; i<rxnList.size(); i++) {
     REACTION tmpRxn = problemSpace.fullrxns.rxnFromId(rxnList[i]);
     for(int j=0; j<tmpRxn.stoich.size(); j++) {
@@ -396,13 +399,13 @@ PROBLEM setUpGapfill(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pLi
 
   /* Set up making magic exits for every metabolite in the model */
   vector<METID> exitIds;
-  vector<int> dirs;
-  for(map<METID, int>::iterator it=metId2Dir.begin(); it!=metId2Dir.end(); it++) {
+  vector<REV> dirs;
+  for(map<METID, REV>::iterator it=metId2Dir.begin(); it!=metId2Dir.end(); it++) {
     exitIds.push_back(it->first);
     dirs.push_back(it->second);
   }
 
-  REACTION biomass = problemSpace.fullrxns.rxnFromId(_db.BIOMASS);
+  REACTION biomass = problemSpace.fullrxns.rxnFromId((RXNID)_db.BIOMASS);
   int basenum;
   makeSimulatableModel(pList, problemSpace, biomass, exitIds, dirs, working, basenum);
 
@@ -410,78 +413,6 @@ PROBLEM setUpGapfill(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pLi
   adjustLikelihoods(working.fullrxns.rxns, 1.0f, -3.0f, 1.1f, -10.0f, true);
 
   return working;
-}
-
-
-
-/* Second method for gapfind/gapfill - crawl along each pathway as necessary to get growth... */
-vector<int> gapFind(const PROBLEM &md, const vector<PATHSUMMARY> &psum) {
-
-  PROBLEM model = md;
-
-  /* Initialize list of entrances */
-  /* Also, turn any EXITS off (keep ENTRANCES on) */
-  vector<int> entranceSet;
-  for(int i=0; i<model.fullrxns.rxns.size(); i++) {
-    if(model.fullrxns.rxns[i].id >= _db.BLACKMAGICFACTOR && model.fullrxns.rxns[i].id < _db.BLACKMAGICFACTOR + _db.MINFACTORSPACING) {
-      if(model.fullrxns.rxns[i].lb < 0.0f) { entranceSet.push_back(model.fullrxns.rxns[i].id); }
-      model.fullrxns.rxns[i].ub = 0.0f;
-    }
-  }
-
-  vector<int> deadEnds;
-  REACTION bm = model.fullrxns.rxnFromId(_db.BIOMASS);
-  for(int i=0; i<bm.stoich.size(); i++) {
-    /* Test for existing production of the biomass component. */
-    int grExit = FindExchange4Metabolite(model.fullrxns.rxns, bm.stoich[i].met_id);
-    if(grExit == -1) { printf("ERROR: No exchange reaction found for metabolite %s which is impossible under our proposed schema...\n", bm.stoich[i].met_name); assert(false); }
-
-    /* If we can already make the target without adding more magic exits, great. */
-    vector<int> obj(1, grExit); vector<double> coeff(1, 1.0f);    
-    GLPKDATA data(model.fullrxns, model.metabolites, obj, coeff, 1);
-    vector<double> fbaResult = data.FBA_SOLVE();
-    if(fbaResult[model.fullrxns.idxFromId(grExit)] > 0.0f) { continue; }
-    
-    /* Get the psum associated with the particular biomass component in question. */
-    PATHSUMMARY bmPath;
-    for(int j=0; j<psum.size(); j++) {
-      if(psum[j].outputId == bm.stoich[i].met_id) { bmPath = psum[j]; break; }
-    }
-
-    /* Starting from the reaction with highest priority, see if the metabolites on one side of the equation can be produced (in the net) but the metabolites
-       on the other cannot. This indicates a situation like A --> B + C - Turn on magic exit for C and see that it cannot be produced even though A can. That means
-       B must be a flux bottleneck. */
-    for(int j=0; j<bmPath.rxnPriority.size(); j++) {
-      vector<STOICH> st = model.fullrxns.rxnFromId(bmPath.rxnPriority[j]).stoich;
-      sort(st.begin(), st.end());
-
-      bool reactantsMade(true);
-      bool productsMade(true);
-
-      /* Test for production of (nominal) reactants and products */
-      for(int k=0; k<st.size(); k++) {
-	int exitId = FindExchange4Metabolite(model.fullrxns.rxns, st[k].met_id);
-	if(exitId == -1) { printf("ERROR: Missing exchange reaction...\n"); assert(false); }
-	/* Turn exchange on and try to get flux through it */
-        model.fullrxns.rxnPtrFromId(exitId)->ub = 1000.0f;
-	GLPKDATA tmp(model.fullrxns, model.metabolites, obj, coeff, 1);
-        vector<double> res = tmp.FBA_SOLVE();
-	if(res[model.fullrxns.idxFromId(exitId)] < _db.FLUX_CUTOFF) { 
-	  if(st[k].rxn_coeff < 0.0f) { reactantsMade = false; }
-	  else { productsMade = false; }
-	}
-	model.fullrxns.rxnPtrFromId(exitId)->ub = 0.0f;
-      }
-
-      /* Test if reactans can be made but products cannot - and test if adding a exit of one chemical allows flux through another (on the same side of the reaction) 
-       If it does, make that exit permanent and add it to our list */
-      if( (productsMade && !reactantsMade) || ( reactantsMade && !productsMade) ) { 
-	
-      }
-    } 
-  }
-
-  return deadEnds;
 }
 
 /* model is a PROBLEM structure containing all of the reactions in the model [see setUpGapfill]
@@ -495,7 +426,7 @@ vector<int> gapFind(const PROBLEM &md, const vector<PATHSUMMARY> &psum) {
 vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace, int gapfillK) {
 
   vector<GAPFILLRESULT> result;
-  vector<int> obj(1, _db.BIOMASS); vector<double> coeff(1, 1.0f);
+  vector<RXNID> obj(1, (RXNID)_db.BIOMASS); vector<double> coeff(1, 1.0f);
 
   char outpath[1028];
   sprintf(outpath, "./%s/Pre_gapfind", _myoutputdir);
@@ -504,11 +435,11 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
   GLPKDATA datainit(model.fullrxns, model.metabolites, obj, coeff, 1);
 
   vector<double> fluxVector1 = datainit.FBA_SOLVE();
-  if( fluxVector1[model.fullrxns.idxFromId(_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { printf("ERROR: No growth after gapfill setup\n"); assert(false); }
+  if( fluxVector1[model.fullrxns.idxFromId((RXNID)_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { printf("ERROR: No growth after gapfill setup\n"); assert(false); }
 
   GLPKDATA data(model.fullrxns, model.metabolites, obj, coeff, 1);
 
-  vector<int> idVector;
+  vector<RXNID> idVector;
   int status  = data.gapFindLinprog(idVector);
   set<METID> idList; for(int i=0; i<idVector.size(); i++) { idList.insert(model.fullrxns.rxnFromId(idVector[i]).stoich[0].met_id); }
 
@@ -537,7 +468,7 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
   /* DATA struct with the exits actually turned off */
   GLPKDATA data2(model.fullrxns, model.metabolites, obj, coeff, 1);
   vector<double> fluxVector = data2.FBA_SOLVE();
-  if( fluxVector[model.fullrxns.idxFromId(_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { printf("ERROR: Unable to get growth from specified set of exits in gapFindGapFill\n"); assert(false); }
+  if( fluxVector[model.fullrxns.idxFromId((RXNID)_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { printf("ERROR: Unable to get growth from specified set of exits in gapFindGapFill\n"); assert(false); }
 
   /* listOfLists[i][j] is the list of reactions composing the j'th possibly viable solution to gapfill for metabolite i */
   vector< vector< vector< int > > > listOfLists;
@@ -546,10 +477,10 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
   /* Come up with a list of gapfill solutions */
   for(set<METID>::iterator it=idList.begin(); it != idList.end(); it++) {
     /* completeList[i] is the list of reactions composing the i'th potentially viable solution to a particular gapfill problem */
-    vector< vector<int> > completeList;
+    vector< vector<RXNID> > completeList;
     /* WE ONLY try to fill the gap with Dijkstras. The reasoning is that there could be a very likely solution with multiple reactions that is missed
        because there is a single-reaction (but quite unlikely) solution available */
-    vector< vector< int> > dijkstrasSln = fillGapWithDijkstras(model.fullrxns, model.metabolites, tmpProblem, *it, 1, gapfillK);
+    vector< vector<RXNID> > dijkstrasSln = fillGapWithDijkstras(model.fullrxns, model.metabolites, tmpProblem, *it, 1, gapfillK);
     for(int j=0; j<dijkstrasSln.size(); j++) {
       /* FIXME: Why does the fillGapWithDijkstras sometimes give us empty results at the end of vectors with non-empty results? */
       if(dijkstrasSln[j].empty()) { continue; }
@@ -591,7 +522,7 @@ After running Dijkstras, it checks if the solution allowed a growth to occur. If
 Returns a list of lists reaction IDs that fills the gap or 
 empty vector if nothing fills the gap and lets it grow.
  */
-vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, PROBLEM &wholeProblem, METID toFix, int direction, int K) {
+vector<vector<RXNID> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &workingMets, PROBLEM &wholeProblem, METID toFix, int direction, int K) {
 
   /* Cutoff - if the total cost of a gap becomes more than badCut * the shortest path, we just throw it out */
   double badCut = 2;
@@ -599,13 +530,13 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
   /* Replace stoich_part with stoich */
   for(int i=0; i<wholeProblem.fullrxns.rxns.size(); i++) { wholeProblem.fullrxns.rxns[i].stoich_part = wholeProblem.fullrxns.rxns[i].stoich;  }
 
-  vector<vector<int> > rxnsFillingGap;
+  vector<vector<RXNID> > rxnsFillingGap;
   double minLength(10000.0f);
   METSPACE &allMets = wholeProblem.metabolites;  RXNSPACE &allRxns = wholeProblem.fullrxns;
   int origRxnSize = workingRxns.rxns.size();  int origMetSize = workingMets.mets.size();
 
   /* Find the magic exit for the given metabolite toFix, and turn it off */
-  int meId = FindExchange4Metabolite(workingRxns.rxns, toFix);
+  RXNID meId = FindExchange4Metabolite(workingRxns.rxns, toFix);
   double oldLb(-1.0f), oldUb(-1.0f);
   if(meId == -1) {
     printf("WARNING: metabolite %d was passed to fillGapWithDijkstras but does not have an exchange reaction to turn off in workingRxns\n", (int)toFix);
@@ -618,8 +549,8 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
    Change this in allRxns, not in workingRxns, becuase Dijktras utilizes allRxns and not workingRxns to try to fill the gap */
   for(int i=0; i<workingRxns.rxns.size(); i++) {
     // Magic exits aren't in allRxns but are found in workingRxns
-    if(allRxns.idIn(workingRxns[i].id)) {
-      REACTION *rxnPtr = allRxns.rxnPtrFromId(workingRxns[i].id);
+    if(allRxns.idIn(workingRxns[(RXNIDX)i].id)) {
+      REACTION *rxnPtr = allRxns.rxnPtrFromId(workingRxns[(RXNIDX)i].id);
       rxnPtr->old_likelihood = rxnPtr->current_likelihood;
       rxnPtr->current_likelihood = -1;
     }
@@ -661,7 +592,7 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
   for(int i=0; i<result.size(); i++) {  
     if(result[i].rxnIds.empty()) { break;  }    
     /* Add the gapfilling reactions and metabolites to our network (for FBA test) */
-    vector<int> currentSolution = result[i].rxnIds;
+    vector<RXNID> currentSolution = result[i].rxnIds;
     for(int j=0; j<currentSolution.size(); j++) {
       
       workingRxns.addReaction(allRxns.rxnFromId(currentSolution[j]));
@@ -673,7 +604,7 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
     
     /* Check that gapfill reactions carry flux - add them if they do this and they satisfy
        the likelihood cutoff compared to the best solution */
-    vector<int> obj(1, result[i].rxnIds[0]);  vector<double> coeff(1, 1.0f);
+    vector<RXNID> obj(1, result[i].rxnIds[0]);  vector<double> coeff(1, 1.0f);
     GLPKDATA data(workingRxns, workingMets, obj, coeff, 1);
     vector<double> fbaResult = data.FBA_SOLVE();
     if( rougheq(fbaResult[workingRxns.idxFromId(result[i].rxnIds[0])], 0.0f, _db.FLUX_CUTOFF) == 0 ) {
@@ -700,8 +631,8 @@ vector<vector<int> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &worki
 
   /* Change the likelihoods back to what they were before (no longer -1) */
   for(int i=0; i<workingRxns.rxns.size(); i++) {
-    if(allRxns.idIn(workingRxns[i].id)) {
-      REACTION *rxnPtr = allRxns.rxnPtrFromId(workingRxns[i].id);
+    if(allRxns.idIn(workingRxns[(RXNIDX)i].id)) {
+      REACTION *rxnPtr = allRxns.rxnPtrFromId(workingRxns[(RXNIDX)i].id);
       rxnPtr->current_likelihood = rxnPtr->old_likelihood;
     }
   }
@@ -728,7 +659,7 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
   /* Set the media components to be uptaken at specified rates (negative because they are uptaken) */
   map <int,bool> meList;
   for(int i=0; i<growth.media.size(); i++) {
-    int meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.media[i].id);
+    RXNID meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.media[i].id);
     if(meId == 0) { 
       printf("ERROR: No exchange present for media condition %s after calling checkExchangesAndTransports \n", 
 	     model.metabolites[growth.media[i].id].name);
@@ -743,7 +674,7 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
 
   /* Set the byproducts to be output at non-specified rates */
   for(int i=0; i<growth.byproduct.size(); i++) {
-    int meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.byproduct[i].id);
+    RXNID meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.byproduct[i].id);
     if(meId == 0) { 
       printf("ERROR: No exchange present for byproduct %s after calling checkExchangesAndTransports \n", 
 	     model.metabolites[growth.byproduct[i].id].name);
@@ -761,6 +692,6 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
 }
 
 void addATPM(PROBLEM &A, ANSWER &B){
-  int atpmId = Name2Ids(A.fullrxns.rxns, _db.ATPM_name);
+  RXNID atpmId = Name2Ids(A.fullrxns.rxns, _db.ATPM_name);
   B.reactions.addReaction(A.fullrxns.rxnFromId(atpmId));
 }
