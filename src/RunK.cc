@@ -65,7 +65,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   /* Ensure that exchangers and transprots exist for everything in the GROWTH conditions (media and byproducts) */
   vector<GROWTH> &growth = ProblemSpace.growth;
   vector<int> dirs;
-  vector<int> metsToCheck;
+  vector<METID> metsToCheck;
   for(int i=0;i<growth.size();i++) {
     for(int j=0;j<growth[i].media.size();j++) {
       dirs.push_back(0); /* Note we want to allow media to be imported OR exported... (especially important for H+ because transporters depend on it) */
@@ -88,11 +88,11 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   if(_db.DEBUGSYN){
     for(int i=0; i<ProblemSpace.synrxns.rxns.size();i++) {
       if(ProblemSpace.synrxns.rxns[i].syn.size() > 1) {
-	printf("SYN %d: ", ProblemSpace.synrxns.rxns[i].id);
+	printf("SYN %d: ", (int) ProblemSpace.synrxns.rxns[i].id);
 	for(int j=0;j<ProblemSpace.synrxns.rxns[i].syn.size();j++) {
 	  printf("%s(%d) ;  ", 
 		 ProblemSpace.fullrxns.rxnFromId(ProblemSpace.synrxns.rxns[i].syn[j]).name, 
-		 ProblemSpace.synrxns.rxns[i].syn[j]);
+		 (int) ProblemSpace.synrxns.rxns[i].syn[j]);
 	}
 	printf("\n");
       }
@@ -103,7 +103,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
     printf("METRXNRELATIONS:\n");
     for(int i=0;i<ProblemSpace.metabolites.mets.size();i++) {
       printf("%s:  ", ProblemSpace.metabolites.mets[i].name);
-      printIntVector(ProblemSpace.metabolites.mets[i].rxnsInvolved_nosec);
+      printVector(ProblemSpace.metabolites.mets[i].rxnsInvolved_nosec);
     }
   }
 
@@ -155,9 +155,9 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
 }
 
 /* Function for finding shortest paths to an output */
-void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int outputId, int K, vector<PATHSUMMARY> &result, int direction, int growthIdx){
+void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METID outputId, int K, vector<PATHSUMMARY> &result, int direction, int growthIdx){
 
-  vector<int> inputIds;
+  vector<METID> inputIds;
   vector<PATH> kpaths;
   int Kq(K);
 
@@ -167,13 +167,13 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int 
 
   if(_db.DEBUGRUNK) {
     printf("Number of reactions passed to Run_K: %d\n", (int)rxnspace.rxns.size());
-    printf("Output ID: %d\n", outputId);
-    printf("Input IDs:"); printIntVector(inputIds);
+    printf("Output ID: %d\n", (int)outputId);
+    printf("Input IDs:"); printVector(inputIds);
   }
 
   METSPACE inputs(ProblemSpace.metabolites, inputIds);  
   kShortest(kpaths,rxnspace,ProblemSpace.metabolites, inputs,
-	    ProblemSpace.metabolites.metFromId(outputId), Kq);
+	    ProblemSpace.metabolites[outputId], Kq);
 
 
   /* Optional Intermediate Print Statement */
@@ -185,7 +185,7 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int 
     #pragma omp parallel for
     for(int j=0;j<kpaths.size();j++){
       char outpath[2056];
-      sprintf(outpath, "./%s/path_%s_k%d.dot", _myoutputdir, ProblemSpace.metabolites.metFromId(outputId).name, j);
+      sprintf(outpath, "./%s/path_%s_k%d.dot", _myoutputdir, ProblemSpace.metabolites[outputId].name, j);
       VisualizePath2File(outpath, outpath, kpaths[j], ProblemSpace, 1);
     }
   }
@@ -214,10 +214,10 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int 
 /* Function for finding shortest paths to an output using kShortest2
    Again, bad practice to copy a function over like this, but it gives
    me a completely separate space to work in. */
-void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, int startingK,
+void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, METID outputId, int K, int startingK,
 	    vector<PATHSUMMARY> &result, int direction, int growthIdx){
   //printf("enter\n");fflush(stdout);
-  vector<int> inputIds;
+  vector<METID> inputIds;
   vector<PATH> kpaths;
   int Kq(K);
   RXNSPACE &rxnspace = ProblemSpace.synrxnsR;
@@ -228,13 +228,13 @@ void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, in
 
   if(_db.DEBUGRUNK) {
     printf("Number of reactions passed to Run_K2: %d\n", (int)rxnspace.rxns.size());
-    printf("Output ID: %d\n", outputId);
-    printf("Input IDs:"); printIntVector(inputIds);
+    printf("Output ID: %d\n", (int)outputId);
+    printf("Input IDs:"); printVector(inputIds);
   }
 
   METSPACE inputs(ProblemSpace.metabolites, inputIds);  
   kShortest2(kpaths,rxnspace,ProblemSpace.metabolites, inputs,
-	     ProblemSpace.metabolites.metFromId(outputId), Kq,
+	     ProblemSpace.metabolites[outputId], Kq,
 	     ProblemSpace.synrxnsR);
 
   /* Optional Intermediate Print Statement */
@@ -265,12 +265,12 @@ void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, in
 void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> > > &psum){
    /* K-Shortest ROUND 1*/
   for(int i=0;i<ProblemSpace.growth.size();i++){
-    vector<int> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
+    vector<METID> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
     vector<vector<PATHSUMMARY> > tempP2;
     for(int j=0;j<outputIds.size();j++){
       if(_db.DEBUGPATHS) {
 	printf("FirstKPass: growth %d of %d   output %d(%s) of %d\n",i+1,(int)ProblemSpace.growth.size(),j+1,
-	       ProblemSpace.metabolites.metFromId(outputIds[j]).name,
+	       ProblemSpace.metabolites[outputIds[j]].name,
 	       (int)outputIds.size());
       }
       vector<PATHSUMMARY> tempP1;
@@ -287,7 +287,7 @@ void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> 
 void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> > > &psum){
 
   /* Output List */
-  vector<vector<int> > outputIds;
+  vector<vector<METID> > outputIds;
   vector<GROWTH> &growth         = ProblemSpace.growth;
 
   /* Note - the likelihoods have been modified here to penalize those reactions with modified reversibilities.
@@ -299,7 +299,7 @@ void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY>
   vector<int> dum;
   
   for(int i=0;i<growth.size();i++){
-    vector<int> outputId = Load_Outputs_From_Growth(ProblemSpace, i);
+    vector<METID> outputId = Load_Outputs_From_Growth(ProblemSpace, i);
     outputIds.push_back(outputId);
   }
 
@@ -310,7 +310,7 @@ void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY>
     for(int j=0;j<psum[i].size();j++){
       if(_db.DEBUGPATHS) {
 	printf("SecondKPass: growth %d of %d   output %s (%d of %d)\n",i+1,(int)psum.size(),
-	       ProblemSpace.metabolites.metFromId(outputIds[i][j]).name, 
+	       ProblemSpace.metabolites[outputIds[i][j]].name, 
 	       j+1,(int)psum[i].size());
       }
 
@@ -413,14 +413,14 @@ REACTION MakeBiomassFromGrowth(const GROWTH &growth){
 
 /* Given an metabolite with id met_id, finds the corresponding 
    metabolite in the opposite compartment. Returns the matching met ID or -1 if it fails to find a match */
-int inOutPair(int met_id, const METSPACE &metspace){ 
+METID inOutPair(METID met_id, const METSPACE &metspace){ 
   int flag;
-  bool isExternal = isExternalMet(metspace.metFromId(met_id).name, _db.E_tag);
+  bool isExternal = isExternalMet(metspace[met_id].name, _db.E_tag);
   char tempS[AR_MAXNAMELENGTH] = {0};
   if(isExternal){
-    strncpy(tempS,metspace.metFromId(met_id).name,(int)strlen(metspace.metFromId(met_id).name)-3);
+    strncpy(tempS,metspace[met_id].name,(int)strlen(metspace[met_id].name)-3);
   } else {
-    strcat(tempS,metspace.metFromId(met_id).name);
+    strcat(tempS,metspace[met_id].name);
     strcat(tempS,_db.E_tag);
   }
 
@@ -430,15 +430,15 @@ int inOutPair(int met_id, const METSPACE &metspace){
     } 
   }
 
-  return -1;
+  return (METID) -1;
 }
 
-vector<int> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex) {
+vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex) {
   /* Load outputs from a GROWTH
      START = -1 means pull out everything 
      Put this into a function and call it to avoid possible consistency problems between Dijkstra runs */
   const GROWTH &growth = parentSpace.growth[growthIndex];
-  vector<int> outputIds;
+  vector<METID> outputIds;
   for(int j=0;j<growth.biomass.size();j++) {
     outputIds.push_back(growth.biomass[j].met_id);}
   for(int j=0;j<growth.byproduct.size();j++) {
@@ -450,8 +450,8 @@ vector<int> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex
   return outputIds;
 }
 
-vector<int> Load_Inputs_From_Growth(const GROWTH &growth) {
-  vector<int> inputIds;
+vector<METID> Load_Inputs_From_Growth(const GROWTH &growth) {
+  vector<METID> inputIds;
   for(int j=0; j<growth.media.size(); j++) {
     inputIds.push_back(growth.media[j].id);
   }
@@ -476,7 +476,7 @@ void GoodReversible(PROBLEM &ProblemSpace){
 	temp.init_likelihood = -3; /* BLACK MAGIC */
 	strcat(temp.name,"_REV");
 	ProblemSpace.synrxnsR.addReaction(temp);
-	ProblemSpace.synrxnsR.changeReversibility(temp.id, temp.init_reversible * -1);
+	ProblemSpace.synrxnsR.changeReversibility(temp.id, temp.init_reversible * (REV) -1);
       }
     }
   }
@@ -486,7 +486,7 @@ void GoodReversible(PROBLEM &ProblemSpace){
 /* Reverse reversibility of all reactions (for gapfilling) */
 void ReverseReversible(vector<REACTION> &reaction){
   for(int i=0;i<reaction.size();i++){
-    reaction[i].net_reversible *= -1;
+    reaction[i].net_reversible = reaction[i].net_reversible * (REV) -1;
   }
   return;
 }
@@ -555,8 +555,8 @@ void calcMetRxnRelations(const RXNSPACE &rxnspace, METSPACE &metspace) {
     const REACTION &currentRxn = rxnspace.rxns[i];
     for(int j=0;j<currentRxn.stoich.size();j++) {
       //      if(currentRxn.id < _db.MAGICBRIDGEFACTOR || currentRxn.id > _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING){
-      if(metspace.idIn(currentRxn.stoich[j].met_id)) {
-	metspace.mets[metspace.idxFromId(currentRxn.stoich[j].met_id)].rxnsInvolved_nosec.push_back(currentRxn.id);
+      if(metspace.isIn(currentRxn.stoich[j].met_id)) {
+	metspace[currentRxn.stoich[j].met_id].rxnsInvolved_nosec.push_back(currentRxn.id);
       }
       // }
     }
@@ -569,19 +569,17 @@ void calcMetRxnRelations(const RXNSPACE &rxnspace, METSPACE &metspace) {
 void calcMetRxnRelations_nosec(const RXNSPACE &rxnspace, METSPACE &metspace) {
 
   unsigned int rxnSize = rxnspace.rxns.size();
-  unsigned int metSize = metspace.mets.size();
 
   /* Clear out any existing rxnsInvolved */
   //printf("Note - calcMetRxnRelations_nosec clears out any existing relationships!\n");
-  for(int i=0;i<metSize;i++) {
-    metspace.mets[i].rxnsInvolved_nosec.clear();
+  for(int i=0;i<metspace.mets.size();i++) {
+    metspace[(METIDX)i].rxnsInvolved_nosec.clear();
   }
 
   for(int i=0;i<rxnSize;i++) {
     const REACTION& currentRxn = rxnspace.rxns[i];
     for(int j=0;j<currentRxn.stoich_part.size();j++) {
-      int metIdx = metspace.idxFromId(currentRxn.stoich_part[j].met_id);
-      metspace.mets[metIdx].rxnsInvolved_nosec.push_back(currentRxn.id);
+      metspace[currentRxn.stoich_part[j].met_id].rxnsInvolved_nosec.push_back(currentRxn.id);
     }
   }
 }

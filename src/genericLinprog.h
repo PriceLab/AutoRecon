@@ -17,12 +17,12 @@ void FVA_SOLVE(const RXNSPACE &rxnspace, const METSPACE &metspace, double optPct
 class GLPKDATA {
  public:
   GLPKDATA();
-  GLPKDATA(const RXNSPACE &rxns, const METSPACE &mets, const vector<int> &objId, const vector<double> &objCoeff, int sense);
+  GLPKDATA(const RXNSPACE &rxns, const METSPACE &mets, const vector<RXNID> &objId, const vector<double> &objCoeff, int sense);
   ~GLPKDATA();
   /* TODO: need copy constructor */
 
   /* Solver routines */
-  int gapFindLinprog(vector<int> &usedExits);
+  int gapFindLinprog(vector<RXNID> &usedExits);
   vector<double> FBA_SOLVE();
   void FVA_SOLVE(vector<double> &minFlux, vector<double> &maxFlux, double optPercentage);
   int FastFVA(vector<double> &minFlux, vector<double> &maxFlux, double optPercentage);
@@ -55,7 +55,7 @@ class GLPKDATA {
   void changeUb(double newUb, int idx);
   void changeObjective(vector<int> newIdx, vector<double> newCoeffs);
   void validateSense(int sense);
-  void initialize(const METSPACE &metspace, const RXNSPACE &rxnspace, vector<int> objId, vector<double> objCoeff, int sense);
+  void initialize(const METSPACE &metspace, const RXNSPACE &rxnspace, vector<RXNID> objId, vector<double> objCoeff, int sense);
   void setUpProblem();
 
   void printGlpkError(int errorCode);

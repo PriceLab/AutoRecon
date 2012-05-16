@@ -23,13 +23,13 @@
 /* Tests Growth via FBA component by component for a growth condition */
 int ComponentTest(const PROBLEM &theModel){
   int Kq = 1;
-  REACTION biomass = theModel.fullrxns.rxnFromId(_db.BIOMASS);
+  REACTION biomass = theModel.fullrxns.rxnFromId((RXNID)_db.BIOMASS);
   PROBLEM baseModel = theModel;
   //Remove Full Biomass
-  int bIdx = baseModel.fullrxns.idxFromId(_db.BIOMASS);
+  int bIdx = baseModel.fullrxns.idxFromId((RXNID)_db.BIOMASS);
   baseModel.fullrxns.rxns.erase(baseModel.fullrxns.rxns.begin()+bIdx);
   baseModel.fullrxns.rxnMap();
-  int sIdx = baseModel.synrxns.idxFromId(_db.BIOMASS);
+  int sIdx = baseModel.synrxns.idxFromId((RXNID)_db.BIOMASS);
   baseModel.synrxns.rxns.erase(baseModel.synrxns.rxns.begin()+sIdx);
   baseModel.synrxns.rxnMap();
   //Put in Exchanges for the Biomass Components so that things can flux out
@@ -42,7 +42,7 @@ int ComponentTest(const PROBLEM &theModel){
   }
   */
 
-  vector<int> inputIds;
+  vector<METID> inputIds;
   vector<int> dirs;
   for(int j=0;j<baseModel.growth[0].media.size();j++){
     inputIds.push_back(baseModel.growth[0].media[j].id);
@@ -64,7 +64,7 @@ int ComponentTest(const PROBLEM &theModel){
 
     /*Load one component Model*/
     STOICH tmpS = biomass.stoich[i]; vector<STOICH> tmpStoich; tmpStoich.push_back(tmpS);
-    int outputId = tmpS.met_id;
+    METID outputId = tmpS.met_id;
     REACTION tmpRxn = MakeObjRxn(tmpStoich);
     tempModel.fullrxns.addReaction(tmpRxn);
     tempModel.synrxns.addReaction(tmpRxn);
@@ -97,7 +97,7 @@ int ComponentTest(const PROBLEM &theModel){
       //Try free cofactors
       FeedEnergy(tempModel,1.0f);
       for(int j=0;j<tempModel.fullrxns.rxns.size();j++){
-	printf("== %d %d %4.0f %4.0f %s\n",j,tempModel.fullrxns.rxns[j].id,
+	printf("== %d %d %4.0f %4.0f %s\n",j,(int)tempModel.fullrxns.rxns[j].id,
 	       tempModel.fullrxns.rxns[j].lb, tempModel.fullrxns.rxns[j].ub, tempModel.fullrxns.rxns[j].name);
       }
       vector<double> fbaResult3 = FBA_SOLVE(tempModel.fullrxns.rxns,tempModel.metabolites);
@@ -111,7 +111,7 @@ int ComponentTest(const PROBLEM &theModel){
 
     printf("Running kShortest: %d %d %d %s %d\n",(int)tempModel.synrxns.rxns.size(),
 	   (int)tempModel.metabolites.mets.size(),(int)inputs.mets.size(),
-	   tempModel.metabolites.metFromId(outputId).name, Kq);
+	   tempModel.metabolites[outputId].name, Kq);
     /*
     printf("tempModel: %d\n",(int)tempModel.synrxns.rxns.size());
     /*Print everything rxnModel
@@ -120,7 +120,7 @@ int ComponentTest(const PROBLEM &theModel){
     printf("synrxn Loaded\n");
     */   
     kShortest(kpaths,tempModel.synrxns,tempModel.metabolites, inputs,
-    	      tempModel.metabolites.metFromId(outputId), Kq);
+    	      tempModel.metabolites[outputId], Kq);
     printPathResults(kpaths);
     allPaths.push_back(kpaths);
   }
@@ -133,8 +133,8 @@ void Load_Stoich_Part_With_Cofactors(PROBLEM &Model){
   for(int i=0;i<Model.fullrxns.rxns.size();i++){
     Model.fullrxns.rxns[i].stoich_part.clear();
     for(int j=0;j<Model.fullrxns.rxns[i].stoich.size();j++){
-      int metID = Model.fullrxns.rxns[i].stoich[j].met_id;
-      if(Model.metabolites.metFromId(metID).secondary_lone!=1){
+      METID metID = Model.fullrxns.rxns[i].stoich[j].met_id;
+      if(Model.metabolites[metID].secondary_lone!=1){
 	Model.fullrxns.rxns[i].stoich_part.push_back(Model.fullrxns.rxns[i].stoich[j]);
       }
     }
@@ -167,7 +167,7 @@ PROBLEM reportFlux(PROBLEM& Model, vector<double> &fbaSolution, double cutoff){
     }
   }
   if(reporter.fullrxns.rxns.size()>0){
-    vector<int> metList;
+    vector<METID> metList;
     for(int i=0;i<reporter.fullrxns.rxns.size();i++){
       for(int j=0;j<reporter.fullrxns.rxns[i].stoich_part.size();j++){
 	metList.push_back(reporter.fullrxns.rxns[i].stoich_part[j].met_id);
@@ -179,7 +179,7 @@ PROBLEM reportFlux(PROBLEM& Model, vector<double> &fbaSolution, double cutoff){
     //printf("custom_unique\n");
     for(int i=0;i<metList.size();i++){
       //printf("* *  %d\n",metList[i]);
-      reporter.metabolites.addMetabolite(Model.metabolites.metFromId(metList[i]));
+      reporter.metabolites.addMetabolite(Model.metabolites[metList[i]]);
     }
     reporter.metabolites.metMap();
   }

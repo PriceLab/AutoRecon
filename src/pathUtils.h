@@ -9,16 +9,23 @@ bool isExternalMet(const char *name, const char* E_tag);
 bool anyVec(const vector<bool> &vec);
 void setdiff(vector<int> &A, vector<int> &B, vector<int> &diff);
 void setdiff1(vector<int> &A, const vector<int> &B);
+void setdiff1(vector<METID> &A, const vector<METID> &B);
+void setdiff1(vector<RXNID> &A, const vector<RXNID> &B);
 vector<int> setdiff2(vector<int> A, vector<int> B);
+vector<METID> setdiff2(vector<METID> A, vector<METID> B);
 vector<int> custom_intersect(vector<int> A, vector<int> B);
+vector<RXNID> custom_intersect(vector<RXNID> A, vector<RXNID> B);
 void catVectors1(vector<int> &vector1, const vector<int> &vector2);
+void catVectors1(vector<RXNID> &vector1, const vector<RXNID> &vector2);
+void catVectors1(vector<RXNDIRID> &vector1, const vector<RXNDIRID> &vector2);
+void catVectors1(vector<RXNDIRID> &vector1, const vector<RXNID> &vector2);
 template <class T> void custom_unique(vector<T> &inVector);
 template <class T> vector<T> catVectors(vector<T> vector1, vector<T> vector2);
 
 /* Get products and reactants lists on the OPPOSITE side of a reaction from a given metabolite */
-void getProducts(const REACTION &rxn, int reactantId, vector<int> &res);
-void pullOutRxnsbyIds(const RXNSPACE &rxnspace, const vector<int> &rxnsToSearchIds, RXNSPACE &result);
-void pullOutRxnsbyIds(const PROBLEM &ProblemSpace, const vector<int> &rxnsToSearchIds, RXNSPACE &result);
+void getProducts(const REACTION &rxn, METID reactantId, vector<METID> &res);
+void pullOutRxnsbyIds(const RXNSPACE &rxnspace, const vector<RXNID> &rxnsToSearchIds, RXNSPACE &result);
+void pullOutRxnsbyIds(const PROBLEM &ProblemSpace, const vector<RXNID> &rxnsToSearchIds, RXNSPACE &result);
 void pullOutMets(const RXNSPACE &rxnspace, const METSPACE &metspace, METSPACE &metabolite);
 
 /* Syn list making */
@@ -30,8 +37,8 @@ void MakeSynList(PROBLEM &ProblemSpace);
 double rxnCoeff(const RXNSPACE &rxnspace, int rxnId, int metId);
 
 /* Utility functions */
-int Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name);
-int Name2Ids(const vector<REACTION> &reaction, const char *rxn_name);
+METID Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name);
+RXNID Name2Ids(const vector<REACTION> &reaction, const char *rxn_name);
 
 vector<PATHSUMMARY> flattenPsum(const vector<vector<vector<PATHSUMMARY> > > &from);
 vector<PATHSUMMARY> uniquePsum(const vector<PATHSUMMARY> &from);
@@ -39,8 +46,8 @@ vector<PATHSUMMARY> uniquePsum(const vector<PATHSUMMARY> &from);
 int rougheq(const double one, const double two);
 int rougheq(const double one, const double two, const double constant);
 
-vector<int> getAllPathRxns(const vector<PATHSUMMARY> &pList);
-vector<int> getAllPathMets(const vector<PATHSUMMARY> &pList, const PROBLEM &problemSpace, int whichOne);
+vector<RXNDIRID> getAllPathRxns(const vector<PATHSUMMARY> &pList);
+vector<METID> getAllPathMets(const vector<PATHSUMMARY> &pList, const PROBLEM &problemSpace, int whichOne);
 vector<int> getAllSecondaryIds(const PROBLEM &ProblemSpace);
 
 void turnOffMagicExits(RXNSPACE &rxnspace, const vector<int> &exitsToKeep);

@@ -81,7 +81,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
   for(int i=0; i<numRXNs; i++) {
     bool pairsDone = false;
     for(int j=0; j<incl_rxns[i].stoich_part.size(); j++) {
-      METABOLITE MET = metspace.metFromId(incl_rxns[i].stoich_part[j].met_id);
+      METABOLITE MET = metspace.getMetObj(incl_rxns[i].stoich_part[j].met_id);
       /* Keep track of how many blanks at the end of the secondary edges we need to keep track of */
       if(MET.secondary_lone == 1 | hasValidSecondaryPair(incl_rxns[i], metspace, MET.id)) {
 	// Secondary lones always will be "dangling" off by definition
@@ -168,7 +168,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
       for(int j=0;j<incl_rxns[i].stoich_part.size();j++){
 	if(incl_rxns[i].net_reversible==0 
 	   && incl_rxns[i].stoich_part[j].rxn_coeff<0){ /* reversible arrows */
-	  METABOLITE MET = metspace.metFromId(incl_rxns[i].stoich_part[j].met_id);
+	  METABOLITE MET = metspace.getMetObj(incl_rxns[i].stoich_part[j].met_id);
 	  if(MET.secondary_lone == 1) {
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
@@ -193,7 +193,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	}
 	if(incl_rxns[i].net_reversible==0 
 	   && incl_rxns[i].stoich_part[j].rxn_coeff>0){ /* reversible arrows */
-	  METABOLITE MET = metspace.metFromId(incl_rxns[i].stoich_part[j].met_id);
+	  METABOLITE MET = metspace.getMetObj(incl_rxns[i].stoich_part[j].met_id);
 	  if(MET.secondary_lone == 1) {
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
@@ -218,7 +218,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	   ||(incl_rxns[i].stoich_part[j].rxn_coeff>0 
 	      && incl_rxns[i].net_reversible==-1)){ /* into rxn_in */
 
-	  METABOLITE MET = metspace.metFromId(incl_rxns[i].stoich_part[j].met_id);
+	  METABOLITE MET = metspace.getMetObj(incl_rxns[i].stoich_part[j].met_id);
 	  if(MET.secondary_lone == 1) {
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
@@ -248,7 +248,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	   ||(incl_rxns[i].stoich_part[j].rxn_coeff>0 
 	      && incl_rxns[i].net_reversible==1)){ /* out of rxn_out */
 
-	  METABOLITE MET = metspace.metFromId(incl_rxns[i].stoich_part[j].met_id);
+	  METABOLITE MET = metspace.getMetObj(incl_rxns[i].stoich_part[j].met_id);
 	  if(MET.secondary_lone == 1) {
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
@@ -281,7 +281,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 
 /* Test if reaction RXN has metablite metId and its opposite, it is not a magic bridge fix, 
    AND it is not a magic bridge. This indicates ones that we want to REMOVE */
-bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, int met_id) {
+bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, METID met_id) {
 
   if(rxn.id >= _db.MAGICBRIDGEFACTOR && rxn.id < _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING) { return false; }
 
@@ -290,7 +290,7 @@ bool hasValidSecondaryPair(const REACTION &rxn, const METSPACE &workingMets, int
     if(rxn.magicBridgeFix[i] == met_id) { return false; }
     } */
 
-  METABOLITE met = workingMets.metFromId(met_id);
+  METABOLITE met = workingMets.getMetObj(met_id);
 
   /* Is met_id in rxn? */
   bool good = false;
@@ -378,15 +378,16 @@ void visualizePathSummary2File(const char* fileBase, const char* label, const ve
   
   for(int i=0; i<psum.size(); i++) {
     char fileName[2056];
-    sprintf(fileName, "%s%s.dot", fileBase, ProblemSpace.metabolites.metFromId(psum[i].outputId).name);
+    sprintf(fileName, "%s%s.dot", fileBase, ProblemSpace.metabolites.getMetObj(psum[i].outputId).name);
 
     FILE* dotput = fopen(fileName, "w");
 
     vector<PATHSUMMARY> tmpP; tmpP.push_back(psum[i]);
 
     /* Get a list of metabolites from reactions in the pList (needed later...) */
-    vector<int> allRxnIds = getAllPathRxns(tmpP);
-    for(int i=0; i<allRxnIds.size(); i++) { allRxnIds[i] = abs(allRxnIds[i]); }
+    vector<RXNDIRID> allRxnDirIds = getAllPathRxns(tmpP);
+    vector<RXNID> allRxnIds;
+    for(int i=0; i<allRxnDirIds.size(); i++) { allRxnIds.push_back((RXNID) abs(allRxnIds[i])); }
     
     RXNSPACE modelRxns; 
     switch(useSyn) {
