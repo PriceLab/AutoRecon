@@ -14,7 +14,7 @@ using std::queue;
 using std::set;
 using std::vector;
 
-PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const METSPACE &inputs, const METABOLITE &output, set<BADIDSTORE> &badIds);
+PATH findShortestPath(const RXNSPACE &rxnspace, const METSPACE &metspace, const METSPACE &inputs, const METABOLITE &output);
 void tracePath(const METSPACE &metspace, const RXNSPACE &rxnspace, 
 	       map<METID, RXNID>  &precursorRxnIds, map<METID, bool> &metsExplored, 
 	       vector<RXNID> &rxnIds, vector<METID> &inputIds,
