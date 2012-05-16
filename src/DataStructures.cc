@@ -564,6 +564,8 @@ void PROBLEM::clear() {
   growth.clear();
 }
 
+/* WARNING: When I implement the new shortest-path algorithm
+   this class will go away */
 PATH::PATH() {
   /* This flag is how you can tell if there was actually a path found or not - total likelihood
      will be > 0 if a path is found */
@@ -642,35 +644,6 @@ PATHSUMMARY PATHSUMMARY::operator/(PATH &onepath){
   this->likelihood = onepath.totalLikelihood;
   this->outputId = onepath.outputId;
   return *this;
-}
-
-BADIDSTORE::BADIDSTORE() {  badRxnId = -1; }
-
-bool BADIDSTORE::operator<(const BADIDSTORE &rhs) const {
-  BADIDSTORE lhs = *this;
-  /* order first by the reaction ID, then by the size of badMetIds, and finally by their values. */
-  if(lhs.badRxnId < rhs.badRxnId) { return true; }
-  if(lhs.badRxnId > rhs.badRxnId) { return false; }
-  /* badRxnId is equal */
-  if(lhs.badMetIds.size() < rhs.badMetIds.size() ) { return true; }
-  if(lhs.badMetIds.size() > rhs.badMetIds.size() ) { return false; }
-  /* size is equal */
-  for(int i=0; i<lhs.badMetIds.size(); i++) { 
-    if(lhs.badMetIds[i] < rhs.badMetIds[i]) { return true; }
-    if(lhs.badMetIds[i] > rhs.badMetIds[i]) { return false; }
-  }
-  /* Everything is equal (return false) */
-  return false;
-}
-
-bool BADIDSTORE::operator==(const BADIDSTORE &rhs) const {
-  BADIDSTORE lhs = *this;
-  if(lhs.badRxnId != rhs.badRxnId) { return false; }
-  if(lhs.badMetIds.size() != rhs.badMetIds.size()) { return false; }
-  for(int i=0; i<lhs.badMetIds.size(); i++) {
-    if(lhs.badMetIds[i] != rhs.badMetIds[i]) { return false; }
-  }
-  return true;
 }
 
 INNERPOPSTORE::INNERPOPSTORE() { score = 0.0f; }
