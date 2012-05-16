@@ -20,14 +20,14 @@ void testKShortest_visuals() {
 	int maxPathLength(5000);
 	
 	vector<REACTION> reaction;
-    vector<METABOLITE> metabolite;
+	vector<METABOLITE> metabolite;
 	vector<GROWTH> growth;
 
 	vector<int> inputIds;
 	vector<int> outputIds;
 	vector< vector<PATH> > result;
 	int i, j,k;
-	map<int, int> metIds2Idx, metIdx2Ids;
+	map<int, int> metIds2Idx;
 
 	char* docName = "model_likelihood_eco.xml";
 	char* docName2 = "inputdata_eco.xml";

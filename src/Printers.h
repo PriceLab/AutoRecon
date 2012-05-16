@@ -12,6 +12,10 @@ using std::set;
 
 /* Basic printers */
 void printIntVector(vector<int> intVector);
+void printVector(vector<RXNID> intVector);
+void printVector(vector<REV> intVector);
+void printVector(vector<RXNDIRID> intVector);
+void printVector(vector<METID> intVector);
 void printDoubleVector(vector<double> doubleVector);
 void printIntSet(const set<int> &mySet);
 void printIntMap(map<int, int> intMap);
@@ -28,7 +32,8 @@ void printDoubleVector_mets(const METSPACE &metspace, const vector<double> &doub
 void printMetsFromStoich(vector<STOICH> a);
 void printDoubleVector_rxns(const RXNSPACE &rxnspace, const vector<double> &doubleVec);
 void printSTOICHIOMETRY_by_id(const vector<STOICH> &stoich, int num_met, int rev);
-void printRxnsFromIntVector(const vector<int> &intVector, const RXNSPACE &rxnspace);
+void printRxnsFromIntVector(const vector<RXNID> &intVector, const RXNSPACE &rxnspace);
+void printRxnsFromIntVector(const vector<RXNDIRID> &intVector, const RXNSPACE &rxnspace);
 void printRxnsFromIntSet(const set<int> &intSet, const RXNSPACE &rxnspace);
 void printSynRxns(const RXNSPACE &synrxns, const RXNSPACE &fullrxns);
 void printREACTIONinputs(const REACTION &reaction, int print_type);

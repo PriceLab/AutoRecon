@@ -47,7 +47,7 @@ class MAGICRESULT{
 };
 
 void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace);
-int inOutPair(int metId, const METSPACE &metspace);
+METID inOutPair(METID metId, const METSPACE &metspace);
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name);
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name, int R);
 void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int outputId, int K, 
@@ -63,8 +63,8 @@ void ReverseReversible(vector<REACTION> &reaction);
 void AddNeededReversibles(vector<REACTION> &reaction, const PATH &path, map<int,int> rxnIds2Idx);
 
 void Load_Forwards_Reactions(vector<REACTION> &reaction, const vector<int> &known_rxn_ids);
-vector<int> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIdx);
-vector<int> Load_Inputs_From_Growth(const GROWTH &growth);
+vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIdx);
+vector<METID> Load_Inputs_From_Growth(const GROWTH &growth);
 
 REACTION MakeObjRxn(const vector<STOICH> &stoich);
 REACTION MakeBiomassFromGrowth(const GROWTH &growth);

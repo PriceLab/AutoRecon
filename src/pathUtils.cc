@@ -43,6 +43,32 @@ void catVectors1(vector<int> &vector1, const vector<int> &vector2) {
   return;
 }
 
+void catVectors1(vector<RXNID> &vector1, const vector<RXNID> &vector2) {
+  int i;
+  for(i=0;i<vector2.size();i++){
+    vector1.push_back(vector2[i]);
+  }
+  return;
+}
+
+void catVectors1(vector<RXNDIRID> &vector1, const vector<RXNID> &vector2) {
+  int i;
+  for(i=0;i<vector2.size();i++){
+    vector1.push_back((RXNDIRID)vector2[i]);
+  }
+  printf("Warning: RXNID merged with RXNDIRID in catVectors1!\n");
+  return;
+}
+
+void catVectors1(vector<RXNDIRID> &vector1, const vector<RXNDIRID> &vector2) {
+  int i;
+  for(i=0;i<vector2.size();i++){
+    vector1.push_back(vector2[i]);
+  }
+  printf("Warning: RXNID merged with RXNDIRID in catVectors1!\n");
+  return;
+}
+
 /* Intersect function for two vectors (does not assume  A and B are already unique)  */
 vector<int> custom_intersect(vector<int> A, vector<int> B) {
   vector<int>::iterator iter;
@@ -52,6 +78,20 @@ vector<int> custom_intersect(vector<int> A, vector<int> B) {
   custom_unique(B);
   iter = set_intersection(A.begin(), A.end(), B.begin(), B.end(), result.begin());
   vector<int> inter(iter - result.begin());
+  for(i= 0; i< inter.size(); i++){
+    inter[i] = result[i];}
+
+  return inter;
+}
+
+vector<RXNID> custom_intersect(vector<RXNID> A, vector<RXNID> B) {
+  vector<RXNID>::iterator iter;
+  vector<RXNID> result(A.size() + B.size());
+  unsigned int i;
+  custom_unique(A);
+  custom_unique(B);
+  iter = set_intersection(A.begin(), A.end(), B.begin(), B.end(), result.begin());
+  vector<RXNID> inter(iter - result.begin());
   for(i= 0; i< inter.size(); i++){
     inter[i] = result[i];}
 
@@ -80,7 +120,55 @@ vector<int> setdiff2(vector<int> A, vector<int> B) {
   return diff;
 }
 
+vector<METID> setdiff2(vector<METID> A, vector<METID> B) {
+  if(B.size()<1){
+    return A;}
+  int i, j(0);	
+  
+  sort(A.begin(), A.end());
+  sort(B.begin(), B.end());
+  custom_unique(A);
+  custom_unique(B);
+  vector<METID>::iterator iter;
+  vector<METID> result(A.size()+B.size());
+
+  iter = set_difference(A.begin(), A.end(), B.begin(), B.end(), result.begin());
+
+  vector<METID> diff(iter-result.begin());
+  for(i=0;i<diff.size();i++) {
+    diff[i]=result[i];
+  }
+
+  return diff;
+}
+vector<RXNID> setdiff2(vector<RXNID> A, vector<RXNID> B) {
+  if(B.size()<1){
+    return A;}
+  int i, j(0);	
+  
+  sort(A.begin(), A.end());
+  sort(B.begin(), B.end());
+  custom_unique(A);
+  custom_unique(B);
+  vector<RXNID>::iterator iter;
+  vector<RXNID> result(A.size()+B.size());
+
+  iter = set_difference(A.begin(), A.end(), B.begin(), B.end(), result.begin());
+
+  vector<RXNID> diff(iter-result.begin());
+  for(i=0;i<diff.size();i++) {
+    diff[i]=result[i];
+  }
+
+  return diff;
+}
+
 void setdiff(vector<int> &A, vector<int> &B, vector<int> &diff) {
+  diff = setdiff2(A, B);
+  return;
+}
+
+void setdiff(vector<METID> &A, vector<METID> &B, vector<METID> &diff) {
   diff = setdiff2(A, B);
   return;
 }
@@ -91,7 +179,19 @@ void setdiff1(vector<int> &A, const vector<int> &B) {
   return;
 }
 
-int instoich(int id, const vector<STOICH> &list){
+void setdiff1(vector<METID> &A, const vector<METID> &B) {
+  vector<METID> diff = setdiff2(A, B);
+  A = diff;
+  return;
+}
+
+void setdiff1(vector<RXNID> &A, const vector<RXNID> &B) {
+  vector<RXNID> diff = setdiff2(A, B);
+  A = diff;
+  return;
+}
+
+int instoich(METID id, const vector<STOICH> &list){
   unsigned int i;
   for(i=0;i<list.size();i++){
     if(id==list[i].met_id){ return i; }
@@ -100,22 +200,22 @@ int instoich(int id, const vector<STOICH> &list){
 }
 
 /* Convert a metabolite name to an ID. Returns -1 on failure */
-int Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name){
+METID Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name){
   for(int i=0;i<metabolite.size();i++){
     if(strcmp(met_name,metabolite[i].name)==0){
       return metabolite[i].id;
     }
   }
-  return -1;
+  return (METID) -1;
 }
 
-int Name2Ids(const vector<REACTION> &reaction, const char *rxn_name) {
+RXNID Name2Ids(const vector<REACTION> &reaction, const char *rxn_name) {
   for(int i=0;i<reaction.size();i++){
     if(strcmp(rxn_name,reaction[i].name)==0){
       return reaction[i].id;
     }
   }
-  return -1;
+  return (RXNID) -1;
 }
 
 /* 0 means they are different and 1 means they are the same (based on stoich_part) - used to synonymize */
@@ -146,7 +246,7 @@ int diff2rxns(const REACTION &one, const REACTION &two){
 
 /* Extract a smaller subset of reactions that we're interested in, given their indices and a larger list */
 /* Maintains order of rxnsToSearchIds */
-void pullOutRxnsbyIds(const RXNSPACE &rxnspace, const vector<int> &rxnsToSearchIds, RXNSPACE &result) {
+void pullOutRxnsbyIds(const RXNSPACE &rxnspace, const vector<RXNID> &rxnsToSearchIds, RXNSPACE &result) {
   result.clear();
   for(int i=0;i<rxnsToSearchIds.size();i++) {
     if(!result.idIn(rxnsToSearchIds[i])){
@@ -157,7 +257,7 @@ void pullOutRxnsbyIds(const RXNSPACE &rxnspace, const vector<int> &rxnsToSearchI
 }
 
 //For synrxns/synrxnsR simultaneiously
-void pullOutRxnsbyIds(const PROBLEM &ProblemSpace, const vector<int> &rxnsToSearchIds, RXNSPACE &result) {
+void pullOutRxnsbyIds(const PROBLEM &ProblemSpace, const vector<RXNID> &rxnsToSearchIds, RXNSPACE &result) {
   result.clear();
   for(int i=0;i<rxnsToSearchIds.size();i++) {
     if(rxnsToSearchIds[i] >= _db.REVFACTOR && rxnsToSearchIds[i] < _db.REVFACTOR + _db.SYNFACTOR + _db.MINFACTORSPACING){
@@ -178,7 +278,7 @@ void pullOutRxnsbyIds(const PROBLEM &ProblemSpace, const vector<int> &rxnsToSear
    (the result is a subset of "metspace"). Asserts an error if any metabolites in rxnspace are not in the metspace.*/
 void pullOutMets(const RXNSPACE &rxnspace, const METSPACE &metspace, METSPACE &result) {
   result.clear();
-  vector<int> metIds;
+  vector<METID> metIds;
   const vector<REACTION> &rxnList = rxnspace.rxns; 
   for(int i=0;i<rxnList.size();i++) {
     for(int j=0;j<rxnList[i].stoich.size();j++) {
@@ -187,7 +287,7 @@ void pullOutMets(const RXNSPACE &rxnspace, const METSPACE &metspace, METSPACE &r
   }
   custom_unique(metIds);
   for(int i=0;i<metIds.size();i++) {
-    result.addMetabolite(metspace.metFromId(metIds[i]));
+    result.addMetabolite(metspace[metIds[i]]);
   }
   return;
 }
@@ -294,9 +394,9 @@ void MakeSynList(PROBLEM &ProblemSpace){
 
 /* Version of getProducts for a single REACTION rather than a vector of REACTIONS
  Returns product IDs (not indexes) and empty upon not finding reactant "reactantId" in the reaction */
-void getProducts(const REACTION &rxn, int reactantId, vector<int> &res) {
+void getProducts(const REACTION &rxn, METID reactantId, vector<METID> &res) {
   res.clear();
-  int sgn(0);
+  REV sgn = (REV) 0;
   unsigned int i;
   bool productPresent = false;
   for(i=0;i<rxn.stoich_part.size();i++) 	{
@@ -305,7 +405,7 @@ void getProducts(const REACTION &rxn, int reactantId, vector<int> &res) {
 	{ sgn = -1; }
       else { sgn = 1; }
       /* Test reversibility -use net_reversible to account for changes due to the algorithm */
-      switch(rxn.net_reversible) {
+      switch((int) rxn.net_reversible) {
       case 0: /* Reversible - always count the reactant as present */
 	productPresent = true;
 	break;
@@ -316,7 +416,7 @@ void getProducts(const REACTION &rxn, int reactantId, vector<int> &res) {
 	if(sgn == 1) { productPresent = true; }
 	break;
       default:
-	printf("ERROR - undefined reversibility value %d in getProducts:\n",  rxn.net_reversible);
+	printf("ERROR - undefined reversibility value %d in getProducts:\n",  (int) rxn.net_reversible);
 	throw;
       }
     }
@@ -384,7 +484,7 @@ int rougheq(const double one, const double two, const double constant){
  Returns 0.0f if the metabolite is not in the reaction 
 
 Looks for the metabolite in stoich, not stoich_part */
-double rxnCoeff(const RXNSPACE &rxnspace, int rxnId, int metId) {
+double rxnCoeff(const RXNSPACE &rxnspace, RXNID rxnId, METID metId) {
   REACTION rxn = rxnspace.rxnFromId(rxnId);
   for(int i=0; i<rxn.stoich.size(); i++) {
     if(rxn.stoich[i].met_id == metId) {
@@ -407,20 +507,20 @@ vector<int> getAllSecondaryIds(const PROBLEM &ProblemSpace) {
 
 /* whichOne = 1 --> fullrxns (stoich)
    whichOne = 2 --> synrxns (stoich_part) */
-vector<int> getAllPathMets(const vector<PATHSUMMARY> &pList, const PROBLEM &problemSpace, int whichOne) {
-  vector<int> metList;
+vector<METID> getAllPathMets(const vector<PATHSUMMARY> &pList, const PROBLEM &problemSpace, int whichOne) {
+  vector<METID> metList;
   for(int i=0; i<pList.size(); i++) {
     for(int j=0; j<pList[i].rxnDirIds.size(); j++) {
       REACTION tmpRxn;
       switch(whichOne) {
       case 1:
-	tmpRxn = problemSpace.fullrxns.rxnFromId(abs(pList[i].rxnDirIds[j]));
+	tmpRxn = problemSpace.fullrxns.rxnFromId((RXNID) abs(pList[i].rxnDirIds[j]));
 	for(int k=0; k<tmpRxn.stoich.size(); k++) {
 	  metList.push_back(tmpRxn.stoich[k].met_id);
 	}
 	break;
       case 2:
-	tmpRxn = problemSpace.synrxns.rxnFromId(abs(pList[i].rxnDirIds[j]));
+	tmpRxn = problemSpace.synrxns.rxnFromId((RXNID) abs(pList[i].rxnDirIds[j]));
 	for(int k=0; k<tmpRxn.stoich_part.size(); k++) {
 	  metList.push_back(tmpRxn.stoich[k].met_id);
 	}
@@ -435,8 +535,8 @@ vector<int> getAllPathMets(const vector<PATHSUMMARY> &pList, const PROBLEM &prob
 }
 
 /* Get a vector of path IDs from a pathsummary list */
-vector<int> getAllPathRxns(const vector<PATHSUMMARY> &pList) {
-  vector<int> result;
+vector<RXNDIRID> getAllPathRxns(const vector<PATHSUMMARY> &pList) {
+  vector<RXNDIRID> result;
   for(int i=0; i<pList.size(); i++) {
     catVectors1(result, pList[i].rxnDirIds);
   }
@@ -508,7 +608,7 @@ RXNSPACE splitReactions(const RXNSPACE &rxnspace) {
    NGAM is modified by changing the lower bound and upper bound of the reaction with name given by db.ATPM_name
    FIXME: Need to make sure to add the ATPM reaction to the model */
 void modifyNGAM(ANSWER &model, double newAtpm) {
-  int atpmId = Name2Ids(model.reactions.rxns, _db.ATPM_name);
+  RXNID atpmId = Name2Ids(model.reactions.rxns, _db.ATPM_name);
   //printf("atpmid = %d\n",atpmId);                                                                                                                                                                           
   if(atpmId == -1) {
     printf("WARNING: ATPM reaction was never added to model!\n");
@@ -525,10 +625,10 @@ void modifyNGAM(ANSWER &model, double newAtpm) {
 amountToChange > 0 --> more ATPM                                                                                                                                                                               
 amountToChange < 0 --> less ATPM */
 void modifyGAM(ANSWER &model, double amountToChange) {
-  int atpmId = Name2Ids(model.reactions.rxns, _db.ATPM_name);
-  int hId = Name2Ids(model.metabolites.mets, _db.H_name);
+  RXNID atpmId = Name2Ids(model.reactions.rxns, _db.ATPM_name);
+  METID hId = Name2Ids(model.metabolites.mets, _db.H_name);
   double numH = 0.0f;
-  REACTION* biomass = model.reactions.rxnPtrFromId(_db.BIOMASS);
+  REACTION* biomass = model.reactions.rxnPtrFromId((RXNID) _db.BIOMASS);
   REACTION ATPM = model.reactions.rxnFromId(atpmId);
 
   if(atpmId == -1) { printf("ERROR: ATPM reaction was never added to the model!\n"); assert(false); }

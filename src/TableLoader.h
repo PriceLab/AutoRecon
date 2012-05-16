@@ -7,6 +7,6 @@
 
 PROBLEM readReactionTable(const char* filename);
 void readLikelihoodTable(PROBLEM &ProblemSpace, const char* filename);
-int rxnByName(const RXNSPACE &rxnspace, const char* name);
+RXNID rxnByName(const RXNSPACE &rxnspace, const char* name);
 
 #endif

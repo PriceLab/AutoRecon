@@ -37,9 +37,9 @@ map<int,double> getSecretionRates(const ANSWER &ans1, const GROWTH &growth1,
 
   //indexed by the order they appear in growth
   for(int i=0;i<growth1.byproduct.size();i++){
-    int met_id = growth1.byproduct[i].id;
-    int rxn_id = FindExchange4Metabolite(ans1.reactions.rxns,met_id);
-    int rxn_idx= ans1.reactions.idxFromId(rxn_id);
+    METID met_id = growth1.byproduct[i].id;
+    RXNID rxn_id = FindExchange4Metabolite(ans1.reactions.rxns,met_id);
+    RXNIDX rxn_idx= ans1.reactions.idxFromId(rxn_id);
     result[met_id] = fba_solution[rxn_idx];
   }
 
@@ -109,13 +109,13 @@ double measureScore(SCORE1 &score1,vector<ANSWER> &ans, vector<GROWTH> &growth){
       // printf("FBA solving\n");
       vector<double> g = FBA_SOLVE(temp_ans.reactions, temp_ans.metabolites);
       //growth rate
-      score1.growthRate[j] = g[temp_ans.reactions.idxFromId(_db.BIOMASS)];
+      score1.growthRate[j] = g[temp_ans.reactions.idxFromId((RXNID)_db.BIOMASS)];
       //printf("Growth Rate: %f\n",g[0]);
       //printf("saving\n");
       vector<double> temp_vec_double;
       sim_growth_rates.push_back(temp_vec_double);
       exp_growth_rates.push_back(temp_vec_double);
-      sim_growth_rates[j].push_back(g[temp_ans.reactions.idxFromId(_db.BIOMASS)]);
+      sim_growth_rates[j].push_back(g[temp_ans.reactions.idxFromId((RXNID)_db.BIOMASS)]);
       exp_growth_rates[j].push_back(growth[j].growth_rate);
       //byproducts
       //printf("getting secretion rates\n");

@@ -20,7 +20,7 @@
 /* For backwards compatibility - assumes that you want db.BIOMASS as the objective
  with a coefficient of 1 and a sense of 1 (MAX) */
 vector<double> FBA_SOLVE(const RXNSPACE &rxnspace, const METSPACE &metspace) {
-  vector<int> obj(1, _db.BIOMASS);
+  vector<RXNID> obj(1, (RXNID)_db.BIOMASS);
   vector<double> coeff(1, 1.0f);
   GLPKDATA prob(rxnspace, metspace, obj, coeff, 1);
   vector<double> result = prob.FBA_SOLVE();
@@ -38,7 +38,7 @@ vector<double> FBA_SOLVE(const vector<REACTION> &rxnList, const METSPACE &metspa
 void FVA_SOLVE(const RXNSPACE &rxnspace, const METSPACE &metspace, double optPct, vector<double> &minflux, 
 	       vector<double> &maxflux) {
   minflux.clear(); maxflux.clear();
-  vector<int> obj(1, _db.BIOMASS);
+  vector<RXNID> obj(1, (RXNID)_db.BIOMASS);
   vector<double> coeff(1, 1.0f);
   GLPKDATA prob(rxnspace, metspace, obj, coeff, 1);
   prob.FVA_SOLVE(minflux, maxflux, optPct);
@@ -58,7 +58,7 @@ GLPKDATA::GLPKDATA() {
 }
 
 /* Objectives are all assumed to be zero except for IDs listed in objId */
-GLPKDATA::GLPKDATA(const RXNSPACE &rxnspace, const METSPACE &metspace, const vector<int> &objId, const vector<double> &objCoeff, int sense) {
+GLPKDATA::GLPKDATA(const RXNSPACE &rxnspace, const METSPACE &metspace, const vector<RXNID> &objId, const vector<double> &objCoeff, int sense) {
   initialize(metspace, rxnspace, objId, objCoeff, sense);
 }
 
@@ -149,7 +149,7 @@ void GLPKDATA::FVA_SOLVE(vector<double> &minFlux, vector<double> &maxFlux, doubl
         MER = Magic exits with always-negative flux
 
  This formulation is not perfect but it at least gets us close...and guarantees that we obtain growth from the resulting pruning */
-int GLPKDATA::gapFindLinprog(vector<int> &usedExits) {
+int GLPKDATA::gapFindLinprog(vector<RXNID> &usedExits) {
 
   usedExits.clear();
 
@@ -163,7 +163,7 @@ int GLPKDATA::gapFindLinprog(vector<int> &usedExits) {
   double exit_penalty = 100.0f;
 
   /* Needed for re-initializing to the previous state from before */
-  vector<int> origIds; 
+  vector<RXNID> origIds; 
   for(int i=0; i<objIdx.size(); i++) { origIds.push_back(rxnsUsed.rxns[objIdx[i]-1].id); }
   vector<double> origCoeff = objCoef;
 
@@ -197,7 +197,7 @@ int GLPKDATA::gapFindLinprog(vector<int> &usedExits) {
   }
 
   vector<double> result = this->FBA_SOLVE();
-  if( result[rxnsUsed.idxFromId(_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { printf("ERROR: Gapfind failed to return a solution...\n"); return -1; }
+  if( result[rxnsUsed.idxFromId((RXNID)_db.BIOMASS)] < _db.GROWTH_CUTOFF ) { printf("ERROR: Gapfind failed to return a solution...\n"); return -1; }
 
   /* Re-initialize */
   this->initialize(metsUsed, rxnsUsed, origIds, origCoeff, objSense);
@@ -392,7 +392,7 @@ int GLPKDATA::suppressGLPKOutput(void *info, const char *s) {
 
 /* (Re)-initialize based on the given data 
  I did nto pass by reference because it causes problems with re-initializign from values already in the class (causes an easy bug to make) */
-void GLPKDATA::initialize(const METSPACE &metspace, const RXNSPACE &rxnspace, vector<int> objId, vector<double> objCoeff, int sense) {
+void GLPKDATA::initialize(const METSPACE &metspace, const RXNSPACE &rxnspace, vector<RXNID> objId, vector<double> objCoeff, int sense) {
 
   rxnsUsed = rxnspace;
   metsUsed = metspace;
