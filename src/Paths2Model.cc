@@ -414,7 +414,7 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
 
   vector<RXNDIRID> rxnDirIdList = getAllPathRxns(pList);
   vector<RXNID> rxnIdList;
-  for(int i=0;i<rxnDirIdList.size();i++){rxnIdList.push_back((RXNID)abs(rxnIdList[i]));}
+  for(int i=0;i<rxnDirIdList.size();i++){rxnIdList.push_back((RXNID)abs(rxnDirIdList[i]));}
   pullOutRxnsbyIds(BaseRxns, rxnIdList, workingRxns);
   /*MATT - what happens if the rxnIdList has negatives in it? */
   /* Add the biomass equation to BaseRxns - we never added it previously, because each path is typically

@@ -16,28 +16,14 @@ vector<NETREACTION> ANSWER::etc;
 vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
-RXNDIRID operator*(const RXNID& x, const REV& y){
-  int tempx = x;
-  int tempy = y;
-  return (RXNDIRID) (x*y);
-}
+/* Can use this for any class that can be converted validly into an int 
+  Return type should be the second one */
 
-RXNDIRID operator*(const RXNDIRID& x, const REV& y){
+template <class T, class U> 
+U intTimes(const T& x, const U& y){
   int tempx = x;
   int tempy = y;
-  return (RXNDIRID) (x*y);
-}
-
-RXNDIRID operator*(const REV& x, const RXNID& y){
-  int tempx = x;
-  int tempy = y;
-  return (RXNDIRID) (x*y);
-}
-
-REV operator*(const REV& x, const REV& y){
-  int tempx = x;
-  int tempy = y;
-  return (REV) (x*y);
+  return (U) (x*y);
 }
 
 REV convertRXNDIRID2REV(RXNDIRID x){
