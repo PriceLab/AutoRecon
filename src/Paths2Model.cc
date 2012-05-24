@@ -8,6 +8,7 @@
 #include "Printers.h"
 #include "RunK.h"
 #include "XML_loader.h"
+#include "DataStructures.h"
 
 #include <algorithm>
 #include <cassert>
@@ -19,12 +20,13 @@
 #include <set>
 #include <vector>
 
+
 /* Utility function identifies if we should include a reaction when unsynonymmming the PATHSUMMARY vector 
 dir: <0 if we want backward directions and >0 if we want forward directions
 
 Tested reversibilities on 3-31-11 - seems to be working as expected and yielding the correct ID's */
-vector<int> findRxnsToIncludeFromSyn(const REACTION &TMPSYN, const RXNSPACE &fullrxns, int dir) {
-  vector<int> result;
+vector<RXNID> findRxnsToIncludeFromSyn(const REACTION &TMPSYN, const RXNSPACE &fullrxns, REV dir) {
+  vector<RXNID> result;
 
   /* Magic bridges are filled from the calling function in a separate step */
   if( TMPSYN.id >= _db.MAGICBRIDGEFACTOR && TMPSYN.id <= _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING) {     
@@ -73,18 +75,21 @@ vector<int> findRxnsToIncludeFromSyn(const REACTION &TMPSYN, const RXNSPACE &ful
   Any non-secondary metabolites in the reaction must be present somewhere in the pList
 
   I'm HOPING that this will make our job gapfilling easier. Sigh... yeah, right. */
-vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSUMMARY> &pList, 
-			     const PROBLEM &ProblemSpace, int bridgeToFill, vector<int> &filledBridges) {
+vector<RXNID> fillMagicBridges(const PATHSUMMARY &currentPsum, 
+				  const vector<PATHSUMMARY> &pList, 
+				  const PROBLEM &ProblemSpace, RXNDIRID bridgeToFill, 
+				  vector<RXNID> &filledBridges) {
 
   // This is needed so I can keep track of the recursion and unwrap it later so I know exactly what magic bridges
   // were filled up
-  filledBridges.push_back(abs(bridgeToFill));
+  filledBridges.push_back((RXNID)abs(bridgeToFill));
 
-  vector<int> suggestedRxnIds;
+  vector<RXNID> suggestedRxnIds;
 
   /* Get a list of metabolites from reactions in the pList (needed later...) */
-  vector<int> allRxnIds = getAllPathRxns(pList);
-  for(int i=0; i<allRxnIds.size(); i++) { allRxnIds[i] = abs(allRxnIds[i]); }
+  vector<RXNDIRID> allRxnDirIds = getAllPathRxns(pList);
+  vector<RXNID> allRxnIds;
+  for(int i=0; i<allRxnIds.size(); i++) { allRxnIds.push_back((RXNID) abs(allRxnIds[i])); }
 
   RXNSPACE modelSynRxns;  pullOutRxnsbyIds(ProblemSpace, allRxnIds, modelSynRxns);
   METSPACE modelSynMets;  pullOutMets(modelSynRxns, ProblemSpace.metabolites, modelSynMets);
@@ -93,10 +98,10 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
   METSPACE allMets = ProblemSpace.metabolites;
   calcMetRxnRelations(ProblemSpace.fullrxns, allMets);
 
-  REACTION bridge = ProblemSpace.synrxns.rxnFromId(abs(bridgeToFill));
+  REACTION bridge = ProblemSpace.synrxns.rxnFromId((RXNID) abs(bridgeToFill));
   
   /* We want the filling reaction to contain [metToConsume --> metToProduce] */
-  int metToProduce; int metToConsume;
+  METID metToProduce; METID metToConsume;
   for(int i=0; i<bridge.stoich_part.size(); i++) {
     if(bridgeToFill < 0) { 
       if(bridge.stoich_part[i].rxn_coeff < 0) { metToProduce = bridge.stoich_part[i].met_id;   }
@@ -107,9 +112,9 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
     }
   }
 
-  vector<int> rxnsWithProdMet = allMets.metFromId(metToConsume).rxnsInvolved_nosec;
+  vector<RXNID> rxnsWithProdMet = allMets[metToConsume].rxnsInvolved_nosec;
 
-  vector<int> tmpSuggested;
+  vector<RXNID> tmpSuggested;
   vector<bool> allCof;
   for(int i=0; i<rxnsWithProdMet.size(); i++) {
     REACTION tmp = ProblemSpace.fullrxns.rxnFromId(rxnsWithProdMet[i]);
@@ -159,9 +164,9 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
 
     bool metsIn = true;
     for(int j=0; j<tmp.stoich.size(); j++) {
-      METABOLITE tmpMet = ProblemSpace.metabolites.metFromId(tmp.stoich[j].met_id);
+      METABOLITE tmpMet = ProblemSpace.metabolites[tmp.stoich[j].met_id];
       if(tmpMet.secondary_lone == 1 | (!tmpMet.secondary_pair.empty())) { continue; }
-      if(!modelSynMets.idIn(tmpMet.id)) { metsIn = false; break; }
+      if(!modelSynMets.isIn(tmpMet.id)) { metsIn = false; break; }
     }
 
     if(!metsIn) { continue; }
@@ -175,7 +180,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
        and the only exception was accoa/coa, which was filled by PDH. */
     bool oneAllCof = true;
     for(int j=0; j<tmp.stoich.size(); j++) {
-      METABOLITE tmpMet = ProblemSpace.metabolites.metFromId(tmp.stoich[j].met_id);
+      METABOLITE tmpMet = ProblemSpace.metabolites[tmp.stoich[j].met_id];
       if(tmpMet.secondary_lone == 1 | (!tmpMet.secondary_pair.empty())) { continue; }
       oneAllCof = false;
       break;
@@ -192,7 +197,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
   } else {  suggestedRxnIds = tmpSuggested;  }
 
   if(suggestedRxnIds.empty()) {
-    vector<int> inputs = Load_Inputs_From_Growth(ProblemSpace.growth[currentPsum.growthIdx[0]]);
+    vector<METID> inputs = Load_Inputs_From_Growth(ProblemSpace.growth[currentPsum.growthIdx[0]]);
     /* This is the difference from the paths we had before... 
      We are now adding the metabolite we're trying to consume to our list */
     inputs.push_back(metToConsume);
@@ -200,14 +205,14 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
     METSPACE allmets = ProblemSpace.metabolites;
 
     METSPACE inputSpace(allmets, inputs);
-    METABOLITE output = allmets.metFromId(metToProduce);
+    METABOLITE output = allmets[metToProduce];
     int K = 5;
     vector<PATH> result;
 
     kShortest(result, allrxns, allmets, inputSpace, output, K);
 
     /* Figure out what is connected to the rest of the network based on the DIjkstras spitouts */
-    vector<int> gapfillRxnDirIds;
+    vector<RXNDIRID> gapfillRxnDirIds;
     for(int i=0; i<result.size(); i++) {
       /* Throw out the trivial solution that contains only the magic exit we're trying to fill
        I kept this solution around so I Can check my sanity that I actually get such a trivial solution
@@ -218,21 +223,21 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
       /* Test inputs - all must be in the network (may not be a necessary check) */
       bool inputsIn = true;
       for(int j=0; j<result[i].inputIds.size(); j++) { 
-	if(!modelSynMets.idIn(result[i].inputIds[j])) { inputsIn = false; break; }
+	if(!modelSynMets.isIn(result[i].inputIds[j])) { inputsIn = false; break; }
       }
       if(!inputsIn) { continue; }
 
       /* Test dead ends (do the extra outputs lead anywhere?) - more important check */
       bool deadIn = true;
       for(int j=0; j<result[i].deadEndIds.size(); j++) {
-	if(!modelSynMets.idIn(result[i].deadEndIds[j])) { deadIn = false; break; }
+	if(!modelSynMets.isIn(result[i].deadEndIds[j])) { deadIn = false; break; }
       }
       if(!deadIn) { continue; }
 
       /* All consistency checks passed so tag the rxnDirIDs for further analysis */
-      vector<int> rxnDirIds;
+      vector<RXNDIRID> rxnDirIds;
       for(int j=0; j<result[i].rxnIds.size(); j++) {
-	rxnDirIds.push_back(result[i].rxnIds[j] * result[i].rxnDirection[j]);
+	rxnDirIds.push_back((RXNDIRID)(result[i].rxnIds[j] * result[i].rxnDirection[j]));
       }
       catVectors1(gapfillRxnDirIds, rxnDirIds);
       
@@ -247,7 +252,7 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
        Magic bridges need to be deciphered with a recursive call to this function.
        Synonym reactions can be dealt with using the findRxnsToIncludeFromSyn function. */
     for(int i=0; i<gapfillRxnDirIds.size(); i++) {
-      REACTION TMPSYN = ProblemSpace.synrxns.rxnFromId(abs(gapfillRxnDirIds[i]));
+      REACTION TMPSYN = ProblemSpace.synrxns.rxnFromId((RXNID)abs(gapfillRxnDirIds[i]));
       /* This should never happen, but because I'm paranoid... 
        ACtually I should be testing if there's EVER a repeat in the recursion and saving all the
       magic bridges that are ever fixed. If I get into trouble this is probably why. */
@@ -257,13 +262,14 @@ vector<int> fillMagicBridges(const PATHSUMMARY &currentPsum, const vector<PATHSU
       if(TMPSYN.id < _db.MINFACTORSPACING) { suggestedRxnIds.push_back(TMPSYN.id); continue; }
       /* Synonym */
       if(TMPSYN.id >= _db.SYNFACTOR && TMPSYN.id < _db.SYNFACTOR + _db.MINFACTORSPACING) {
-	vector<int> newIds = findRxnsToIncludeFromSyn(TMPSYN,ProblemSpace.fullrxns,gapfillRxnDirIds[i]);
+	REV tempR = convertRXNDIRID2REV(gapfillRxnDirIds[i]);
+	vector<RXNID> newIds = findRxnsToIncludeFromSyn(TMPSYN,ProblemSpace.fullrxns,tempR); 
 	catVectors1(suggestedRxnIds, newIds);
 	continue;
       }
       /* Recurse */
       if(TMPSYN.id >= _db.MAGICBRIDGEFACTOR && TMPSYN.id < _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING) {
-	vector<int> newIds = fillMagicBridges(currentPsum, pList, ProblemSpace, gapfillRxnDirIds[i], filledBridges);
+	vector<RXNID> newIds = fillMagicBridges(currentPsum, pList, ProblemSpace, gapfillRxnDirIds[i], filledBridges);
 	catVectors1(suggestedRxnIds, newIds);
       }
     }
@@ -291,32 +297,25 @@ CommonRxnIds tested on 3-11-11 and seems to be replaced correctly at least for t
 PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMMARY> &allPsum, 
 				  PROBLEM &ProblemSpace) {
   PATHSUMMARY result = psum;
-  vector<int> rxnIds = psum.rxnDirIds;
+  vector<RXNDIRID> rxnIds = psum.rxnDirIds;
   vector<bool> toErase(ProblemSpace.synrxns.rxns.size(), false);
 
   int origSize = rxnIds.size();
 
-  /* The different reactions chosen to replace a synrxn are all given adjacent priorities (it really doesn't
-     matter which one is picked first because we're traversing the whole list anyway) 
-
-     Since we're traversing rxnIds and not rxnPriority, the resulting list will be backwards... */
-  vector<int> backwardsPriority;
-
   for(int i=0;i<origSize;i++) {
-    REACTION TMPSYN = ProblemSpace.synrxns.rxnFromId(abs(rxnIds[i]));
+    REACTION TMPSYN = ProblemSpace.synrxns.rxnFromId((RXNID)abs(rxnIds[i]));
     /* Don't replace if theres no synonyms - but DO replace rxnIds[i] with its 
        absolute value so we actually pull the right reaction out */
     if(TMPSYN.id < _db.MINFACTORSPACING) { 
-      rxnIds[i] = abs(rxnIds[i]);
-      backwardsPriority.push_back(rxnIds[i]);
+      rxnIds[i] = (RXNDIRID)abs(rxnIds[i]);
       continue; 
     }
 
     if(TMPSYN.id >= _db.MAGICBRIDGEFACTOR && TMPSYN.id < _db.MAGICBRIDGEFACTOR + _db.MINFACTORSPACING) {
       /* Pass direction and ID to the sub-function so I can call 
 	 findRxnsToIncludeFromSyn from there and match things up correctly */
-      vector<int> filledBridges;
-      vector<int> toInclude = fillMagicBridges(psum, allPsum, ProblemSpace, rxnIds[i], filledBridges);
+      vector<RXNID> filledBridges;
+      vector<RXNID> toInclude = fillMagicBridges(psum, allPsum, ProblemSpace, rxnIds[i], filledBridges);
 
       // This adds toInclude to the END of the list and messes with the order.
       catVectors1(rxnIds, toInclude);
@@ -325,23 +324,20 @@ PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMM
       }
       toErase[i] = true;
 
-      // In our list of priorities we preserve order.
-      for(int j=0; j<toInclude.size(); j++) { backwardsPriority.push_back(toInclude[j]); }
     }
 
     if((TMPSYN.id >= _db.SYNFACTOR && TMPSYN.id < _db.SYNFACTOR + _db.MINFACTORSPACING) ||
        (TMPSYN.id >= _db.SYNFACTOR + _db.REVFACTOR && TMPSYN.id < _db.SYNFACTOR + _db.REVFACTOR + _db.MINFACTORSPACING) ) {
       /* Get the relevant synonyms and tack them on to the end. Set up the old name 
 	 (synonym name) to be deleted and set the real IDs not to be deleted */
-      vector<int> toInclude = findRxnsToIncludeFromSyn(TMPSYN,ProblemSpace.fullrxns,rxnIds[i]);
+      REV dir = convertRXNDIRID2REV(rxnIds[i]);
+      vector<RXNID> toInclude = findRxnsToIncludeFromSyn(TMPSYN,ProblemSpace.fullrxns,dir);
       catVectors1(rxnIds, toInclude);
       
       toErase[i] = true;
       for(int j=0;j<toInclude.size();j++) {
 	toErase.push_back(false);
       }
-
-      for(int j=0; j<toInclude.size(); j++) { backwardsPriority.push_back(toInclude[j]); }
     }
   }
 
@@ -354,8 +350,6 @@ PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMM
     }
   }
 
-  reverse(backwardsPriority.begin(), backwardsPriority.end());
-  result.rxnPriority = backwardsPriority; 
   custom_unique(result.rxnDirIds);
 
   return result;
@@ -364,23 +358,23 @@ PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMM
 /* Add appropriately needed rxns from synrxnsR to the ProblemSpace                                                                                                                                             
    FIXME: THese should be moved into the paths2model.h / paths2model.cc files */
 void addR(PATHSUMMARY &psum, PROBLEM &ProblemSpace) {
-  vector<int> rxnIds = psum.rxnDirIds;
+  vector<RXNDIRID> rxnIds = psum.rxnDirIds;
   int origSize = rxnIds.size();
   for(int i=0;i<origSize;i++){
-    if(ProblemSpace.synrxns.idIn(abs(rxnIds[i]))){continue;}
+    if(ProblemSpace.synrxns.idIn((RXNID)abs(rxnIds[i]))){continue;}
     if(abs(rxnIds[i]) >= _db.REVFACTOR && abs(rxnIds[i]) < _db.REVFACTOR + _db.MINFACTORSPACING){
-      REACTION TEMP = ProblemSpace.synrxnsR.rxnFromId(abs(rxnIds[i]));
+      REACTION TEMP = ProblemSpace.synrxnsR.rxnFromId((RXNID)abs(rxnIds[i]));
       ProblemSpace.synrxns.addReaction(TEMP);
       ProblemSpace.fullrxns.addReaction(TEMP);
     }
     if(abs(rxnIds[i]) >= _db.REVFACTOR + _db.SYNFACTOR
        && abs(rxnIds[i]) < _db.REVFACTOR + _db.SYNFACTOR + _db.MINFACTORSPACING){
-      REACTION TEMP = ProblemSpace.synrxnsR.rxnFromId(abs(rxnIds[i]));
+      REACTION TEMP = ProblemSpace.synrxnsR.rxnFromId((RXNID)abs(rxnIds[i]));
       ProblemSpace.synrxns.addReaction(TEMP);
       for(int j=0;j<TEMP.syn.size();j++){
         REACTION TEMP2 = ProblemSpace.fullrxns.rxnFromId(TEMP.syn[j]);
         TEMP2.id += _db.REVFACTOR;
-        TEMP2.net_reversible *= -1;
+        TEMP2.net_reversible = TEMP2.net_reversible * (REV)-1;
         ProblemSpace.fullrxns.addReaction(TEMP2);
       }
     }
@@ -408,7 +402,7 @@ void addR(vector<vector<vector<PATHSUMMARY> > > &psum, PROBLEM &ProblemSpace) {
    so we can just iterate until the end) */
 
 void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, const REACTION &biomass, 
-			  const vector<int> &magicIds, const vector<int> &magicDirs, PROBLEM &working, int &baseNum) {
+			  const vector<METID> &magicIds, const vector<REV> &magicDirs, PROBLEM &working, int &baseNum) {
 
   working.clear();
   const METSPACE &BaseMets = ProblemSpace.metabolites;
@@ -418,9 +412,11 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
   METSPACE &workingMets = working.metabolites;
   RXNSPACE &workingRxns = working.fullrxns;
 
-  vector<int> rxnIdList = getAllPathRxns(pList);
-  for(int i=0;i<rxnIdList.size();i++){rxnIdList[i] = abs(rxnIdList[i]);}
+  vector<RXNDIRID> rxnDirIdList = getAllPathRxns(pList);
+  vector<RXNID> rxnIdList;
+  for(int i=0;i<rxnDirIdList.size();i++){rxnIdList.push_back((RXNID)abs(rxnDirIdList[i]));}
   pullOutRxnsbyIds(BaseRxns, rxnIdList, workingRxns);
+  /*MATT - what happens if the rxnIdList has negatives in it? */
   /* Add the biomass equation to BaseRxns - we never added it previously, because each path is typically
      tied to one particular output */
   workingRxns.addReaction(biomass);
@@ -435,7 +431,7 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
 
   /* I use a map here because we are interested in making sure that we don't duplicate metabolite ID's with different directions.
      When in doubt, make it 0 */
-  map<int, int> id2Dir;
+  map<METID, int> id2Dir;
 
   for(int i=0; i<growthIdx.size(); i++) {
     int currentIdx = growthIdx[i];
@@ -450,8 +446,9 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
     }
   }
 
-  vector<int> metIds,  byDirs;
-  for(map<int, int>::iterator it=id2Dir.begin(); it!=id2Dir.end(); it++) {
+  vector<METID> metIds;
+  vector<int> byDirs;
+  for(map<METID, int>::iterator it=id2Dir.begin(); it!=id2Dir.end(); it++) {
     metIds.push_back(it->first);
     byDirs.push_back(it->second);
   }
@@ -478,7 +475,7 @@ void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &Probl
     }
   }
 
-  vector<int> newMagic = magicIds;
+  vector<METID> newMagic = magicIds;
   vector<int> newDirs;
   /* Decide the direction of the magic stuff */
   custom_unique(newMagic);
@@ -515,7 +512,7 @@ This should elminiarte the need for the warning in the transport reaction adder 
 If you call this with "fullrxns" or "synrxns" as both arguments it will just add the magic stuff to the reactions
 that is necessary - useful for updating the fullreactions. However, I'm not sure that would work with a pass by reference... 
 you may need to make an extra copy in the calling function. */
-void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<int> &metsToCheck, 
+void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<METID> &metsToCheck, 
 				   const vector<int> &dirsToCheck) {
 
   RXNSPACE &workingRxns = working.fullrxns;
@@ -531,18 +528,18 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
 
   // Existence check for metabolites in metsToCheck - add things that are missing to the metabolite list 
   for(int i=0; i<metsToCheck.size();i++) {
-    if(!workingMets.idIn(metsToCheck[i])) {
-      if(!allMets.idIn(metsToCheck[i])) { printf("ERROR: Metaboilte %d not found in allMets although it was in metsToCheck in checkReactionsAndTransporters.\n", metsToCheck[i]);	throw;   }
-      workingMets.addMetabolite(allMets.metFromId(metsToCheck[i]));
+    if(!workingMets.isIn(metsToCheck[i])) {
+      if(!allMets.isIn(metsToCheck[i])) { printf("ERROR: Metaboilte %d not found in allMets although it was in metsToCheck in checkReactionsAndTransporters.\n", (int)metsToCheck[i]);	throw;   }
+      workingMets.addMetabolite(allMets[metsToCheck[i]]);
     }
 
     // Also add the pair (in case for example a metabolite that wasn't needed was included in the media 
     // Could cause issues if someone passes both a metabolite and its pair as mets to check so we check for that 
     // condition here  
-    int pairId = inOutPair(metsToCheck[i], allMets);
-    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets.metFromId(metsToCheck[i]).name, metsToCheck[i]); throw; }
-    if(!workingMets.idIn(pairId)) {
-      workingMets.addMetabolite(allMets.metFromId(pairId));
+    METID pairId = inOutPair(metsToCheck[i], allMets);
+    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets[metsToCheck[i]].name, (int)metsToCheck[i]); throw; }
+    if(!workingMets.isIn(pairId)) {
+      workingMets.addMetabolite(allMets[pairId]);
     }
   }
 
@@ -550,7 +547,7 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
   // If we need to, we'll add magic too. 
   GetExchangeReactions(metsToCheck, dirsToCheck, ProblemSpace, excRxns);
   for(int i=0;i<excRxns.rxns.size();i++) {
-    int excId = excRxns.rxns[i].id;
+    RXNID excId = excRxns.rxns[i].id;
     if(!workingRxns.idIn(excId)) {
       workingRxns.addReaction(excRxns.rxns[i]);
     } else {
@@ -564,17 +561,17 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
 
   GetTransportReactions(metsToCheck, dirsToCheck, ProblemSpace, transporters.rxns);
   for(int i=0; i<transporters.rxns.size();i++) {
-    int transId = transporters[i].id;
+    RXNID transId = transporters.rxns[i].id;
     if(!workingRxns.idIn(transId)) {
-      workingRxns.addReaction(transporters[i]);
+      workingRxns.addReaction(transporters.rxns[i]);
     } else {
       // Keep the reaction the same but check the reversibility and modify as needed
-      workingRxns.rxnPtrFromId(transId)->net_reversible = transporters[i].net_reversible;
+      workingRxns.rxnPtrFromId(transId)->net_reversible = transporters.rxns[i].net_reversible;
     }
     // Check for new metabolites added because of transporters and add them to the metabolite list
-    for(int j=0;j<transporters[i].stoich.size();j++) {
-      if(!workingMets.idIn(transporters[i].stoich[j].met_id)) {
-	workingMets.addMetabolite(allMets.metFromId(transporters[i].stoich[j].met_id));
+    for(int j=0;j<transporters.rxns[i].stoich.size();j++) {
+      if(!workingMets.isIn(transporters.rxns[i].stoich[j].met_id)) {
+	workingMets.addMetabolite(allMets[transporters.rxns[i].stoich[j].met_id]);
       }
     }
   }

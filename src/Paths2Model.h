@@ -18,13 +18,16 @@
 void addR(PATHSUMMARY &psum, PROBLEM &ProblemSpace);
 void addR(vector<vector<vector<PATHSUMMARY> > > &psum, PROBLEM &ProblemSpace);
 
-vector<int> findRxnsToIncludeFromSyn(const REACTION &TMPSYN, const RXNSPACE &rxnspace, int dir);
+vector<RXNID> findRxnsToIncludeFromSyn(const REACTION &TMPSYN, const RXNSPACE &rxnspace, REV dir);
 PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMMARY> &pList, PROBLEM &ProblemSpace);
-vector<int> fillMagicBridges(const PATHSUMMARY &psum, const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, int id);
+vector<RXNID> fillMagicBridges(const PATHSUMMARY &psum, const vector<PATHSUMMARY> &pList, 
+			     const PROBLEM &ProblemSpace, RXNDIRID id, 
+			     vector<RXNID> &filledMagicBridges);
 
 /* Random utility functions */
-void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<int> &metIds, const vector<int> &dirs);
-void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, const REACTION &biomass, const vector<int> &magicIds, const vector<int> &magicDirs,
+void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace, const vector<METID> &metIds, const vector<int> &dirs);
+void makeSimulatableModel(const vector<PATHSUMMARY> &pList, const PROBLEM &ProblemSpace, const REACTION &biomass, const vector<METID> &magicIds, 
+			  const vector<REV> &magicDirs,
                           PROBLEM &working, int &baseNum);
 
 

@@ -64,10 +64,10 @@ int main(int argc, char *argv[]) {
      This could make magic entrances under all conditions but we should be able to prune out if any are only
      needed conditionally... */
   for(int i=0; i<psum.size(); i++) {
-    vector<int> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
+    vector<METID> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
     for(int j=0; j<psum[i].size(); j++) { 
       if(psum[i][j].size() == 0) {
-	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", ProblemSpace.metabolites.metFromId(outputIds[j]).name, i);
+	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", ProblemSpace.metabolites[outputIds[j]].name, i);
 	ProblemSpace.metabolites.metPtrFromId(outputIds[j])->secondary_lone = 1;
       }
     }

@@ -42,7 +42,7 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
   tmp.path = onePath;
   L.push(tmp);
 
-  vector<int> previousGraphRxns;
+  vector<RXNID> previousGraphRxns;
 
   while(true) {
 
@@ -96,8 +96,8 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
     /* No more graphs to check (meaning the total number of shortest paths is less than K) */
     if(_db.DEBUGPATHS) { printf("Working on the %dth shortest...\n", currentK + 1); }
 
-    vector<int> &currentRxnList = currentGraph.path.rxnIds;
-    vector<int> &excludedRxnIds = currentGraph.excludedRxnIds;
+    vector<RXNID> &currentRxnList = currentGraph.path.rxnIds;
+    vector<RXNID> &excludedRxnIds = currentGraph.excludedRxnIds;
 
     /* Set all of the specified reactions to not be included */
     for(int i=0; i<excludedRxnIds.size();i++) {
@@ -112,7 +112,7 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
 
     vector<GRAPHSTORE> temporaryList(currentRxnList.size(), currentGraph);
 
-#pragma omp parallel for shared(L, currentRxnList, temporaryList) firstprivate(tmp, onePath, tmpRxn)
+#pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
       set<BADIDSTORE> dum;
       int dir = truedir.rxnFromId(currentRxnList[i]).net_reversible;
@@ -182,7 +182,7 @@ void kShortest(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, MET
   tmp.path = onePath;
   L.push(tmp);
 
-  vector<int> previousGraphRxns;
+  vector<RXNID> previousGraphRxns;
 
   while(true) {
 
@@ -226,8 +226,8 @@ void kShortest(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, MET
     /* No more graphs to check (meaning the total number of shortest paths is less than K) */
     //printf("Working on the %dth shortest...\n", currentK + 1);
 
-    vector<int> &currentRxnList = currentGraph.path.rxnIds;
-    vector<int> &excludedRxnIds = currentGraph.excludedRxnIds;
+    vector<RXNID> &currentRxnList = currentGraph.path.rxnIds;
+    vector<RXNID> &excludedRxnIds = currentGraph.excludedRxnIds;
 
     /* Set all of the specified reactions to not be included */
     for(int i=0; i<excludedRxnIds.size();i++) {
@@ -242,7 +242,7 @@ void kShortest(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, MET
 
     vector<GRAPHSTORE> temporaryList(currentRxnList.size(), currentGraph);
 
-    #pragma omp parallel for shared(L, currentRxnList, temporaryList) firstprivate(tmp, onePath, tmpRxn)
+#pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
       set<BADIDSTORE> dum;
       tmp.excludedRxnIds.push_back(currentRxnList[i]);

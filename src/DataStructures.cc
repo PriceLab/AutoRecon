@@ -16,8 +16,30 @@ vector<NETREACTION> ANSWER::etc;
 vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
+/* Can use this for any class that can be converted validly into an int 
+  Return type should be the second one */
+
+template <class T, class U> 
+U intTimes(const T& x, const U& y){
+  int tempx = x;
+  int tempy = y;
+  return (U) (x*y);
+}
+
+REV convertRXNDIRID2REV(RXNDIRID x){
+  if(x > 0){return (REV)1;}
+  else{return (REV)-1;}
+}
+
+/*
+RXNID operator=(const RXNDIRID x){
+  int tempx = x;
+  return (RXNID) abs(x);
+}
+*/
+
 METABOLITE::METABOLITE() {
-  name = {0};
+  //name = {0};
   input = 0;
   output = 0;
   biomass = 0;
@@ -172,7 +194,7 @@ RXNSPACE::RXNSPACE(const vector<REACTION> &rxnVec) {
   }
 }
 
-RXNSPACE::RXNSPACE(const RXNSPACE& existingSpace, const vector<int> &idSubset) {
+RXNSPACE::RXNSPACE(const RXNSPACE& existingSpace, const vector<RXNID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
     REACTION rxn = existingSpace.rxnFromId(idSubset[i]);
     rxns.push_back(rxn);
@@ -187,7 +209,7 @@ void RXNSPACE::clear() {
   numRxns = 0;
 }
 
-REACTION & RXNSPACE::operator[](int idx) {
+REACTION & RXNSPACE::operator[](RXNIDX idx) {
   assert(idx < rxns.size());
   return this->rxns[idx];
 }
@@ -234,14 +256,14 @@ void RXNSPACE::addReaction(const REACTION &rxn) {
 
 void RXNSPACE::removeRxnFromBack() {
   assert(rxns.size() > 0);
-  int id = rxns.back().id;
-  int idx = Ids2Idx[id];
+  RXNID  id  = rxns.back().id;
+  RXNIDX idx = Ids2Idx[id];
   rxns.pop_back();
   Ids2Idx.erase(id);
   numRxns--;
 }
 
-void RXNSPACE::changeId(int oldId, int newId) {
+void RXNSPACE::changeId(RXNID oldId, RXNID newId) {
   if(idIn(newId)) { printf("ERROR: Request to change ID to an ID already taken by a reaction in the RXNSPACE (in RXNSPACE::changeID)\n"); assert(false); }
   int idx = idxFromId(oldId);
   rxns[idx].id = newId;
@@ -259,7 +281,7 @@ void RXNSPACE::changeId(int oldId, int newId) {
    easier to keep track of the large number of RXNSPACE running around.
    
 */
-void RXNSPACE::changeReversibility(int id, int new_rev) {
+void RXNSPACE::changeReversibility(RXNID id, REV new_rev) {
   REACTION* ptr = rxnPtrFromId(id);
   /* new_rev = -1: set ub = 0 */
   if(new_rev == -1) { ptr->lb = -1000.0f; ptr->ub = 0.0f;  }
@@ -271,7 +293,7 @@ void RXNSPACE::changeReversibility(int id, int new_rev) {
 /* Change the lb of the reaction to new_lb
    Change net_reversible to +1 if the lb is > 0 and
    0 if the lb is < 0 and the ub is > 0 */
-void RXNSPACE::change_Lb(int id, double new_lb) {
+void RXNSPACE::change_Lb(RXNID id, double new_lb) {
   REACTION* ptr = rxnPtrFromId(id);
   assert(new_lb <= ptr->ub - 1E-8);
 
@@ -283,7 +305,7 @@ void RXNSPACE::change_Lb(int id, double new_lb) {
 
 /* Change the ub of the reaction to new_ub
    Change the net_reversible to -1 if lb is < 0 and 0 if the reaction can now go in either direction */
-void RXNSPACE::change_Ub(int id, double new_ub) {
+void RXNSPACE::change_Ub(RXNID id, double new_ub) {
   REACTION* ptr = rxnPtrFromId(id);
   assert(new_ub >= ptr->lb + 1E-8);
 
@@ -296,7 +318,7 @@ void RXNSPACE::change_Ub(int id, double new_ub) {
 /* If you know you want to change both the LB AND the UB... you can pass both here to avoid obnoxious assertions.
    I suggest doing this INSTEAD of modifying net_reversible... although I have written functions to let you do it either way.
 */
-void RXNSPACE::change_Lb_and_Ub(int id, double new_lb, double new_ub) {
+void RXNSPACE::change_Lb_and_Ub(RXNID id, double new_lb, double new_ub) {
   assert(new_lb <= new_ub + 1E-8);
 
   REACTION* ptr = rxnPtrFromId(id);
@@ -311,33 +333,33 @@ void RXNSPACE::change_Lb_and_Ub(int id, double new_lb, double new_ub) {
 
 /* Uses "find" function from map to allow us to declare constant RXNSPACE's
 Return a reaction with a given ID */
-REACTION RXNSPACE::rxnFromId(int id) const {
+REACTION RXNSPACE::rxnFromId(RXNID id) const {
   int idx = this->idxFromId(id);
   return rxns[idx];
 }
 
-REACTION* RXNSPACE::rxnPtrFromId(int id) {
+REACTION* RXNSPACE::rxnPtrFromId(RXNID id) {
   int idx = this->idxFromId(id);
   return &rxns[idx];
 }
 
-const REACTION* RXNSPACE::rxnPtrFromId(int id) const {
+const REACTION* RXNSPACE::rxnPtrFromId(RXNID id) const {
   int idx = this->idxFromId(id);
   return &rxns[idx];
 }
 
 /* Returns a reaction index from an Id (does bounds-checking) */
-int RXNSPACE::idxFromId(int id) const {
-  map<int,int>::const_iterator it = Ids2Idx.find(id);
+RXNIDX RXNSPACE::idxFromId(RXNID id) const {
+  map<RXNID,RXNIDX>::const_iterator it = Ids2Idx.find(id);
   if(it == Ids2Idx.end()) {
     printf("FAILURE: Attempt to get an index for ID %d that is not in the RXNSPACE(%d)!\n", 
-	   id,(int)this->rxns.size());
+	   (int)id,(int)this->rxns.size());
     assert(it != Ids2Idx.end() );
   }
   return (it -> second);
 }
 
-bool RXNSPACE::idIn(int id) const {
+bool RXNSPACE::idIn(RXNID id) const {
   if(Ids2Idx.count(id) > 0) { return true; }
   else { return false; }
 }
@@ -367,9 +389,9 @@ METSPACE::METSPACE(const vector<METABOLITE> &metVec) {
 }
 
 /* Initialize metabolite list to be a subset of a larger metabolite list */
-METSPACE::METSPACE(const METSPACE& existingSpace, const vector<int> &idSubset) {
+METSPACE::METSPACE(const METSPACE& existingSpace, const vector<METID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
-    mets.push_back(existingSpace.metFromId(idSubset[i]));
+    mets.push_back(existingSpace[idSubset[i]]);
     Ids2Idx[idSubset[i]] = i;
   }
   numMets = mets.size();
@@ -377,7 +399,7 @@ METSPACE::METSPACE(const METSPACE& existingSpace, const vector<int> &idSubset) {
 
 /* Initializes a list of mets based on stoich (NOT stoich_part) for a given RXNSPACE */
 METSPACE::METSPACE(const RXNSPACE &rxnspace, const METSPACE &largeMetSpace) {
-  vector<int> metIds;
+  vector<METID> metIds;
   for(int i=0; i<rxnspace.rxns.size(); i++) {
     for(int j=0; j<rxnspace.rxns[i].stoich.size(); j++) {
       metIds.push_back(rxnspace.rxns[i].stoich[j].met_id);
@@ -385,7 +407,7 @@ METSPACE::METSPACE(const RXNSPACE &rxnspace, const METSPACE &largeMetSpace) {
   }
   custom_unique(metIds);
   for(int i=0; i<metIds.size(); i++) {
-    mets.push_back(largeMetSpace.metFromId(metIds[i]));
+    mets.push_back(largeMetSpace[metIds[i]]);
     Ids2Idx[metIds[i]] = i;
   }
   numMets = metIds.size();
@@ -398,7 +420,7 @@ void METSPACE::clear() {
 }
 
 void METSPACE::addMetabolite(const METABOLITE &met) {
-  if(idIn(met.id)) {
+  if(isIn(met.id)) {
     //printf("WARNING: Attempted to pass a metabolite with id %d that was already in the METSPACE!\n", met.id);
     return;
   }
@@ -409,41 +431,65 @@ void METSPACE::addMetabolite(const METABOLITE &met) {
 
 void METSPACE::removeMetFromBack() {
   assert(mets.size() > 0);
-  int id = mets.back().id;
+  METID id = mets.back().id;
   int idx = Ids2Idx[id];
   mets.pop_back();
   Ids2Idx.erase(id);
   numMets--;
 }
 
-METABOLITE METSPACE::metFromId(int id) const {
+METABOLITE METSPACE::getMetObj(METID id) const {
   return mets[idxFromId(id)];
 }
 
-METABOLITE* METSPACE::metPtrFromId(int id) {
-  int idx = this->idxFromId(id);
+METABOLITE* METSPACE::metPtrFromId(METID id) {
+  METIDX idx = this->idxFromId(id);
   return &mets[idx];
 }
 
 
-int METSPACE::idxFromId(int id) const {
-  map<int,int>::const_iterator it = Ids2Idx.find(id);
+METIDX METSPACE::idxFromId(METID id) const {
+  map<METID,METIDX>::const_iterator it = Ids2Idx.find(id);
   if(it == Ids2Idx.end()) {
-    printf("FAIL: Attempted to access metabolite %d that is not present in the metabolite struct...\n", id);
+    printf("FAIL: Attempted to access metabolite %d that is not present in the metabolite struct...\n", (int)id);
     assert(it != Ids2Idx.end() );
   }
   return (it -> second);
 }
 
-bool METSPACE::idIn(int id) const {
+bool METSPACE::isIn(METID id) const {
   if(Ids2Idx.count(id) > 0) { return true; }
   else { return false; }
 }
 
-METABOLITE & METSPACE::operator[](int idx) {
+bool METSPACE::isIn(METIDX idx) const {
+  if(idx < mets.size()) { return true; }
+  else { return false; }
+}
+
+METABOLITE  & METSPACE::operator[](int idx) {
+  printf("Warning: int instead of METIDX\n");
+  assert(0);
+  return this->mets[idx];
+}
+
+METABOLITE & METSPACE::operator[](METIDX idx) {
   assert(idx < mets.size());
   return this->mets[idx];
 }
+
+METABOLITE & METSPACE::operator[](METID id) {
+  assert(this->isIn(id));
+  METIDX idx = this->idxFromId(id);
+  return this->mets[idx];
+}
+
+const METABOLITE & METSPACE::operator[](METID id) const{
+  assert(this->isIn(id));
+  METIDX idx = this->idxFromId(id);
+  return this->mets[idx];
+}
+
 
 /* Convert metabolite ID's to metabolite indicies and vice versa */
 /* You won't have to use this functino if you always make and expand/contract METSPACEs with member class functions */
@@ -487,7 +533,7 @@ PROBLEM::PROBLEM(const RXNSPACE &x, const PROBLEM &ProblemSpace){
     }
   }
 
-  vector<int> mets;
+  vector<METID> mets;
   for(int i=0;i<fullrxns.rxns.size();i++){
     for(int j=0;j<fullrxns.rxns[i].stoich.size();j++){
       mets.push_back(fullrxns.rxns[i].stoich[j].met_id);
@@ -496,7 +542,7 @@ PROBLEM::PROBLEM(const RXNSPACE &x, const PROBLEM &ProblemSpace){
   custom_unique(mets);
 
   for(int i=0;i<mets.size();i++){
-    metabolites.addMetabolite(ProblemSpace.metabolites.metFromId(mets[i]));
+    metabolites.addMetabolite(ProblemSpace.metabolites[mets[i]]);
     if(metabolites.mets.back().noncentral == 1) {
       cofactors.addMetabolite(metabolites.mets.back());
     }
@@ -534,7 +580,6 @@ PATHSUMMARY PATHSUMMARY::clear(){
   this->likelihood = -1;
   this->growthIdx.clear();
   this->k_number = -1;
-  this->rxnPriority.clear();
   return *this;
 }
 
@@ -544,7 +589,7 @@ PATHSUMMARY::PATHSUMMARY() {
   k_number = -1;
 };
 
-bool PATHSUMMARY::metIn(int metId) const{
+bool PATHSUMMARY::metIn(METID metId) const{
   for(int i=0;i<this->deadEndIds.size();i++){
     if(this->deadEndIds[i]==metId){ return 1;}
   }
@@ -572,15 +617,12 @@ PATHSUMMARY PATHSUMMARY::operator=(PATH &onepath){
   this->rxnDirIds.clear();
   this->deadEndIds.clear();
   this->metsConsumed.clear();
-  this->rxnPriority.clear();
   for(int i=0;i<onepath.rxnIds.size();i++){
     this->rxnDirIds.push_back(onepath.rxnIds[i] * onepath.rxnDirection[i]);}
   for(int i=0;i<onepath.deadEndIds.size();i++){
     this->deadEndIds.push_back(onepath.deadEndIds[i]);}
   for(int i=0;i<onepath.metsConsumedIds.size();i++){
     this->metsConsumed.push_back(onepath.metsConsumedIds[i]);}
-  for(int i=0; i<onepath.rxnPriority.size(); i++) {
-    this->rxnPriority.push_back(onepath.rxnPriority[i]);  }
 
   this->likelihood = onepath.totalLikelihood;
   this->outputId = onepath.outputId;
@@ -591,16 +633,12 @@ PATHSUMMARY PATHSUMMARY::operator/(PATH &onepath){
   this->rxnDirIds.clear();
   this->deadEndIds.clear();
   this->metsConsumed.clear();
-  this->rxnPriority.clear();
   for(int i=0;i<onepath.rxnIds.size();i++){
-    this->rxnDirIds.push_back(-onepath.rxnIds[i] * onepath.rxnDirection[i]);}
+    this->rxnDirIds.push_back(onepath.rxnIds[i] * onepath.rxnDirection[i] * (REV) -1);}
   for(int i=0;i<onepath.deadEndIds.size();i++){
     this->deadEndIds.push_back(onepath.deadEndIds[i]);}
   for(int i=0;i<onepath.metsConsumedIds.size();i++){
     this->metsConsumed.push_back(onepath.metsConsumedIds[i]);}
-  for(int i=0; i<onepath.rxnPriority.size(); i++) {
-    this->rxnPriority.push_back(onepath.rxnPriority[i]);  }  
-
   this->likelihood = onepath.totalLikelihood;
   this->outputId = onepath.outputId;
   return *this;
