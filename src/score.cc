@@ -189,7 +189,8 @@ void optimizeAMs(vector<ANSWER> &ans, PROBLEM &ProblemSpace, double init_AM){
   double size;
   printf("optimizeAMs: 2\n");
 
-  gsl_vector *AMs = (gsl_vector *) gsl_vector_alloc(sizeof(gsl_vector) * 2);
+  gsl_vector *AMs = (gsl_vector *) gsl_vector_alloc(2);
+  cout<<"AM size: "<<AMs->size<<endl;
   gsl_vector_set_all(AMs,init_AM);
   printf("optimizeAMs: 3\n");
 
@@ -212,6 +213,9 @@ void optimizeAMs(vector<ANSWER> &ans, PROBLEM &ProblemSpace, double init_AM){
   printf("optimizeAMs: 6\n");
 
   s = gsl_multimin_fminimizer_alloc (T,2);
+  printf("optimizeAMs: 6a\n");
+  cout<<"AMs size: "<<AMs->size<<"\t step size: "<<ss->size
+      <<"\tf size: "<<minex_func.n<<endl;
   gsl_multimin_fminimizer_set (s, &minex_func, AMs, ss);
   printf("optimizeAMs: 7\n");
 

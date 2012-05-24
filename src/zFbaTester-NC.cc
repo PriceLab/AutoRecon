@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
   optimizeAMs(ans, ProblemSpace, 50);
 
 
-  /*
+  
   for(int i=0;i<100;i++){
     for(int j=0;j<100;j++){
       SCORE1 score12;
@@ -161,7 +161,6 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-  */
 
     //  gapFindGapFill(allMagic, ProblemSpace);
   printf("...done.\n");
