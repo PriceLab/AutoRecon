@@ -98,6 +98,7 @@ class RXNSPACE{
 
   RXNSPACE operator=(const RXNSPACE& init);
   REACTION & operator[](RXNIDX idx);
+  REACTION & operator[](RXNID idx);
   bool operator==(const RXNSPACE &rhs);
 
  private:
@@ -129,7 +130,7 @@ class METSPACE{
   void metMap();
 
   METSPACE operator=(const METSPACE& init);
-  METABOLITE & operator[](int idx);
+  //METABOLITE & operator[](int idx);
   METABOLITE & operator[](METIDX idx);
   METABOLITE & operator[](METID id);
   const METABOLITE & operator[](METID id) const;

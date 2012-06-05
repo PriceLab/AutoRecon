@@ -716,7 +716,7 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
   /* This is how we keep track of ones that HAVE to be there */
   vector<bool> mustOK(mustIds.size(), false);
   
-  REACTION ATPM = ProblemSpace.fullrxns.rxnFromId(ATPM_id);
+  REACTION ATPM = ProblemSpace.fullrxns[ATPM_id];
   for(int i=0; i<ATPM.stoich.size(); i++) {
     bool OK(false);
     for(int j=0; j<mustIds.size(); j++) {
@@ -738,7 +738,7 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
   Note - I don't bother guessing the ATP maintenance value from teh biomass equation. Instead I just
   start at 0 and adjust it from there in the optimizer... 
   I'll just have to make sure everything stays on the correct side of the equation (i.e. no ATP generation!) */
-  REACTION biomass = ProblemSpace.fullrxns.rxnFromId((RXNID)db.BIOMASS);
+  REACTION biomass = ProblemSpace.fullrxns[(RXNID)db.BIOMASS];
   vector<bool> requiredPresent(mustIds.size(), false);
   bool hPresent(false);
   for(int i=0; i<biomass.stoich.size(); i++) { 
