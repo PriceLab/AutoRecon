@@ -113,7 +113,7 @@ void kShortest2(vector<PATH> &result, RXNSPACE &rxnspace, METSPACE &metspace, ME
 
 #pragma omp parallel for shared(L, temporaryList) firstprivate(tmp, onePath, tmpRxn)
     for(int i=0; i<currentRxnList.size();i++) {
-      int dir = truedir.rxnFromId(currentRxnList[i]).net_reversible;
+      int dir = truedir[currentRxnList[i]].net_reversible;
       if(dir!=tmp.path.rxnDirection[i] || 1){
 	tmp.excludedRxnIds.push_back(currentRxnList[i]);
 	tmpRxn.rxnPtrFromId(currentRxnList[i])->old_likelihood = tmpRxn.rxnPtrFromId(currentRxnList[i])->current_likelihood;

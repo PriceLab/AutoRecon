@@ -476,7 +476,7 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace, RXNSPACE 
     printRxnsFromIntVector(path[i].rxnIds,rxnspace);
     printf("Reaction likelihoods: ");
     for(int j=0;j<path[i].rxnIds.size();j++){
-      printf("%1.2f  ",rxnspace.rxnFromId(path[i].rxnIds[j]).current_likelihood);}
+      printf("%1.2f  ",rxnspace[path[i].rxnIds[j]].current_likelihood);}
     printf("\n");
     printf("Reaction directionality: ");
     printVector(path[i].rxnDirection);

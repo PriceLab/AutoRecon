@@ -191,6 +191,7 @@ RXNSPACE::RXNSPACE(const vector<REACTION> &rxnVec) {
   }
 }
 
+//Constructor
 RXNSPACE::RXNSPACE(const RXNSPACE& existingSpace, const vector<RXNID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
     REACTION rxn = existingSpace.rxnFromId(idSubset[i]);
@@ -208,7 +209,15 @@ void RXNSPACE::clear() {
 
 REACTION & RXNSPACE::operator[](RXNIDX idx) {
   assert(idx < rxns.size());
-  return this->rxns[idx];
+  //  return this->rxns[idx];
+  return rxns[idx];
+}
+
+REACTION & RXNSPACE::operator[](RXNID id) {
+  assert(idIn(id));
+  RXNIDX idx = idxFromId(id);
+  REACTION & rRXN = rxns[idx];
+  return rRXN;
 }
 
 /* Note - I implemented this myself so that I automatically reserve the capacity... lets see if it helps make this more efficient */
@@ -329,7 +338,7 @@ void RXNSPACE::change_Lb_and_Ub(RXNID id, double new_lb, double new_ub) {
 }
 
 /* Uses "find" function from map to allow us to declare constant RXNSPACE's
-Return a reaction with a given ID */
+   Return a reaction with a given ID*/ 
 REACTION RXNSPACE::rxnFromId(RXNID id) const {
   int idx = this->idxFromId(id);
   return rxns[idx];
@@ -464,11 +473,13 @@ bool METSPACE::isIn(METIDX idx) const {
   else { return false; }
 }
 
+/*
 METABOLITE  & METSPACE::operator[](int idx) {
   printf("Warning: int instead of METIDX\n");
   assert(0);
   return this->mets[idx];
 }
+*/
 
 METABOLITE & METSPACE::operator[](METIDX idx) {
   assert(idx < mets.size());

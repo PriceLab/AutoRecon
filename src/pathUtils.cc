@@ -332,7 +332,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
 	 synonyms. However, -5 should be handled correctly now... */
       vector<double> current_likelihood;
       for(int j=0;j<synspace.rxns[i].syn.size();j++){
-	double curFlag = fullspace.rxnFromId(synspace.rxns[i].syn[j]).init_likelihood;
+	double curFlag = fullspace[synspace.rxns[i].syn[j]].init_likelihood;
 	if(curFlag < 0 && rougheq(curFlag,-5)!=1 ) {
 	  synspace.rxns[i].init_likelihood = curFlag;
 	  current_likelihood.clear(); current_likelihood.push_back(curFlag);
@@ -354,7 +354,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
 	synspace.rxns[i].init_likelihood = sum/(double)current_likelihood.size();
       }
 
-      REACTION firstSyn = fullspace.rxnFromId(synspace.rxns[i].syn[0]);
+      REACTION firstSyn = fullspace[synspace.rxns[i].syn[0]];
       synspace.rxns[i].stoich_part = firstSyn.stoich_part;
 
       /* Merge Reversibilities */
@@ -366,7 +366,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
       int rev = firstSyn.net_reversible; /* We want to model the reversibility on the FIRST of the synrxns */
 
       for(int j=0;j<synspace.rxns[i].syn.size();j++){
-	REACTION curRxn = fullspace.rxnFromId(synspace.rxns[i].syn[j]);
+	REACTION curRxn = fullspace[synspace.rxns[i].syn[j]];
 	if(curRxn.net_reversible == 0) { rev = 0; break; }
 
 	int curRev = curRxn.net_reversible;
@@ -629,7 +629,7 @@ void modifyGAM(ANSWER &model, double amountToChange) {
   METID hId = Name2Ids(model.metabolites.mets, _db.H_name);
   double numH = 0.0f;
   REACTION* biomass = model.reactions.rxnPtrFromId((RXNID) _db.BIOMASS);
-  REACTION ATPM = model.reactions.rxnFromId(atpmId);
+  REACTION ATPM = model.reactions[atpmId];
 
   if(atpmId == -1) { printf("ERROR: ATPM reaction was never added to the model!\n"); assert(false); }
   if(hId == -1) { printf("ERROR: No H found for some reason in the list of model metabolites...\n"); assert(false); }
