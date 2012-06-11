@@ -68,6 +68,7 @@ class ANSWER;
 class SIMULATIONRESULT;
 class KORESULT;
 class SCORE;
+class STOICHMATRIX;
 
 class RXNSPACE{
  public:
@@ -96,9 +97,14 @@ class RXNSPACE{
   bool idIn(RXNID id) const;
   void rxnMap();
 
+  vector<double> & lbVector();
+  vector<double> & ubVector();
+
   RXNSPACE operator=(const RXNSPACE& init);
   REACTION & operator[](RXNIDX idx);
   bool operator==(const RXNSPACE &rhs);
+
+  friend std::ostream& operator<<(std::ostream &out, RXNSPACE & orig);
 
  private:
   /* Note - this is just a REFERENCE POINT - it always starts at 0 and all changes to ATPM are relative to whatever the user inputs */
@@ -107,6 +113,8 @@ class RXNSPACE{
   int numRxns;
 
 };
+
+std::ostream& operator<<(std::ostream &out, RXNSPACE & orig);
 
 class METSPACE{
  public:
@@ -135,9 +143,13 @@ class METSPACE{
   const METABOLITE & operator[](METID id) const;
   map<METID, METIDX> Ids2Idx;
 
+  friend std::ostream& operator<<(std::ostream &out, METSPACE & orig);
+
  private:
   int numMets;
 };
+
+std::ostream& operator<<(std::ostream &out, METSPACE & orig);
 
 class PROBLEM{
  public:
@@ -170,7 +182,11 @@ class GROWTH{
 
   GROWTH();
   void reset();
+
+  friend std::ostream& operator<<(std::ostream &out, GROWTH & orig);
 };
+
+std::ostream& operator<<(std::ostream &out, GROWTH & orig);
 
 struct MEDIA{
   METID id; /* Metabolite id */
@@ -180,9 +196,12 @@ struct MEDIA{
   bool operator==(const MEDIA &rhs) const;
   bool operator>(const MEDIA &rhs) const;
   bool operator<(const MEDIA &rhs) const;
-  
-  MEDIA();
+  friend std::ostream& operator<<(std::ostream &out, MEDIA & orig); 
+ 
+  MEDIA() : id(-1), rate(1000.0f) {}
 };
+
+std::ostream& operator<<(std::ostream &out, MEDIA & orig);
 
 struct KNOCKOUT{
   int id;
@@ -216,7 +235,12 @@ class METABOLITE{
   METABOLITE();
   void reset();
   int isSecondary() const;
+
+  friend std::ostream& operator<<(std::ostream &out, METABOLITE & orig);
+
 };
+
+std::ostream& operator<<(std::ostream &out, METABOLITE & orig);
 
 class STOICH{
   public:
@@ -230,8 +254,15 @@ class STOICH{
   bool operator>(const STOICH &rhs) const;
   bool operator<(const STOICH &rhs) const;
   STOICH();
+  STOICH(METID id, double coef) : met_id(id), rxn_coeff(coef) {}
+
   void reset();
+  
+  friend std::ostream& operator<<(std::ostream &out, STOICH & orig);
 };
+
+std::ostream& operator<<(std::ostream &out, STOICH & orig);
+
 
 class REACTION{
  public:
@@ -276,7 +307,11 @@ class REACTION{
   /* Trivially calculatable properties */
   bool isExchange() const;
 
+  friend std::ostream& operator<<(std::ostream &out, REACTION & orig);
+
 };
+
+std::ostream& operator<<(std::ostream &out, REACTION & orig);
 
 struct ANNOTATION{
   double probability;
@@ -463,6 +498,45 @@ class ANSWER {
   }
 
 };
+
+class STOICHMATRIX{
+public:
+
+  vector<map<int, double> > matrix; // sparse matrix format
+  vector<RXNID> yIDs;
+  vector<METID> xIDs;
+  map<RXNID, int> yIdx;
+  map<METID, int> xIdx;
+  int sizeX; // metabolites
+  int sizeY; // reactions
+
+  STOICHMATRIX() : sizeX(0), sizeY(0) {}
+  STOICHMATRIX(const RXNSPACE & rxns) : sizeX(0), sizeY(0)
+               { buildStoich(rxns.rxns); }
+  STOICHMATRIX(const vector<REACTION> & rxns) : sizeX(0), sizeY(0)
+               { buildStoich(rxns); }
+  STOICHMATRIX(const vector<vector<STOICH> > & rxns) : sizeX(0), sizeY(0)
+               { buildStoich(rxns); }
+  STOICHMATRIX(const vector<map<int,double> > rxns)
+               { buildStoich(rxns); }
+
+  void buildStoich(const vector<REACTION> & rxns);
+  void buildStoich(const vector<vector<STOICH> > & rxns);
+  void buildStoich(const vector<map<int, double> > & rxns); 
+
+  map<int, double> & operator[](int i) { return matrix[i]; }
+
+  vector<double> & getObjFromMetID(const METID & id);
+  vector<double> & getObjFromRxnID(const RXNID & id);
+
+  vector<int> & equalLEG();
+  vector<double> & zeroRHS();
+
+  friend std::ostream& operator<<(std::ostream &out, STOICHMATRIX & orig);
+
+};
+
+std::ostream& operator<<(std::ostream &out, STOICHMATRIX & orig);
 
 class KORESULT{
 

@@ -1,6 +1,8 @@
 #include "DataStructures.h"
 #include "pathUtils.h"
 
+#include <iostream>
+#include <cstdlib>
 #include <assert.h>
 #include <cstring>
 #include <cstdio>
@@ -65,6 +67,13 @@ int METABOLITE::isSecondary() const {
   return 0;
 }
 
+// OUTPUT:
+// ID: - ; Name: -
+std::ostream& operator<<(std::ostream &out, METABOLITE &orig){
+  out<<"ID: "<<orig.id<<"; Name: "<<orig.name;
+  return out;
+}
+
 bool STOICH::operator==(const STOICH &rhs) const{
   return (this[0].rxn_coeff == rhs.rxn_coeff);
 }
@@ -75,6 +84,13 @@ bool STOICH::operator>(const STOICH &rhs) const{
 
 bool STOICH::operator<(const STOICH &rhs) const{
   return (this[0].rxn_coeff < rhs.rxn_coeff);
+}
+
+std::ostream& operator<<(std::ostream &out, STOICH & orig){
+  //out<<"ID: "<<orig.met_id<<"; Name: "<<orig.met_name<<"; Coeff: "
+  //   <<orig.rxn_coeff<<"; Compartment: "<<orig.compartment;
+  out<<orig.rxn_coeff<<"*"<<orig.met_name<<"("<<orig.met_id<<")";
+  return out;
 }
 
 bool ANNOTATION::operator<(const ANNOTATION &rhs)const {
@@ -140,6 +156,36 @@ void REACTION::reset() {
   annote.clear();
 }
 
+// OUTPUT:
+// ID: -; [Transporter ; ]Name: -
+// iLikelihood: -; Bounds l: - u: -
+// REACTION + REACTION + REACTION + ...
+std::ostream& operator<<(std::ostream &out, REACTION & orig){
+  out<<"ID: "<<orig.id<<"; Name: "<<orig.name;
+  if(orig.transporter == 1){
+    out<<"; Transporter ";
+  }
+  if(orig.init_reversible == 0){
+    out<<"; Reversible ";
+  }
+  else if(orig.init_reversible == 1){
+    out<<"; Backwards only ";
+  }
+  else if(orig.init_reversible == -1){
+    out<<"; Forward only ";
+  }
+  out<<std::endl<<" iLikelihood: "<<orig.init_likelihood
+     <<"; Bounds l: "<<orig.lb<<" u: "<<orig.ub<<std::endl;
+  for(int i=0; i<orig.stoich.size(); i++){
+    if(i != 0){
+      out<<" + "; 
+    }
+    out<<orig.stoich[i];
+  }
+  out<<std::endl;
+  return out;
+}
+
 bool NETREACTION::operator==(const NETREACTION &rhs) const{
   unsigned int i;
   if(this[0].rxnDirIds.size()!=rhs.rxnDirIds.size()){
@@ -161,9 +207,10 @@ bool MEDIA::operator<(const MEDIA &rhs) const{
   return (this[0].id < rhs.id);
 }
 
-MEDIA::MEDIA() {
-  id = -1;
-  rate = 1000.0f;
+std::ostream& operator<<(std::ostream &out, MEDIA & orig){
+  out<<"ID: "<<orig.id<<"; Name: "<<orig.name<<"; Uptake Rate: "<<orig.rate
+     <<" mmol/gDw/hr";
+  return out;
 }
 
 GROWTH::GROWTH() {
@@ -175,6 +222,21 @@ void GROWTH::reset() {
   biomass.clear();
   mutation.clear();
   growth_rate = -1;
+}
+
+std::ostream& operator<<(std::ostream &out, GROWTH & orig){
+  out<<"--GROWTH DATA--"<<std::endl
+     <<"Growth Rate: "<<orig.growth_rate<<std::endl
+     <<"-MEDIA-"<<std::endl;
+  for(int i=0; i<orig.media.size(); i++)
+    out<<orig.media[i]<<std::endl;
+  out<<"-BYPRODUCTS-"<<std::endl;
+  for(int i=0; i<orig.byproduct.size(); i++)
+    out<<orig.byproduct[i]<<std::endl;
+  out<<"-BIOMASS-"<<std::endl;
+  for(int i=0; i<orig.biomass.size(); i++)
+    out<<orig.biomass[i]<<std::endl;
+  return out;
 }
 
 /* I think I'm required to put this here...even if it does nothing*/
@@ -236,6 +298,18 @@ bool RXNSPACE::operator==(const RXNSPACE &rhs) {
   }
 
   return true;
+}
+
+// OUTPUT:
+// -RXNSPACE-
+// REACTION
+// REACTION
+// ...
+std::ostream& operator<<(std::ostream &out, RXNSPACE & orig){
+  out<<"-RXNSPACE-"<<std::endl;
+  for(int i=0; i<orig.rxns.size(); i++)
+    out<<orig.rxns[i]<<std::endl;
+  return out;
 }
 
 void RXNSPACE::addReactionVector(const vector<REACTION> &rxnVec) {
@@ -373,6 +447,26 @@ void RXNSPACE::rxnMap() {
     this->Ids2Idx[this->rxns[i].id] = i;
   }
   return;
+}
+
+// returns vector of lower bounds for reactions
+vector<double> & RXNSPACE::lbVector()
+{
+  static vector<double> STATIC_VAR_lbs;
+  STATIC_VAR_lbs.clear();
+  for(int i=0; i<rxns.size(); i++)
+    STATIC_VAR_lbs.push_back(rxns[i].lb);
+  return STATIC_VAR_lbs;
+}
+
+// returns vector of upper bounds for reactions
+vector<double> & RXNSPACE::ubVector()
+{
+  static vector<double> STATIC_VAR_ubs;
+  STATIC_VAR_ubs.clear();
+  for(int i=0; i<rxns.size(); i++)
+    STATIC_VAR_ubs.push_back(rxns[i].ub);
+  return STATIC_VAR_ubs;
 }
 
 
@@ -514,6 +608,17 @@ METSPACE METSPACE::operator=(const METSPACE &orig) {
   return *this;
 }
 
+// OUTPUT:
+// -METSPACE-
+// METABOLITE
+// METABOLITE
+// ...
+std::ostream& operator<<(std::ostream &out, METSPACE & orig){
+  out<<"-METSPACE-"<<std::endl;
+  for(int i=0; i<orig.mets.size(); i++)
+    out<<orig.mets[i]<<std::endl;
+  return out;
+}
 
 PROBLEM::PROBLEM(){
 
@@ -708,3 +813,160 @@ void initializeAnswer(const vector<NETREACTION> &myEtc, const vector<vector<vect
   ANSWER::pList = myPlist;
   ANSWER::annoteToRxns = annoteToRxn;
 }
+
+void STOICHMATRIX::buildStoich(const vector<REACTION> & rxns){
+  if(!matrix.empty()){
+    std::cout<<"Stoichmatrix not empty. Original left unchanged."<<std::endl;
+    return;
+  }
+  map<int, double> temp;
+  for(int i=0; i<rxns.size(); i++){
+    yIDs.push_back(rxns[i].id);
+    std::cout<<"Read IDs: in: "<<rxns[i].id<<"\tout: "<<rxns[i].name<<std::endl;
+    yIdx[rxns[i].id] = i;
+    for(int j=0; j<rxns[i].stoich.size(); j++){
+      if(!xIdx.count(rxns[i].stoich[j].met_id)){
+        xIDs.push_back(rxns[i].stoich[j].met_id);
+        xIdx[rxns[i].stoich[j].met_id] = (xIDs.size()-1);
+        matrix.push_back(temp);
+      }
+      matrix[xIdx[rxns[i].stoich[j].met_id]][i] = rxns[i].stoich[j].rxn_coeff;
+    }
+  }
+  sizeX = xIDs.size();
+  sizeY = yIDs.size();
+  return;
+}
+
+void STOICHMATRIX::buildStoich(const vector<vector<STOICH> > & rxns){
+  if(!matrix.empty()){
+    std::cout<<"Stoichmatrix not empty. Original left unchanged."<<std::endl;
+    return;
+  }
+  map<int, double> temp;
+  for(int i=0; i<rxns.size(); i++){
+    yIDs.push_back(RXNID(i));
+    yIdx[RXNID(i)] = i;
+    temp.clear();
+    for(int j=0; j<rxns[i].size(); j++){
+      if(!xIdx.count(rxns[i][j].met_id)){
+        xIDs.push_back(rxns[i][j].met_id);
+        xIdx[rxns[i][j].met_id] = (xIDs.size()-1);
+      }
+      temp[xIdx[rxns[i][j].met_id]] = rxns[i][j].rxn_coeff;
+    }
+    matrix.push_back(temp);
+  }
+  sizeX = xIDs.size();
+  sizeY = yIDs.size();
+  return;
+}
+
+// FIXME the iterator is not working
+void STOICHMATRIX::buildStoich(const vector<map<int,double> > & rxns){
+  if(!matrix.empty()){
+    std::cout<<"Stoichmatrix not empty. Original left unchanged."<<std::endl;
+    return;
+  }
+/* FIXME
+  map<int, double> temp;
+  map<int, double>::iterator it;
+  for(int i=0; i<rxns.size(); i++){
+    yIDs.push_back(RXNID(i));
+    yIdx[RXNID(i)] = i;
+    temp.clear();
+    for( it = rxns[i].begin(); it != rxns[i].end(); it++){
+      if(!xIdx.count(METID(it->first))){
+        xIDs.push_back(METID(it->first));
+        xIdx[METID(it->first)] = (xIDs.size()-1);
+      }
+      temp[xIdx[METID(it->first)]] = it->second;
+    }
+    matrix.push_back(temp);
+  }
+  sizeX = xIDs.size();
+  sizeY = yIDs.size();
+*/
+  return;
+}
+
+// OUTPUT:
+// (x1, y1): double1
+// (x2, y2): double2
+// ...
+std::ostream& operator<<(std::ostream &out, STOICHMATRIX & orig){
+  for(int i=0; i<orig.sizeX; i++){
+    for(map<int,double>::iterator it=orig[i].begin(); it!=orig[i].end(); it++)
+      out<<"("<<i<<","<<(it->first)<<"): "<<(it->second)<<std::endl;
+  }
+  return out;
+}
+ 
+ 
+vector<double> & STOICHMATRIX::getObjFromMetID(const METID & id)
+{ 
+  static vector<double> STATIC_VAR_objMet;
+  STATIC_VAR_objMet.clear();
+  
+  if(!xIdx.count(id)){
+    std::cout<<"getObjFromMetID error: METID does not exist"<<std::endl;
+    return STATIC_VAR_objMet;
+  }
+
+  int met = xIdx[id];
+  map<int, double>::iterator it;
+  int i = 0;
+  for(it=matrix[met].begin(); it!=matrix[met].end(); it++)
+  {
+    for(;i<it->first; i++)
+      STATIC_VAR_objMet.push_back(0.0);
+
+    STATIC_VAR_objMet.push_back(it->second);
+    i++;
+  }
+
+  for(;i<sizeY; i++)
+    STATIC_VAR_objMet.push_back(0.0);
+
+  return STATIC_VAR_objMet;
+}
+
+
+vector<double> & STOICHMATRIX::getObjFromRxnID(const RXNID & id)
+{
+  static vector<double> STATIC_VAR_objRxn;
+  STATIC_VAR_objRxn.clear();
+  if(!yIdx.count(id)){
+    std::cout<<"getObjFromRxnID error: RXNID does not exist"<<std::endl;
+    return STATIC_VAR_objRxn;
+  }
+
+  int rxn = yIdx[id];
+  for(int i=0; i<rxn; i++)
+    STATIC_VAR_objRxn.push_back(0.0);
+  STATIC_VAR_objRxn.push_back(1.0);
+  for(int i=rxn+1; i<sizeY; i++)
+    STATIC_VAR_objRxn.push_back(0.0);
+  return STATIC_VAR_objRxn;
+}
+
+vector<int> & STOICHMATRIX::equalLEG()
+{
+  static vector<int> STATIC_VAR_eqleg;
+  STATIC_VAR_eqleg.clear();
+  for(int i=0; i<sizeX; i++)
+    STATIC_VAR_eqleg.push_back(0);
+  return STATIC_VAR_eqleg;
+}
+
+vector<double> & STOICHMATRIX::zeroRHS()
+{
+  static vector<double> STATIC_VAR_zerorhs;
+  STATIC_VAR_zerorhs.clear();
+  for(int i=0; i<sizeX; i++)
+    STATIC_VAR_zerorhs.push_back(0.0);
+  return STATIC_VAR_zerorhs;
+}
+
+
+

@@ -11,22 +11,31 @@ $(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
 
 # Compiler, object, library, and header definitions...
 CC = g++
-LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl`
-INCLUDES =-Isrc `pkg-config --cflags libxml-2.0` -I /opt/local/include/
+LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl` \
+      -L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
+      -L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/concert/lib/x86-64_sles10_4.1/static_pic/ \
+      -lilocplex -lconcert -lcplex -lm -lpthread
+
+#-L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/opl/lib/x86-64_sles10_4.1/static_pic/ -lilocplex -lconcert -lopl -lm -lpthread
+INCLUDES =-Isrc `pkg-config --cflags libxml-2.0` -I /opt/local/include/ \
+      -I /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/opl/include \
+      -I /usr/include -I /usr/local/include -DIL_STD
 OBJS = obj/DataStructures.o obj/XML_loader.o \
        obj/shortestPath.o obj/kShortest.o obj/pathUtils.o \
        obj/RunK.o obj/visual01.o obj/Grow.o obj/Exchanges.o \
        obj/ETC.o obj/Modularity.o obj/Components.o obj/genericLinprog.o \
        obj/Printers.o obj/Paths2Model.o obj/Annotations.o obj/MyConstants.o \
-       obj/score.o obj/TableLoader.o
+       obj/score.o obj/TableLoader.o obj/cplexScript.o
        
 HDRS =  src/DataStructures.h src/Grow.h src/pathUtils.h \
-        src/RunK.h src/visual01.h src/kShortest.h src/shortestPath.h src/XML_loader.h \
-        src/Exchanges.h src/ETC.h src/Modularity.h src/Components.h src/genericLinprog.h \
-	src/Printers.h src/Paths2Model.h src/Annotations.h src/MyConstants.h src/score.h src/TableLoader.h
+        src/RunK.h src/visual01.h src/kShortest.h src/shortestPath.h \
+	src/XML_loader.h src/Exchanges.h src/ETC.h src/Modularity.h \
+	src/Components.h src/genericLinprog.h src/Printers.h \
+	src/Paths2Model.h src/Annotations.h src/MyConstants.h \
+	src/score.h src/TableLoader.h src/cplexScript.h
         
 
-all: FbaTester-NC FbaTester
+all: FbaTester-NC FbaTester CplexTester
 
 # Note - you require a "cc" file to compile into an object file using this command...will it work without one?
 obj/%.o: src/%.cc $(HDRS)
@@ -45,6 +54,9 @@ FbaTester: obj/zFbaTester.o $(OBJS)
 
 FbaTester-NC: obj/zFbaTester-NC.o $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/zFbaTester-NC.o $(LIBS)
+
+CplexTester: obj/zCplexTester.o $(OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/zCplexTester.o $(LIBS)
 
 PathUtilsTester: obj/zPathUtilsTester.o $(OBJS)
 	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zPathUtilsTester.o ${LIBS}
