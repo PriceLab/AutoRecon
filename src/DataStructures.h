@@ -499,17 +499,40 @@ class ANSWER {
 
 };
 
+
+// A sparse matrix primarily used in FBA. Sparse matrix used to reduce the
+//   space used by a matrix of mostly (99%) zeros.
 class STOICHMATRIX{
 public:
-
+  // vector of map<int, double> because it allows for a call like a normal
+  //   matrix. Ex: matrix[int][int] gives you a double if the value isn't zero.
+  // IMPORTANT NOTE: do not ask for a value that is zero. It will create an
+  //   empty cell, since the cell itself does not exist in a sparse matrix
+  //   format. If you must iterate through the matrix, iterate through the
+  //   vector normally, then use a map iterator to iterate through the map.
+  //   If you wish to access the matrix, and you are unfamiliar with how to
+  //   handle a vector of maps, use the access functions at a cost of slightly
+  //   increased run time.
+  // TIP: to test if a map element contains a value, use 
+  //   int map<int,double>::count(int index). Empty returns 0.
   vector<map<int, double> > matrix; // sparse matrix format
+
+  // converts from index to reaction/metabolite ID
   vector<RXNID> yIDs;
   vector<METID> xIDs;
+
+  // Converts from reaction/metabolite ID to index
+  // The same applies to these maps. If you are unsure how to handle a map,
+  //   use the access functions. These are left public for use by non-member
+  //   functions.
   map<RXNID, int> yIdx;
   map<METID, int> xIdx;
-  int sizeX; // metabolites
-  int sizeY; // reactions
+  int sizeX; // number of metabolites
+  int sizeY; // number of reactions
 
+
+
+  // constructors
   STOICHMATRIX() : sizeX(0), sizeY(0) {}
   STOICHMATRIX(const RXNSPACE & rxns) : sizeX(0), sizeY(0)
                { buildStoich(rxns.rxns); }
@@ -517,21 +540,61 @@ public:
                { buildStoich(rxns); }
   STOICHMATRIX(const vector<vector<STOICH> > & rxns) : sizeX(0), sizeY(0)
                { buildStoich(rxns); }
+  // this last constructor does not work yet, due to iterator problems.
   STOICHMATRIX(const vector<map<int,double> > rxns)
                { buildStoich(rxns); }
 
+  // the initialization functions for the constructors. Left public for
+  //   manual initialization functionality.
   void buildStoich(const vector<REACTION> & rxns);
   void buildStoich(const vector<vector<STOICH> > & rxns);
+  // this last buildStoich function does not work yet, due to iterator problems
   void buildStoich(const vector<map<int, double> > & rxns); 
 
+  // functions to manually build the STOICHMATRIX. Returns 0 if unsuccessful
+  bool addReaction(REACTION &rxn);
+  bool addReaction(RXNID id);
+  bool addMetabolite(METID id);
+
+  // calling the stoich matrix by [index] will result in the row map being
+  //   returned. This allows for the calling of a cell by
+  //   STOICHMATRIX[int][int].
+  // Just remember that calling an empty cell will create an empty cell.
   map<int, double> & operator[](int i) { return matrix[i]; }
 
+  // access functions
+  // matrix get access. Returns unchangeable value
+  double getCell(int x, int y);
+  // matrix set access. Returns changeable value. This means the value for the
+  //   cell can be set in the val parameter or by altering the return value
+  //   outside of the function.
+  double& setCell(int x, int y, double val=0.0);
+  // Reaction ID to index. Returns -1 if unsuccessful
+  int rxnIDtoIDX(RXNID id);
+  // Reaction index to ID. Returns -1 if unsuccessful
+  RXNID rxnIDXtoID(int idx);
+  // Metabolite ID to index. Returns -1 if unsuccessful
+  int metIDtoIDX(METID id);
+  // Metabolite index to ID. Returns -1 if unsuccessful
+  METID metIDXtoID(int idx);
+
+  // Allows for the creation of an objective function to maximize or minimize
+  //   a reaction or metabolite.
   vector<double> & getObjFromMetID(const METID & id);
   vector<double> & getObjFromRxnID(const RXNID & id);
 
+  // These functions create vectors to be used in manual runs of FBA
+  // creates a proper size Lesser Equal Greater vector {-1,0,1} of all equal {0}
   vector<int> & equalLEG();
+  // creates a proper size Right Hand Size value vector of all 0
   vector<double> & zeroRHS();
 
+  // output operator.
+  // OUTPUT:
+  // (x,y): z        for all x,y that contain a value z.
+  // (x1,y1): z1     example line
+  // (x2,y2): z2     example line
+  //   [etc.]
   friend std::ostream& operator<<(std::ostream &out, STOICHMATRIX & orig);
 
 };

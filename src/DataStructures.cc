@@ -814,6 +814,8 @@ void initializeAnswer(const vector<NETREACTION> &myEtc, const vector<vector<vect
   ANSWER::annoteToRxns = annoteToRxn;
 }
 
+
+// initializes the STOICHMATRIX with a REACTION vector
 void STOICHMATRIX::buildStoich(const vector<REACTION> & rxns){
   if(!matrix.empty()){
     std::cout<<"Stoichmatrix not empty. Original left unchanged."<<std::endl;
@@ -822,7 +824,6 @@ void STOICHMATRIX::buildStoich(const vector<REACTION> & rxns){
   map<int, double> temp;
   for(int i=0; i<rxns.size(); i++){
     yIDs.push_back(rxns[i].id);
-    std::cout<<"Read IDs: in: "<<rxns[i].id<<"\tout: "<<rxns[i].name<<std::endl;
     yIdx[rxns[i].id] = i;
     for(int j=0; j<rxns[i].stoich.size(); j++){
       if(!xIdx.count(rxns[i].stoich[j].met_id)){
@@ -838,6 +839,7 @@ void STOICHMATRIX::buildStoich(const vector<REACTION> & rxns){
   return;
 }
 
+// initializes the STOICHMATRIX with a matrix of STOICHs
 void STOICHMATRIX::buildStoich(const vector<vector<STOICH> > & rxns){
   if(!matrix.empty()){
     std::cout<<"Stoichmatrix not empty. Original left unchanged."<<std::endl;
@@ -847,21 +849,22 @@ void STOICHMATRIX::buildStoich(const vector<vector<STOICH> > & rxns){
   for(int i=0; i<rxns.size(); i++){
     yIDs.push_back(RXNID(i));
     yIdx[RXNID(i)] = i;
-    temp.clear();
     for(int j=0; j<rxns[i].size(); j++){
       if(!xIdx.count(rxns[i][j].met_id)){
         xIDs.push_back(rxns[i][j].met_id);
         xIdx[rxns[i][j].met_id] = (xIDs.size()-1);
+        matrix.push_back(temp);
       }
-      temp[xIdx[rxns[i][j].met_id]] = rxns[i][j].rxn_coeff;
+      matrix[xIdx[rxns[i][j].met_id]][i] = rxns[i][j].rxn_coeff;
     }
-    matrix.push_back(temp);
+
   }
   sizeX = xIDs.size();
   sizeY = yIDs.size();
   return;
 }
 
+// initializes the STOICHMATRIX with a swapped-axes sparse matrix
 // FIXME the iterator is not working
 void STOICHMATRIX::buildStoich(const vector<map<int,double> > & rxns){
   if(!matrix.empty()){
@@ -888,6 +891,96 @@ void STOICHMATRIX::buildStoich(const vector<map<int,double> > & rxns){
   sizeY = yIDs.size();
 */
   return;
+}
+
+// adds reaction to the stoichmatrix by REACTION input. Returns 0 if failure
+bool STOICHMATRIX::addReaction(REACTION &rxn)
+{
+  if(yIdx.count(rxn.id))
+    return 0;
+
+  yIDs.push_back(rxn.id);
+  yIdx[rxn.id] = sizeY++; // sets index to rxnsize then increments rxnsize
+  for(int j=0; j<rxn.stoich.size(); j++)
+  {
+    if(!xIdx.count(rxn.stoich[j].met_id))
+    {
+      xIDs.push_back(rxn.stoich[j].met_id);
+      xIdx[rxn.stoich[j].met_id] = sizeX++;
+      matrix.push_back(map<int,double>());
+    }
+    matrix[xIdx[rxn.stoich[j].met_id]][sizeY-1] = rxn.stoich[j].rxn_coeff;
+  }
+  return 1;
+}
+
+// adds reaction to the STOICHMATRIX by RXNID input. Returns 0 if failure
+bool STOICHMATRIX::addReaction(RXNID id)
+{
+  if(yIdx.count(id))
+    return 0;
+  
+  yIDs.push_back(id);
+  yIdx[id] = sizeY++;
+  return 1;
+}
+
+bool STOICHMATRIX::addMetabolite(METID id)
+{
+  if(xIdx.count(id))
+    return 0;
+  
+  xIDs.push_back(id);
+  xIdx[id] = sizeX++;
+  matrix.push_back(map<int,double>());
+  return 1;
+}
+
+// STOICHMATRIX matrix get access function
+double STOICHMATRIX::getCell(int x, int y)
+{
+  if(matrix[x].count(y))
+    return matrix[x][y];
+  else return 0.0;
+}
+
+// STOICHMATRIX matrix set access function
+double& STOICHMATRIX::setCell(int x, int y, double val)
+{
+  matrix[x][y] = val;
+  return matrix[x][y];
+}
+
+// Reaction ID to index. Returns -1 if unsuccessful
+int STOICHMATRIX::rxnIDtoIDX(RXNID id)
+{
+  if(yIdx.count(id))
+    return yIdx[id];
+  else return -1;
+}
+
+// Reaction index to ID. Returns -1 if unsuccessful
+RXNID STOICHMATRIX::rxnIDXtoID(int idx)
+{
+  if(idx<sizeY && idx>-1)
+    return yIDs[idx];
+  else return RXNID(-1);
+}
+
+// Metabolite ID to index. Returns -1 if unsuccessful
+int STOICHMATRIX::metIDtoIDX(METID id)
+{
+  if(xIdx.count(id))
+    return xIdx[id];
+  else return -1;
+}
+
+// Metabolite index to ID. Returns -1 if unsuccessful
+METID STOICHMATRIX::metIDXtoID(int idx)
+{
+  if(idx<sizeX && idx>-1)
+    return xIDs[idx];
+  else return METID(-1);
 }
 
 // OUTPUT:
