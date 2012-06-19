@@ -915,7 +915,7 @@ bool STOICHMATRIX::addReaction(REACTION &rxn)
 }
 
 // adds reaction to the STOICHMATRIX by RXNID input. Returns 0 if failure
-bool STOICHMATRIX::addReaction(RXNID id)
+bool STOICHMATRIX::addEmptyReaction(RXNID id)
 {
   if(yIdx.count(id))
     return 0;
@@ -925,7 +925,7 @@ bool STOICHMATRIX::addReaction(RXNID id)
   return 1;
 }
 
-bool STOICHMATRIX::addMetabolite(METID id)
+bool STOICHMATRIX::addEmptyMetabolite(METID id)
 {
   if(xIdx.count(id))
     return 0;

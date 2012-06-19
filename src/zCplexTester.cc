@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
   printf("Setting up problem inputs...\n");fflush(stdout);
   InputSetup(argc,argv,ProblemSpace);
-
+/*
   std::cout<<"Hello World, growth media: "<<ProblemSpace.growth[0].media.size()
            <<", byproducts: "<<ProblemSpace.growth[0].byproduct.size()
            <<", biomass: "<<ProblemSpace.growth[0].biomass.size()
@@ -55,7 +55,12 @@ int main(int argc, char *argv[]) {
   
   std::cout<<"STOICHMATRIX"<<std::endl
            <<ProblemStoich<<std::endl;
-
+  cout<<"ORIG: "<<ProblemStoich.getCell(4,20)<<"\tCHANGED: ";
+  ProblemStoich.setCell(4,20,6.334);
+  cout<<ProblemStoich.getCell(4,20)<<"\tCHANGED: ";
+  ProblemStoich.setCell(4,20) = 9.3;
+  cout<<ProblemStoich.getCell(4,20)<<endl;
+*/
   //if(toCplexLP(ProblemStoich, ProblemStoich[20], "Maximize"))
   //  cout<<"YAAAAAAAAY!"<<endl;
 /* 
@@ -99,31 +104,70 @@ int main(int argc, char *argv[]) {
 //  ub.push_back(1000);
 
 
-  STOICHMATRIX pstoichmat(ProblemSpace.fullrxns); 
+
 
 //  vector<double> objfn = pstoichmat.getObjFromRxnID(RXNID(2142));
 
   IloEnv env;
 
-  Solver sol(env, pstoichmat, pstoichmat.getObjFromRxnID(RXNID(2142)),
-             "Maximize", ProblemSpace.fullrxns.lbVector(),
-              ProblemSpace.fullrxns.ubVector() );
+  SOLVER sol(env, ProblemSpace); 
 
+  
   sol.writeProblem("incomplete.lp");
-
-  //sol.obj.setLinearCoef(sol.rxns[1], 5.4);
 
   sol.solve();
 
   sol.writeSolution("complete.sol");
-  cout<<"GROWTH RATE: "<<sol.getObjVal()<<endl;
-  vector<int> RxnIDs;
-  sol.getRxnIDs(RxnIDs);
-  vector<double> Rates;
-  sol.getRxnRates(Rates);
-  for(int i=0; i<sol.rxnsize; i++)
+  METID mid(23);
+  RXNID rid(508);
+//  cout<<"Coef at("<<int(mid)<<","<<int(rid)<<"): "<<sol.getCoef(mid,rid)<<endl;
+//  if(!sol.setCoef(mid,rid, 333.225))
+//    cout<<"Yeah, girl, back that drive up!"<<endl; 
+//  cout<<"Coef at("<<int(mid)<<","<<int(rid)<<"): "<<sol.getCoef(mid,rid)<<endl;
+  map<RXNID, double> objMap;
+  cout<<"Objective"<<endl;
+  cout<<"ID: 99999\tCoeff: "<<sol.getObjCoef(RXNID(99999))<<endl;
+  cout<<"ID: 508\tCoeff: "<<sol.getObjCoef(RXNID(508))<<endl;
+  cout<<"ID: 848484\tCoeff: "<<sol.getObjCoef(RXNID(848484))<<endl;
+  sol.changeObjective(rid, 2.34);
+  cout<<"NEWID: 508\tCoeff: "<<sol.getObjCoef(rid)<<endl;
+  sol.getObjFn(objMap);
+  map<RXNID, double>::iterator it = objMap.begin();
+  for(;it != objMap.end(); ++it)
   {
-    cout<<"ID : "<<RxnIDs[i]<<"\tRate: "<<Rates[i]<<endl;
+    cout<<"ID: "<<it->first<<"\tCoeff: "<<it->second<<endl;
+  }
+    
+  objMap[RXNID(1996)] = -0.234;
+
+  cout<<"NEW OBJECTIVE FUNCTION"<<endl;
+
+  it = objMap.begin();
+  for(;it != objMap.end(); ++it)
+  {
+    cout<<"ID: "<<it->first<<"\tCoeff: "<<it->second<<endl;
+  }
+  
+  cout<<"1NOW?: "<<sol.hasRXNID(RXNID(848484))<<" AND "
+      <<sol.hasMETID(METID(678912))<<endl;
+  sol.addEmptyRxn(RXNID(848484), -IloInfinity, IloInfinity);
+  sol.addEmptyMet(METID(678912));
+  
+  cout<<"2NOW?: "<<sol.hasRXNID(RXNID(848484))<<" AND "
+      <<sol.hasMETID(METID(678912))<<endl;
+ 
+  sol.changeObjective(objMap);
+  cout<<"THIS: "<<double(-IloInfinity)<<endl;
+  sol.solve();
+  sol.writeProblem("incomplete2.lp");
+  cout<<"GROWTH RATE: "<<sol.getObjVal()<<endl;
+  map<RXNID, double> RxnIDs;
+  sol.getRxnValues(RxnIDs);
+
+
+  for(map<RXNID, double>::iterator it=RxnIDs.begin(); it!=RxnIDs.end(); it++)
+  {
+    cout<<"ID : "<<it->first<<"\tRate: "<<it->second<<endl;
   }
 
 

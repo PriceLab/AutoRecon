@@ -250,7 +250,7 @@ XMLinfo cplexSolve(char * filename)
   */
 
 
-bool Solver::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
+bool SOLVER::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
                  char * objm, vector<int> &leg, vector<double> &rhs,
                  vector<double> &lb, vector<double> &ub)
 {
@@ -367,7 +367,7 @@ bool Solver::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
 
 
 
-bool Solver::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
+bool SOLVER::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
                  char * objm, vector<double> &lb, vector<double> &ub)
 {
   // check that the input sizes are consistent
@@ -452,19 +452,238 @@ bool Solver::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
   return 1; // SUCCESS!
 }
 
-void Solver::getRxnIDs(vector<int> & rxnIDs)
+
+bool SOLVER::initialize(RXNSPACE &rSpace, RXNID rid, char * objm)
+{
+  // check that the input sizes are consistent
+  if(!rSpace.idIn(rid))
+  {
+    cout<<"Reaction ID not in RXNSPACE"<<endl;
+    cout<<"ID: "<<int(rid)<<endl;
+    return 0;
+  }
+
+  // grab environment from model
+  IloEnv env = model.getEnv();
+
+  // check for max, min, or error from objm
+  if(!strcmp(objm, "Maximize") || !strcmp(objm, "max") ||
+     !strcmp(objm, "maximize") )
+  {
+    obj = IloMaximize(env);
+  }
+  else if(!strcmp(objm,"Minimize") || !strcmp(objm,"min") ||
+          !strcmp(objm, "minimize")  )
+  {
+    obj = IloMinimize(env);
+  }
+  else{
+    cout<<"did not specify maximize or minimize"<<endl;
+    return 0;
+  }
+  
+  rxnsize = rSpace.rxns.size();
+  char temp[24];
+  
+  int rxncount=0;
+  metsize=0;
+  // set up reactions and ranges
+  for(vector<REACTION>::iterator it=rSpace.rxns.begin(); rxncount<rxnsize; it++)
+  {
+    sprintf(temp, "Rxn%d", int(it->id)); 
+    rxns.add(IloNumVar(env, it->lb, it->ub, temp) );
+    rxnIDs.push_back(it->id);
+    // set up metabolites and coefficients
+    for(vector<STOICH>::iterator it2=it->stoich.begin();
+        it2 != it->stoich.end(); it2++)
+    {
+      // check if met ID is new, if so, add to mets
+      if(!metIdx.count(it2->met_id))
+      {
+        sprintf(temp, "Met%d", int(it2->met_id));
+        mets.add(IloRange(env, 0, 0, temp) );
+        metIDs.push_back(it2->met_id);
+        metIdx[it2->met_id] = metsize++;
+      }
+      mets[metIdx[it2->met_id] ].setLinearCoef(rxns[rxncount], it2->rxn_coeff);
+    }
+    rxnIdx[it->id] = rxncount++;
+  }
+
+  // set up objective function with reaction
+  obj.setLinearCoef(rxns[rxnIdx[rid] ], 1.0);
+
+  model.add(obj);
+  model.add(mets);
+
+  return 1; // SUCCESS!
+}
+
+// solve - SOLVER
+// solves the constructed LP, returns 1 if success, 0 if fail
+bool SOLVER::solve()
+{
+  return cplex.solve();
+}
+
+// getCoef - SOLVER
+// returns the coefficient corresponding to METID and RXNID
+double SOLVER::getCoef(METID mid, RXNID rid)
+{
+  if(!rxnIdx.count(rid)){
+    cout<<"RXNID: "<<int(rid)<<" not inSOLVER"<<endl;
+    return 0.0;
+  }
+  if(!metIdx.count(mid)){
+    cout<<"METID: "<<int(mid)<<" not in SOLVER"<<endl;
+    return 0.0;
+  }
+
+  int ridx = rxnIdx[rid];
+  int midx = metIdx[mid];
+  IloExpr e = mets[midx].getExpr();
+  for(IloExpr::LinearIterator it = e.getLinearIterator(); it.ok(); ++it)
+  {
+    if((it.getVar()).getName() == rxns[ridx].getName())
+      return it.getCoef();
+  }
+  return 0.0;
+}
+
+// setCoef - SOLVER
+// sets the coefficient corresponding to METID(mid) and RXNID(rid) to coef
+// returns 0 if error, 1 if success
+bool SOLVER::setCoef(METID mid, RXNID rid, double coef)
+{
+  if(!rxnIdx.count(rid)){
+    cout<<"RXNID: "<<int(rid)<<" not in SOLVER"<<endl;
+    return 0;
+  }
+  if(!metIdx.count(mid)){
+    cout<<"METID: "<<int(mid)<<" not in SOLVER"<<endl;
+    return 0;
+  }
+
+  mets[ metIdx[mid] ].setLinearCoef(rxns[ rxnIdx[rid] ], coef);
+
+  return 1;
+}
+
+// rxnIDtoIDX - SOLVER
+// Returns corresponding index if ID is in SOLVER, -1 otherwise
+int SOLVER::rxnIDtoIDX(RXNID id)
+{
+  return ((rxnIdx.count(id)) ? (rxnIdx[id]) : -1);
+}
+
+// metIDtoIDX - SOLVER
+// Returns corresponding index if ID is in SOLVER, -1 otherwise
+int SOLVER::metIDtoIDX(METID id)
+{
+  return (metIdx.count(id) ? metIdx[id] : -1);
+}
+
+// rxnIDXtoID - SOLVER
+// Returns corresponding RXNID if index is within bounds, -1 otherwise
+RXNID SOLVER::rxnIDXtoID(int idx) const
+{
+  return ((idx>-1 && idx<rxnsize) ? rxnIDs[idx] : RXNID(-1));
+}
+
+// metIDXtoID - SOLVER
+// Returns corresponding METID if index is within bounds, -1 otherwise
+METID SOLVER::metIDXtoID(int idx) const
+{
+  return ((idx>-1 && idx<metsize) ? metIDs[idx] : METID(-1));
+}
+
+// hasRXNID - SOLVER
+// Returns 1 if RXNID is in SOLVER, 0 otherwise
+bool SOLVER::hasRXNID(RXNID id)
+{
+  return rxnIdx.count(id);
+}
+
+// hasMETID - SOLVER
+// Returns 1 if METID is in SOLVER, 0 otherwise
+bool SOLVER::hasMETID(METID id)
+{
+  return metIdx.count(id);
+}
+
+// getUB - SOLVER
+// Returns Upper Bound of Reaction RXNID, if error: returns 0.0
+double SOLVER::getUB(RXNID id)
+{
+  if(!rxnIdx.count(id) ){
+    cout<<"RXN: "<<int(id)<<" not in SOLVER"<<endl;
+    return 0.0;
+  }
+  return rxns[ rxnIdx[id] ].getUB();
+}
+
+// getLB - SOLVER
+// Returns Lower Bound of Reaction RXNID, if error: returns 0.0
+double SOLVER::getLB(RXNID id)
+{
+  if(!rxnIdx.count(id) ){
+    cout<<"RXN: "<<int(id)<<" not in SOLVER"<<endl;
+    return 0.0;
+  }
+  return rxns[ rxnIdx[id] ].getLB();
+}
+
+// getObjCoef - SOLVER
+// Returns objective coefficient by RXNID, 0.0 is returned if error
+double SOLVER::getObjCoef(RXNID id)
+{
+  if(!rxnIdx.count(id)){
+    cout<<"RXNID: "<<int(id)<<" not in SOLVER"<<endl;
+    return 0.0;
+  }
+  
+  IloExpr e = obj.getExpr();
+  for(IloExpr::LinearIterator it = e.getLinearIterator(); it.ok(); ++it)
+  {
+    if((it.getVar()).getName() == rxns[ rxnIdx[id] ].getName() )
+      return it.getCoef();
+  }
+  return 0.0;
+}
+
+// getObjFn - SOLVER
+// Stores the objective coefficients as a map of RXNID and doubles
+// Must pass the map to fill as the input parameter.
+void SOLVER::getObjFn(map<RXNID, double> & rxnVals)
+{
+  rxnVals.clear();
+  int id;
+  IloExpr e = obj.getExpr();
+  for(IloExpr::LinearIterator it = e.getLinearIterator(); it.ok(); ++it)
+  {
+    if( sscanf((it.getVar()).getName(), "Rxn%d", &id) )
+    {
+      rxnVals[RXNID(id)] = it.getCoef();
+    }
+  }
+}
+
+// getRxnIDs - SOLVER
+// Input vector will be filled with the RXNIDs corresponding to solution values
+void SOLVER::getRxnIDs(vector<RXNID> & rxnIDs)
 {
   rxnIDs.clear();
-  char * temp;
   int id;
   for(int i=0; i<rxnsize; i++)
   {
     sscanf(rxns[i].getName(), "Rxn%d", &id);
-    rxnIDs.push_back(id);
+    rxnIDs.push_back( RXNID(id) );
   }
 }
 
-void Solver::getRxnRates(vector<double> & rxnRates)
+// getRxnRates - SOLVER
+// Input vector will be filled with reaction values from the solution
+void SOLVER::getRxnRates(vector<double> & rxnRates)
 {
   rxnRates.clear();
   for(int i=0; i<rxnsize; i++)
@@ -473,7 +692,222 @@ void Solver::getRxnRates(vector<double> & rxnRates)
   }
 }
 
-    
+// getRxnValues - SOLVER
+// Input map will be filled with RXNIDs and corresponding solution values
+void SOLVER::getRxnValues(map<RXNID, double> & rxnVals)
+{
+  rxnVals.clear();
+  int id;
+  for(int i=0; i<rxnsize; i++)
+  {
+    if( sscanf(rxns[i].getName(), "Rxn%d", &id) )
+    {
+      rxnVals[RXNID(id)] = cplex.getValue(rxns[i]);
+    }
+  }
+  return;
+}
+
+bool SOLVER::changeBounds(RXNID id, double lb, double ub)
+{
+  if(!rxnIdx.count(id)){
+    cout<<"changeBounds error: Reaction not in SOLVER"<<endl;
+    return 0;
+  }
+  rxns[rxnIdx[id] ].setBounds(lb, ub);
+  return 1;  
+}
+
+bool SOLVER::changeLB(RXNID id, double lb)
+{
+  if(!rxnIdx.count(id)){
+    cout<<"changeLB error: Reaction not in SOLVER"<<endl;
+    return 0;
+  }
+  rxns[rxnIdx[id] ].setLB(lb);
+  return 1;  
+}
+
+bool SOLVER::changeUB(RXNID id, double ub)
+{
+  if(!rxnIdx.count(id)){
+    cout<<"changeUB error: Reaction not in SOLVER"<<endl;
+    return 0;
+  }
+  rxns[rxnIdx[id] ].setUB(ub);
+  return 1;  
+}
+
+// changeObjective - SOLVER
+// Changes the objective function by map of RXNIDs and corresponding values
+// Paramteter: objvals - map of reaction IDs and coefficients for each reaction
+// Returns 1 if successful, 0 if error
+bool SOLVER::changeObjective(map<RXNID, double> & objvals)
+{
+  bool success = true;
+  map<RXNID, double>::iterator it = objvals.begin();
+  for(; it != objvals.end(); ++it)
+  {
+    if(rxnIdx.count(it->first) ){
+      obj.setLinearCoef(rxns[ rxnIdx[it->first] ], it->second);
+    }
+    else{
+      cout<<"RXNID: "<<int(it->first)<<" not in SOLVER"<<endl;
+      success = false;
+    }
+  }
+  return success;
+}
+
+// changeObjective - SOLVER
+// Changes the objective function by all reactions
+// Paramteter: objvals - vector of coefficients for each reaction
+// Returns 1 if successful, 0 if error
+bool SOLVER::changeObjective(vector<double> & objvals)
+{
+  if(objvals.size() != rxnsize){
+    cout<<"objective vector does not match size of reaction vector"<<endl;
+    return 0;
+  }
+  for(int i=0; i<rxnsize; i++)
+  {
+    obj.setLinearCoef(rxns[i], objvals[i]);
+  }
+  return 1;
+}
+
+// changeObjective - SOLVER
+// Changes the objective function by a single reaction
+// Parameters: rid - Reaction ID, value - coefficient in front of the reaction
+// Returns: 1 if successful, 0 if error
+bool SOLVER::changeObjective(RXNID rid, double value)
+{
+  // check if reaction is within range
+  if(!rxnIdx.count(rid) ) {
+    cout<<"changeObjective error: Reaction is not within bounds of lp"<<endl;
+    return 0;
+  }
+  obj.setLinearCoef(rxns[ rxnIdx[rid] ], value);
+  return 1;
+}
+
+bool SOLVER::addRxn(REACTION &r)
+{
+  // checks if reaction is new
+  if(rxnIdx.count(r.id)){
+    cout<<"Reaction already in SOLVER"<<endl;
+    return 0;
+  }
+  // sets up reaction
+  char temp[24];
+  IloEnv env = model.getEnv();
+  sprintf(temp, "Rxn%d", int(r.id));
+  rxns.add(IloNumVar(env, r.lb, r.ub, temp) );
+  rxnIDs.push_back(r.id);
+  // fills in metabolite/reaction coefficients
+  for(vector<STOICH>::iterator it=r.stoich.begin(); it!=r.stoich.end(); it++)
+  {
+    // creates new metabolite if metabolite is new
+    if(!metIdx.count(it->met_id))
+    {
+      sprintf(temp, "Met%d", int(it->met_id) );
+      mets.add(IloRange(env, 0, 0, temp) );
+      metIDs.push_back(it->met_id);
+      metIdx[it->met_id] = metsize++;
+    }
+    mets[metIdx[it->met_id] ].setLinearCoef(rxns[rxnsize], it->rxn_coeff);
+  }
+  // finishes up setting up reaction
+  rxnIdx[r.id] = rxnsize++; // increments rxnsize
+
+  return 1; // SUCCESS
+}
+
+bool SOLVER::addEmptyRxn(RXNID id, double lb, double ub)
+{
+  // checks if reaction is new
+  if(rxnIdx.count(id) ){
+    cout<<"Reaction already in SOLVER"<<endl;
+    return 0;
+  }
+  // sets up reaction
+  char temp[24];
+  IloEnv env = model.getEnv();
+  sprintf(temp, "Rxn%d", int(id) );
+  rxns.add(IloNumVar(env, lb, ub, temp));
+  rxnIDs.push_back(id);
+  rxnIdx[id] = rxnsize++; // increments rxnsize
+  return 1; // SUCCESS
+}
+
+// addEmptyMet - SOLVER
+// Adds a metabolite with no reactions to the SOLVER
+// Returns 1 if successful, 0 if error
+bool SOLVER::addEmptyMet(METID id, double lb, double ub)
+{
+  // check if metabolite is new
+  if(metIdx.count(id) ){
+    cout<<"addEmptyMet error: Metabolite already in SOLVER"<<endl;
+    return 0;
+  }
+  // seting up metabolite
+  char temp[24];
+  IloEnv env = model.getEnv();
+  sprintf(temp, "Met%d", int(id) );
+  mets.add(IloRange(env, lb, ub, temp) );
+  metIDs.push_back(id);
+  metIdx[id] = metsize++; // increments metsize
+  return 1; // SUCCESS
+}
+
+// addMet - SOLVER
+// Adds metabolite to the SOLVER with corresponding reactions and values
+// Set lb and ub to 0.0 if FBA.
+// Can be used to set bounds for a set of reactions.  
+// Must contain reactions already in the input problem. Will return 0
+//   if reaction is not in problem or if metabolite is already in problem.
+//   Returns 1 if successful.
+bool SOLVER::addMet(METID id, vector<RXNID> &reacts, vector<double> &vals,
+            double lb, double ub)
+{
+  // ERROR CHECKERS
+  // check if metabolite is new
+  if(metIdx.count(id) ){
+    cout<<"addMet error: Metabolite already in SOLVER"<<endl;
+    return 0;
+  }
+  // check if vector sizes match
+  if(reacts.size() != vals.size()){
+    cout<<"addMet error: Reaction vector and coefficient vector sizes did not "
+        <<"match."<<endl;
+    return 0;
+  }
+  // checks if reactions in vector are in the solver
+  for(int i=0; i<reacts.size(); i++){
+    if(!rxnIdx.count(reacts[i]) ) {
+      cout<<"addMet error: Reaction ID: "<<reacts[i]<<" not in SOLVER"<<endl;
+      return 0;
+    }
+  }
+  
+  // set up new metabolite
+  char temp[24];
+  IloEnv env = model.getEnv();
+  sprintf(temp, "Met%d", int(id) );
+  mets.add(IloRange(env, lb, ub, temp) );
+  metIDs.push_back(id);
+  
+  // fill with reactions and correlating coefficients
+  for(int i=0; i<reacts.size(); i++)
+  {
+    mets[metsize].setLinearCoef(rxns[rxnIdx[reacts[i] ] ], vals[i]);
+  }
+  
+  // finish setting up metabolite, and increment metsize
+  metIdx[id] = metsize++;
+  
+  return 1; // SUCCESS
+}
 
 
 

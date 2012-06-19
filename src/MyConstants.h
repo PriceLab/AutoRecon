@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 
+
 #define AR_MAXNAMELENGTH 256
 
 extern char _myoutputdir[AR_MAXNAMELENGTH];
@@ -46,7 +47,7 @@ class DEBUGFLAGS{
   int ETCFACTOR;
   int MINFACTORSPACING;
   int BRIDGEMETFACTOR;
-  int BIOMASS; //why does RXNID not name a type when i put it here?
+  int BIOMASS;
   /* Database conventions */
   char E_tag[8];
   char H_name[8];

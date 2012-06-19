@@ -552,9 +552,10 @@ public:
   void buildStoich(const vector<map<int, double> > & rxns); 
 
   // functions to manually build the STOICHMATRIX. Returns 0 if unsuccessful
-  bool addReaction(REACTION &rxn);
-  bool addReaction(RXNID id);
-  bool addMetabolite(METID id);
+  // Not yet tested. If problems, email: colin.hoffman48@gmail.com
+  bool addReaction(REACTION &rxn); // Not yet tested
+  bool addEmptyReaction(RXNID id);      // Not yet tested
+  bool addEmptyMetabolite(METID id);    // Not yet tested
 
   // calling the stoich matrix by [index] will result in the row map being
   //   returned. This allows for the calling of a cell by
@@ -563,12 +564,18 @@ public:
   map<int, double> & operator[](int i) { return matrix[i]; }
 
   // access functions
-  // matrix get access. Returns unchangeable value
+  // matrix get access by index. Returns unchangeable value
   double getCell(int x, int y);
-  // matrix set access. Returns changeable value. This means the value for the
-  //   cell can be set in the val parameter or by altering the return value
-  //   outside of the function.
+  // matrix set access by index. Returns changeable value. This means the value
+  //   for the cell can be set in the val parameter or by altering the return
+  //   value outside of the function.
   double& setCell(int x, int y, double val=0.0);
+  // matrix get access by IDs. Returns unchangeable value
+  double getCell(METID x, RXNID y);
+  // matrix set access by index. Returns changeable value. This means the value
+  //   for the cell can be set in the val parameter or by altering the return
+  //   value outside of the function.
+  double& setCell(METID x, RXNID y, double val=0.0);
   // Reaction ID to index. Returns -1 if unsuccessful
   int rxnIDtoIDX(RXNID id);
   // Reaction index to ID. Returns -1 if unsuccessful
