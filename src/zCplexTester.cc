@@ -118,46 +118,77 @@ int main(int argc, char *argv[]) {
   sol.solve();
 
   sol.writeSolution("complete.sol");
-  METID mid(23);
-  RXNID rid(508);
+  METID mid(20003);
+  RXNID rid(50800);
 //  cout<<"Coef at("<<int(mid)<<","<<int(rid)<<"): "<<sol.getCoef(mid,rid)<<endl;
 //  if(!sol.setCoef(mid,rid, 333.225))
 //    cout<<"Yeah, girl, back that drive up!"<<endl; 
 //  cout<<"Coef at("<<int(mid)<<","<<int(rid)<<"): "<<sol.getCoef(mid,rid)<<endl;
-  map<RXNID, double> objMap;
-  cout<<"Objective"<<endl;
-  cout<<"ID: 99999\tCoeff: "<<sol.getObjCoef(RXNID(99999))<<endl;
-  cout<<"ID: 508\tCoeff: "<<sol.getObjCoef(RXNID(508))<<endl;
-  cout<<"ID: 848484\tCoeff: "<<sol.getObjCoef(RXNID(848484))<<endl;
-  sol.changeObjective(rid, 2.34);
-  cout<<"NEWID: 508\tCoeff: "<<sol.getObjCoef(rid)<<endl;
-  sol.getObjFn(objMap);
-  map<RXNID, double>::iterator it = objMap.begin();
-  for(;it != objMap.end(); ++it)
-  {
-    cout<<"ID: "<<it->first<<"\tCoeff: "<<it->second<<endl;
-  }
-    
-  objMap[RXNID(1996)] = -0.234;
+  map<RXNID, double> testMap;
+  map<METID, double> metMap;
 
-  cout<<"NEW OBJECTIVE FUNCTION"<<endl;
+  sol.getUB(testMap);
+  testMap[rid] = 12.78;
+  testMap[RXNID(50007)] = 333.212;
+  cout<<"RID: "<<rid<<"\tLB: "<<sol.getLB(rid)<<"\tUB: "<<sol.getUB(rid)<<endl;
+  cout<<"MID: "<<mid<<"\tLB: "<<sol.getLB(mid)<<"\tUB: "<<sol.getUB(mid)<<endl;
 
-  it = objMap.begin();
-  for(;it != objMap.end(); ++it)
+  cout<<  "RID UB: "<<sol.setUB(testMap);
+  sol.getLB(testMap);
+  testMap[rid] = -8.23;
+  testMap[RXNID(50007)] = -321.2;
+  cout<<"\tLB: "<<sol.setLB(testMap);
+  sol.getLB(metMap);
+  metMap[mid] = -32.3;
+  metMap[METID(23000)] = -7.424;
+  cout<<"\tMID LB: "<<sol.setLB(metMap);
+  sol.getUB(metMap);
+  metMap[mid] = 9.3;
+  metMap[METID(23000)] = 48.3;
+  cout<<"\tUB: "<<sol.setUB(metMap)<<endl;
+
+  cout<<"RID: "<<rid<<"\tLB: "<<sol.getLB(rid)<<"\tUB: "<<sol.getUB(rid)<<endl;
+  cout<<"MID: "<<mid<<"\tLB: "<<sol.getLB(mid)<<"\tUB: "<<sol.getUB(mid)<<endl;
+
+  cout<<"RID LB: "<<sol.setLB(rid, -88.22)
+    <<"\tUB: "<<sol.setUB(rid, 12.78)
+    <<"\tMID LB: "<<sol.setLB(mid, -32.3)
+    <<"\tUB: "<<sol.setUB(mid, 9.3)<<endl;
+
+  cout<<"RID: "<<rid<<"\tLB: "<<sol.getLB(rid)<<"\tUB: "<<sol.getUB(rid)<<endl;
+  cout<<"MID: "<<mid<<"\tLB: "<<sol.getLB(mid)<<"\tUB: "<<sol.getUB(mid)<<endl;
+
+  map<RXNID, double>::iterator it = testMap.begin();
+  for(;it != testMap.end(); ++it)
   {
-    cout<<"ID: "<<it->first<<"\tCoeff: "<<it->second<<endl;
+    cout<<"RID: "<<it->first<<"\tUB: "<<it->second<<endl;
   }
-  
-  cout<<"1NOW?: "<<sol.hasRXNID(RXNID(848484))<<" AND "
-      <<sol.hasMETID(METID(678912))<<endl;
-  sol.addEmptyRxn(RXNID(848484), -IloInfinity, IloInfinity);
-  sol.addEmptyMet(METID(678912));
-  
-  cout<<"2NOW?: "<<sol.hasRXNID(RXNID(848484))<<" AND "
-      <<sol.hasMETID(METID(678912))<<endl;
- 
-  sol.changeObjective(objMap);
-  cout<<"THIS: "<<double(-IloInfinity)<<endl;
+
+  sol.getLB(testMap);
+
+  it = testMap.begin();
+  for(;it != testMap.end(); ++it)
+  {
+    cout<<"RID: "<<it->first<<"\tLB: "<<it->second<<endl;
+  }
+
+  sol.getUB(metMap);
+
+
+  map<METID, double>::iterator it2 = metMap.begin();
+  for(;it2 != metMap.end(); ++it2)
+  {
+    cout<<"MID: "<<it2->first<<"\tUB: "<<it2->second<<endl;
+  }
+
+  sol.getLB(metMap);
+
+  it2 = metMap.begin();
+  for(;it2 != metMap.end(); ++it2)
+  {
+    cout<<"MID: "<<it2->first<<"\tLB: "<<it2->second<<endl;
+  }
+
   sol.solve();
   sol.writeProblem("incomplete2.lp");
   cout<<"GROWTH RATE: "<<sol.getObjVal()<<endl;

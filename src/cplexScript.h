@@ -68,9 +68,8 @@ public:
 //       env.end();
 //       at this point, the solver and all CPLEX stuff should be freed up.
 // 
-// TODO: finish testing: addRxn and addMet functions
-//       add functions: get bounds for mets
-//                      set bounds for mets
+// TODO: finish testing: addRxn-full- and addMet-full- functions
+//       add functions:
 class SOLVER
 {
 private:
@@ -165,6 +164,18 @@ public:
   // Returns Upper/Lower bound as double if successful, 0 is returned if error
   double getUB(RXNID id);
   double getLB(RXNID id);
+  // Stores Upper/Lower Bounds of Reactions in map of RXNIDs and
+  //    their correlating values.
+  void getUB(map<RXNID, double> &ubMap);
+  void getLB(map<RXNID, double> &lbMap);
+  // Returns Upper/Lower bound of metabolite as double if successful,
+  //    0.0 returned if error
+  double getUB(METID id);
+  double getLB(METID id);
+  // Stores Upper/Lower Bounds of Metabolites in map of METIDs and
+  //    their correlating values.
+  void getUB(map<METID, double> &ubMap);
+  void getLB(map<METID, double> &lbMap);
   // Returns objective coefficient by RXNID, 0 is returned if error
   double getObjCoef(RXNID id);
   // Stores the objective coefficients as a map of RXNID and doubles
@@ -181,13 +192,30 @@ public:
   void getRxnValues(map<RXNID, double> & rxnVals);
 
   // Use to alter the input problem
+  // REACTION BOUNDS SET
   // Change Bounds - set bounds to 0 to "remove" the reaction
   // changes both Upper and Lower bound
-  bool changeBounds(RXNID id, double lb, double ub);
+  bool setBounds(RXNID id, double lb, double ub);
   // changes Lower Bound
-  bool changeLB(RXNID id, double lb);
+  bool setLB(RXNID id, double lb);
+  // changes Lower Bounds by paired RXNIDs
+  bool setLB(map<RXNID, double> &bounds);
   // changes Upper Bound
-  bool changeUB(RXNID id, double ub);
+  bool setUB(RXNID id, double ub);
+  // changes Uppoer Bounds by paired RXNIDs
+  bool setUB(map<RXNID, double> &bounds);
+  // METABOLITE BOUNDS SET
+  // Change Bounds
+  // changes both Upper and Lower bound
+  bool setBounds(METID id, double lb=0.0, double ub=0.0);
+  // changes Lower Bound
+  bool setLB(METID id, double lb);
+  // changes Lower Bounds by paired RXNIDs
+  bool setLB(map<METID, double> &bounds);
+  // changes Upper Bound
+  bool setUB(METID id, double ub);
+  // changes Uppoer Bounds by paired RXNIDs
+  bool setUB(map<METID, double> &bounds);
   // Change Objective
   // Change objective by a map matching IDs to values. Any incorrect IDs
   //    will be skipped, and a 0 returned. 1 returned if successful.

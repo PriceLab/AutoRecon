@@ -633,6 +633,77 @@ double SOLVER::getLB(RXNID id)
   return rxns[ rxnIdx[id] ].getLB();
 }
 
+// getUB - SOLVER - mass get
+// Stores Upper Bounds for reactions in map of RXNID and corresponding values
+void SOLVER::getUB(map<RXNID, double> &ubMap)
+{
+  ubMap.clear();
+  for(int i=0; i<rxnIDs.size(); i++)
+  {
+    ubMap[ rxnIDs[i] ] = rxns[i].getUB();
+  }
+  return;
+}
+
+// getLB - SOLVER - mass get
+// Stores Lower Bounds for reactions in map of RXNID and corresponding values
+void SOLVER::getLB(map<RXNID, double> &lbMap)
+{
+  lbMap.clear();
+  for(int i=0; i<rxnIDs.size(); i++)
+  {
+    lbMap[ rxnIDs[i] ] = rxns[i].getLB();
+  }
+  return;
+}
+
+
+// getUB - SOLVER
+// Returns Upper Bound of Metabolite METID, if error: returns 0.0
+double SOLVER::getUB(METID id)
+{
+  if(!metIdx.count(id) ){
+    cout<<"MET: "<<int(id)<<" not in SOLVER"<<endl;
+    return 0.0;
+  }
+  return mets[ metIdx[id] ].getUB();
+}
+
+// getLB -SOLVER
+// Returns Lower Bound of Metabolite METID, if error: returns 0.0
+double SOLVER::getLB(METID id)
+{
+  if(!metIdx.count(id) ){
+    cout<<"MET: "<<int(id)<<" not in SOLVER"<<endl;
+    return 0.0;
+  }
+  return mets[ metIdx[id] ].getLB();
+}
+
+// getUB - SOLVER - mass get
+// Stores Upper Bounds for metabolites in map of METID and corresponding values
+void SOLVER::getUB(map<METID, double> &ubMap)
+{
+  ubMap.clear();
+  for(int i=0; i<metIDs.size(); i++)
+  {
+    ubMap[ metIDs[i] ] = mets[i].getUB();
+  }
+  return;
+}
+
+// getLB - SOLVER - mass get
+// Stores Lower Bounds for metabolites in map of METID and corresponding values
+void SOLVER::getLB(map<METID, double> &lbMap)
+{
+  lbMap.clear();
+  for(int i=0; i<metIDs.size(); i++)
+  {
+    lbMap[ metIDs[i] ] = mets[i].getLB();
+  }
+  return;
+}
+
 // getObjCoef - SOLVER
 // Returns objective coefficient by RXNID, 0.0 is returned if error
 double SOLVER::getObjCoef(RXNID id)
@@ -708,34 +779,170 @@ void SOLVER::getRxnValues(map<RXNID, double> & rxnVals)
   return;
 }
 
-bool SOLVER::changeBounds(RXNID id, double lb, double ub)
+// setBounds - SOLVER
+// sets both upper and lower bounds for reaction RXNID
+// Returns 1 if successful, 0 if error
+bool SOLVER::setBounds(RXNID id, double lb, double ub)
 {
   if(!rxnIdx.count(id)){
-    cout<<"changeBounds error: Reaction not in SOLVER"<<endl;
+    cout<<"changeBounds error: Reaction "<<id<<" not in SOLVER"<<endl;
     return 0;
   }
   rxns[rxnIdx[id] ].setBounds(lb, ub);
   return 1;  
 }
 
-bool SOLVER::changeLB(RXNID id, double lb)
+// setLB - SOLVER
+// sets lower bound of reaction RXNID to lb
+// Returns 1 if successful, 0 if error
+bool SOLVER::setLB(RXNID id, double lb)
 {
   if(!rxnIdx.count(id)){
-    cout<<"changeLB error: Reaction not in SOLVER"<<endl;
+    cout<<"changeLB error: Reaction "<<id<<" not in SOLVER"<<endl;
     return 0;
   }
   rxns[rxnIdx[id] ].setLB(lb);
   return 1;  
 }
 
-bool SOLVER::changeUB(RXNID id, double ub)
+// setLB - SOLVER - mass set
+// sets both lower bound for reactions in map of RXNIDs and values
+// Returns 1 if successful, 0 if error. Skips invalid reactions
+bool SOLVER::setLB(map<RXNID, double> &bounds)
+{
+  bool success = true;
+  map<RXNID, double>::iterator it=bounds.begin();
+  for(; it != bounds.end(); ++it)
+  {
+    if(rxnIdx.count(it->first))
+    {
+      rxns[ rxnIdx[it->first] ].setLB(it->second);
+    }
+    else
+    {
+      cout<<"changeBounds error: Reaction "<<it->first<<" not in SOLVER"<<endl;
+      success = false;
+    }
+  }
+  return success;  
+}
+
+// setUB - SOLVER
+// sets upper bound for reaction RXNID
+// Returns 1 if successful, 0 if error
+bool SOLVER::setUB(RXNID id, double ub)
 {
   if(!rxnIdx.count(id)){
-    cout<<"changeUB error: Reaction not in SOLVER"<<endl;
+    cout<<"changeUB error: Reaction "<<id<<" not in SOLVER"<<endl;
     return 0;
   }
   rxns[rxnIdx[id] ].setUB(ub);
   return 1;  
+}
+
+// setUB - SOLVER - mass set
+// sets both upper bound for reactions in map of RXNIDs and values
+// Returns 1 if successful, 0 if error. Skips invalid reactions
+bool SOLVER::setUB(map<RXNID, double> &bounds)
+{
+  bool success = true;
+  map<RXNID, double>::iterator it=bounds.begin();
+  for(; it != bounds.end(); ++it)
+  {
+    if(rxnIdx.count(it->first))
+    {
+      rxns[ rxnIdx[it->first] ].setUB(it->second);
+    }
+    else
+    {
+      cout<<"changeBounds error: Reaction "<<it->first<<" not in SOLVER"<<endl;
+      success = false;
+    }
+  }
+  return success;  
+}
+
+// setBounds - SOLVER
+// sets both upper and lower bounds for metabolite METID
+// Returns 1 if successful, 0 if error
+bool SOLVER::setBounds(METID id, double lb, double ub)
+{
+  if(!metIdx.count(id)){
+    cout<<"changeBounds error: Metabolite "<<id<<" not in SOLVER"<<endl;
+    return 0;
+  }
+  mets[ metIdx[id] ].setBounds(lb, ub);
+  return 1;  
+}
+
+// setLB - SOLVER
+// sets lower bound of metabolite METID to lb
+// Returns 1 if successful, 0 if error
+bool SOLVER::setLB(METID id, double lb)
+{
+  if(!metIdx.count(id)){
+    cout<<"changeLB error: Metabolite "<<id<<" not in SOLVER"<<endl;
+    return 0;
+  }
+  mets[metIdx[id] ].setLB(lb);
+  return 1;  
+}
+
+// setLB - SOLVER - mass set
+// sets lower bound for metabolites in map of METIDs and values
+// Returns 1 if successful, 0 if error. Skips invalid reactions
+bool SOLVER::setLB(map<METID, double> &bounds)
+{
+  bool success = true;
+  map<METID, double>::iterator it=bounds.begin();
+  for(; it != bounds.end(); ++it)
+  {
+    if(metIdx.count(it->first))
+    {
+      mets[ metIdx[it->first] ].setLB(it->second);
+    }
+    else
+    {
+      cout<<"changeLB error: Metabolite "<<it->first<<" not in SOLVER"<<endl;
+      success = false;
+    }
+  }
+  return success;  
+}
+
+// setUB - SOLVER
+// sets upper bound of metabolite METID to lb
+// Returns 1 if successful, 0 if error
+bool SOLVER::setUB(METID id, double ub)
+{
+  if(!metIdx.count(id)){
+    cout<<"changeLB error: Metabolite "<<id<<" not in SOLVER"<<endl;
+    return 0;
+  }
+  mets[metIdx[id] ].setUB(ub);
+  return 1;  
+}
+
+// setUB - SOLVER - mass set
+// sets upper bound for metabolites in map of METIDs and values
+// Returns 1 if successful, 0 if error. Skips invalid reactions
+bool SOLVER::setUB(map<METID, double> &bounds)
+{
+  bool success = true;
+  map<METID, double>::iterator it=bounds.begin();
+  for(; it != bounds.end(); ++it)
+  {
+    if(metIdx.count(it->first))
+    {
+      mets[ metIdx[it->first] ].setUB(it->second);
+    }
+    else
+    {
+      cout<<"changeLB error: Metabolite "<<it->first<<" not in SOLVER"<<endl;
+      success = false;
+    }
+  }
+  return success;  
 }
 
 // changeObjective - SOLVER
