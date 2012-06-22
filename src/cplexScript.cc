@@ -998,6 +998,59 @@ bool SOLVER::changeObjective(RXNID rid, double value)
   return 1;
 }
 
+// setObjective - SOLVER
+// Clears old objective and replaces it with new objective
+//   Single reaction by RXNID, coefficient defaults to 1.0
+bool SOLVER::setObjective(RXNID id, double coeff)
+{
+  if(!rxnIdx.count(id) ){
+    cout<<"setObjective error: Reaction: "<<id<<" not in SOLVER"<<endl;
+    return 0;
+  }
+  map<RXNID, double> objmap;
+  getObjFn(objmap);
+  map<RXNID, double>::iterator it = objmap.begin();
+  for(; it != objmap.end(); ++it)
+  {
+    it->second = 0.0;
+  }
+  objmap[id] = coeff;
+  if(!changeObjective(objmap))
+    cout<<"setObjective error: inconsistent map, failed changeObjective"<<endl;
+  return 1;
+}
+
+// setObjective - SOLVER - mass set
+// Clears old objective and replaces it with new objective
+//   Multiple reaction by RXNID, and correlating coefficients
+bool SOLVER::setObjective(map<RXNID, double> &objset)
+{
+  bool success = true;
+  map<RXNID, double> objmap;
+  getObjFn(objmap);
+  map<RXNID, double>::iterator it = objmap.begin();
+  for(; it != objmap.end(); ++it)
+  {
+    it->second = 0.0;
+  }
+  it = objset.begin();
+  for(; it != objset.end(); ++it)
+  {
+    if(rxnIdx.count(it->first) )
+    {
+      objmap[it->first] = it->second;
+    }
+    else
+    {
+      cout<<"setObjective error: RXNID "<<it->first<<" not in SOLVER"<<endl;
+      success = false;
+    }
+  }
+  if(!changeObjective(objmap))
+    cout<<"setObjective error: inconsistent map, failed changeObjective"<<endl;
+  return success;
+}
+
 bool SOLVER::addRxn(REACTION &r)
 {
   // checks if reaction is new

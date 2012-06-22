@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
 
   SOLVER sol(env, ProblemSpace); 
 
-  
+  sol.setObjective(RXNID(2142));  
   sol.writeProblem("incomplete.lp");
 
   sol.solve();

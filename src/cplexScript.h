@@ -224,6 +224,11 @@ public:
   bool changeObjective(vector<double> & objvals);
   // Change objective by a single reaction. Takes a RXNID and a value
   bool changeObjective(RXNID rid, double value);
+  // Clear old objective and replaces it with new objective
+  //   singe RXNID - coefficient defaults to 1.0
+  bool setObjective(RXNID id, double coeff=1.0);
+  //   multiple RXNID
+  bool setObjective(map<RXNID, double> &objset);
   // Add Reaction
   bool addRxn(REACTION &r); //needs test
   bool addEmptyRxn(RXNID id, double lb, double ub); //needs bounds test
