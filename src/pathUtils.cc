@@ -332,7 +332,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
 	 synonyms. However, -5 should be handled correctly now... */
       vector<double> current_likelihood;
       for(int j=0;j<synspace.rxns[i].syn.size();j++){
-	double curFlag = fullspace.rxnFromId(synspace.rxns[i].syn[j]).init_likelihood;
+	double curFlag = fullspace[synspace.rxns[i].syn[j]].init_likelihood;
 	if(curFlag < 0 && rougheq(curFlag,-5)!=1 ) {
 	  synspace.rxns[i].init_likelihood = curFlag;
 	  current_likelihood.clear(); current_likelihood.push_back(curFlag);
@@ -354,7 +354,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
 	synspace.rxns[i].init_likelihood = sum/(double)current_likelihood.size();
       }
 
-      REACTION firstSyn = fullspace.rxnFromId(synspace.rxns[i].syn[0]);
+      REACTION firstSyn = fullspace[synspace.rxns[i].syn[0]];
       synspace.rxns[i].stoich_part = firstSyn.stoich_part;
 
       /* Merge Reversibilities */
@@ -366,7 +366,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
       int rev = firstSyn.net_reversible; /* We want to model the reversibility on the FIRST of the synrxns */
 
       for(int j=0;j<synspace.rxns[i].syn.size();j++){
-	REACTION curRxn = fullspace.rxnFromId(synspace.rxns[i].syn[j]);
+	REACTION curRxn = fullspace[synspace.rxns[i].syn[j]];
 	if(curRxn.net_reversible == 0) { rev = 0; break; }
 
 	int curRev = curRxn.net_reversible;
@@ -556,6 +556,54 @@ void turnOffMagicExits(RXNSPACE &rxnspace, const vector<int> &exitsToKeep) {
   }
 }
 
+/* Split all reactions in inputSpace into forward and reverse parts
+   so that all fluxes are strictly positive. */
+RXNSPACE splitReactions(const RXNSPACE &rxnspace) {
+  RXNSPACE revSplit;
+  for(int i=0; i<rxnspace.rxns.size(); i++) {
+    REACTION tmp = rxnspace.rxns[i];
+    tmp.revPair = -1;
+    /* FIXME - should I attempt to put the opposite direction of all the other rxns here too? (with a penalty) */
+    if(tmp.init_reversible == 1) {
+      revSplit.addReaction(tmp);
+    }
+    /* Ensure that the reaction only goes in one direction */
+    if(tmp.init_reversible == -1) {
+      REACTION newRxn = tmp;
+      newRxn.id += _db.REVFACTOR;
+      newRxn.stoich = tmp.stoich;
+      for(int j=0; j<newRxn.stoich.size(); j++) {
+        newRxn.stoich[j].rxn_coeff *= -1;
+      }
+      newRxn.ub = -newRxn.lb;
+      newRxn.lb = 0.0f;
+      revSplit.addReaction(newRxn);
+    }
+
+    if(tmp.init_reversible == 0) {
+      REACTION newRxn = tmp;
+      newRxn.revPair = tmp.id;
+      newRxn.id += _db.REVFACTOR;
+      newRxn.stoich = tmp.stoich;
+      for(int j=0; j<newRxn.stoich.size(); j++) {
+        newRxn.stoich[j].rxn_coeff *= -1;
+      }
+      newRxn.ub = -newRxn.lb;
+      newRxn.lb = 0.0f;
+      revSplit.addReaction(newRxn);
+      /* Also put in the forward reaction, but constrained to only go forward
+        I only assign the revPair to ONE of the reactions so that we don't get
+        duplicate constraints (makes GLPK's life easier) */
+      newRxn = tmp;
+      newRxn.lb = 0.0f;
+      revSplit.addReaction(newRxn);
+    }
+  }
+
+  return revSplit;
+}
+
+
 /* Modify the NGAM associated with the model PROBLEM
    NGAM is modified by changing the lower bound and upper bound of the reaction with name given by db.ATPM_name
    FIXME: Need to make sure to add the ATPM reaction to the model */
@@ -581,7 +629,7 @@ void modifyGAM(ANSWER &model, double amountToChange) {
   METID hId = Name2Ids(model.metabolites.mets, _db.H_name);
   double numH = 0.0f;
   REACTION* biomass = model.reactions.rxnPtrFromId((RXNID) _db.BIOMASS);
-  REACTION ATPM = model.reactions.rxnFromId(atpmId);
+  REACTION ATPM = model.reactions[atpmId];
 
   if(atpmId == -1) { printf("ERROR: ATPM reaction was never added to the model!\n"); assert(false); }
   if(hId == -1) { printf("ERROR: No H found for some reason in the list of model metabolites...\n"); assert(false); }

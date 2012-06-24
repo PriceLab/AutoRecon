@@ -476,7 +476,7 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace, RXNSPACE 
     printRxnsFromIntVector(path[i].rxnIds,rxnspace);
     printf("Reaction likelihoods: ");
     for(int j=0;j<path[i].rxnIds.size();j++){
-      printf("%1.2f  ",rxnspace.rxnFromId(path[i].rxnIds[j]).current_likelihood);}
+      printf("%1.2f  ",rxnspace[path[i].rxnIds[j]].current_likelihood);}
     printf("\n");
     printf("Reaction directionality: ");
     printVector(path[i].rxnDirection);
@@ -619,6 +619,31 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
     }
   }
 
+  fflush(output);
+  fclose(output);
+}
+
+/* After un-synonymizing: Output an adjacency-list for the data in the PSUM:
+   Reaction   metabolite  direction  edge weight [default: current_likelihood] 
+direction is 0 if it is a reversible edge, -1 means metabolite --> reaction, and +1 means reaction --> metabolite */
+void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBLEM &problem) {
+  FILE* output = fopen(fileName, "w");
+  fprintf(output, "%s\t%s\t%s\t%s\n", "REACTION", "METABOLITE", "DIRECTION", "EDGEWEIGHT");
+  for(int i=0; i<psum.rxnDirIds.size(); i++) {
+    REACTION tmprxn = problem.fullrxns.rxnFromId((RXNID)abs(psum.rxnDirIds[i]));
+    for(int j=0; j<tmprxn.stoich.size(); j++) {
+      int dir;
+      if(tmprxn.net_reversible == 0) {
+	dir = 0;
+      } else if (tmprxn.net_reversible * tmprxn.stoich[j].rxn_coeff > 0.0f) { 
+	/* A --> B: Stoich coeff for B is 1 and net_reversible = 1, we want the arrow pointing towards B so dir = 1*/
+	/* B <-- A: Stoich coeff for B is -1 but net_reversible = -1, we want thearrow pointing towards B so dir = 1 */
+	dir = 1;
+      } else { dir = -1; }
+      fprintf(output, "%s\t%s\t%d\t%1.4f\n", 
+	      tmprxn.name, tmprxn.stoich[j].met_name, dir, tmprxn.current_likelihood);
+    }
+  }
   fflush(output);
   fclose(output);
 }

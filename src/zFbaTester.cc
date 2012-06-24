@@ -44,6 +44,12 @@ int main(int argc, char *argv[]) {
 
   printSynRxns(ProblemSpace.synrxns, ProblemSpace.fullrxns);
 
+  FILE* fid = fopen("RxnLikelihoodTable", "w");
+  for(int i=0; i<ProblemSpace.fullrxns.rxns.size(); i++) {
+    fprintf(fid, "%s\t%1.5f\n", ProblemSpace.fullrxns.rxns[i].name, ProblemSpace.fullrxns.rxns[i].current_likelihood);
+  }
+  fclose(fid);
+
   /* I tried to move this to inputSetup as well but it gave me a compile error
      so here it is*/
   printf("Annotating genes...\n");
@@ -104,6 +110,11 @@ int main(int argc, char *argv[]) {
   PrintPathSummary2(unSynPsum, ProblemSpace.fullrxns);
 
   vector<PATHSUMMARY> flat_unsyn = flattenPsum(unSynPsum);
+  for(int i=0; i<flat_unsyn.size(); i++) {
+    char fileName[1028];
+    sprintf(fileName, "./%s/%s_k%d.tsv", _myoutputdir, ProblemSpace.metabolites.getMetObj(flat_unsyn[i].outputId).name, flat_unsyn[i].k_number);
+    ONEPATH_adj_list(fileName, flat_unsyn[i], ProblemSpace);
+  }
 
   printf("...done\n");
 

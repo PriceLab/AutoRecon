@@ -64,7 +64,7 @@ ANSWER gapfillWrapper(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pL
 
   printf("Final Essential exits: \n");
   for(int i=0; i<allEssentialExits.size(); i++) {
-    printf("%s\t", baseModel.fullrxns.rxnFromId(allEssentialExits[i]).name);
+    printf("%s\t", baseModel.fullrxns[allEssentialExits[i]].name);
   }
   printf("\n");
   
@@ -441,7 +441,7 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
 
   vector<RXNID> idVector;
   int status  = data.gapFindLinprog(idVector);
-  set<METID> idList; for(int i=0; i<idVector.size(); i++) { idList.insert(model.fullrxns.rxnFromId(idVector[i]).stoich[0].met_id); }
+  set<METID> idList; for(int i=0; i<idVector.size(); i++) { idList.insert(model.fullrxns[idVector[i]].stoich[0].met_id); }
 
   /* Skip over the turning off of magic exits if gapfinding failed */
   if(status == -1) { printf("Gap pruning failed! Will attempt to recover using ALL possible exits...\n"); 
@@ -595,7 +595,7 @@ vector<vector<RXNID> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &wor
     vector<RXNID> currentSolution = result[i].rxnIds;
     for(int j=0; j<currentSolution.size(); j++) {
       
-      workingRxns.addReaction(allRxns.rxnFromId(currentSolution[j]));
+      workingRxns.addReaction(allRxns[currentSolution[j]]);
       for(int k=0; k<workingRxns.rxns.back().stoich.size(); k++) {
 	METID metId = workingRxns.rxns.back().stoich[k].met_id;
 	workingMets.addMetabolite(allMets[metId]);
@@ -611,7 +611,7 @@ vector<vector<RXNID> > fillGapWithDijkstras(RXNSPACE &workingRxns, METSPACE &wor
       /* Apply cost cutoff */
       double totalCost = 0.0f;
       for(int k=0; k<currentSolution.size(); k++) { 
-	totalCost += allRxns.rxnFromId(currentSolution[k]).current_likelihood;
+	totalCost += allRxns[currentSolution[k]].current_likelihood;
       }
       /* First one should always be accepted */
       if(rxnsFillingGap.empty()) { 
@@ -693,5 +693,5 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
 
 void addATPM(PROBLEM &A, ANSWER &B){
   RXNID atpmId = Name2Ids(A.fullrxns.rxns, _db.ATPM_name);
-  B.reactions.addReaction(A.fullrxns.rxnFromId(atpmId));
+  B.reactions.addReaction(A.fullrxns[atpmId]);
 }

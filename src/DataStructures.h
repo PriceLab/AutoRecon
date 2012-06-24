@@ -61,7 +61,6 @@ class PATHSUMMARY;
 
 class VALUESTORE;
 class GRAPHSTORE;
-class BADIDSTORE;
 
 class GAPFILLRESULT;
 class ANSWER;
@@ -102,6 +101,7 @@ class RXNSPACE{
 
   RXNSPACE operator=(const RXNSPACE& init);
   REACTION & operator[](RXNIDX idx);
+  REACTION & operator[](RXNID idx);
   bool operator==(const RXNSPACE &rhs);
 
   friend std::ostream& operator<<(std::ostream &out, RXNSPACE & orig);
@@ -128,7 +128,6 @@ class METSPACE{
   void clear();
   void removeMetFromBack();
   void addMetabolite(const METABOLITE &met);
-  //METABOLITE metFromId(METID id) const;
   METABOLITE getMetObj(METID id) const;
   METABOLITE* metPtrFromId(METID id);
   METIDX idxFromId(METID id) const;
@@ -137,7 +136,7 @@ class METSPACE{
   void metMap();
 
   METSPACE operator=(const METSPACE& init);
-  METABOLITE & operator[](int idx);
+  //METABOLITE & operator[](int idx);
   METABOLITE & operator[](METIDX idx);
   METABOLITE & operator[](METID id);
   const METABOLITE & operator[](METID id) const;
@@ -329,6 +328,13 @@ class NETREACTION{
   bool operator==(const NETREACTION &rhs) const;
 };
 
+
+/* WARNING: 
+   When the new (LP-based) shortest path algorithm is implemented,
+   this class will go away!
+
+   The new algorithm will just output a PATHSUMMARY directly.
+*/
 class PATH{
  public:
   METID outputId; /* The Path by definition is trying to reach a specific output. This lists that 
@@ -392,20 +398,6 @@ class GAPFILLRESULT{
  public:  
   METID deadMetId; /* ID of any essential magic exits given the specified combination of PATHSUMMARY */
   vector< vector<RXNID> > deadEndSolutions; /* Dijkstras solutions for metabolite deadMetId - deadEndSolutions[i] is the i'th shortest gapfill solution */
-};
-
-/* Setup for storage of ID's of reactions that cannot be used in Dijkstras algorithm and which metablites block them.
-   Since we use a SET to store them we need a "<" operator - I order them first by reaction ID and then by length of the met ID vectors,
-   and finally by the values in the met ID vector themselves (if they are the same)
-
-   To remove the values I also need an == operator. */
-class BADIDSTORE {
- public:
-  int badRxnId;
-  vector<METID> badMetIds;
-  BADIDSTORE();
-  bool operator<(const BADIDSTORE &rhs) const;
-  bool operator==(const BADIDSTORE &rhs) const;
 };
 
 class INNERPOPSTORE {

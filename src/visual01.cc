@@ -388,7 +388,6 @@ void visualizePathSummary2File(const char* fileBase, const char* label, const ve
     vector<RXNDIRID> allRxnDirIds = getAllPathRxns(tmpP);
     vector<RXNID> allRxnIds;
     for(int i=0; i<allRxnDirIds.size(); i++) { allRxnIds.push_back((RXNID) abs(allRxnDirIds[i])); }
-    
     RXNSPACE modelRxns; 
     switch(useSyn) {
     case 0:

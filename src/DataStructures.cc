@@ -18,9 +18,6 @@ vector<NETREACTION> ANSWER::etc;
 vector<vector<vector<PATHSUMMARY> > > ANSWER::pList;
 map<string, vector<VALUESTORE> > ANSWER::annoteToRxns;
 
-/* Can use this for any class that can be converted validly into an int 
-  Return type should be the second one */
-
 template <class T, class U> 
 U intTimes(const T& x, const U& y){
   int tempx = x;
@@ -256,6 +253,7 @@ RXNSPACE::RXNSPACE(const vector<REACTION> &rxnVec) {
   }
 }
 
+//Constructor
 RXNSPACE::RXNSPACE(const RXNSPACE& existingSpace, const vector<RXNID> &idSubset) {
   for(int i=0; i<idSubset.size(); i++) {
     REACTION rxn = existingSpace.rxnFromId(idSubset[i]);
@@ -273,7 +271,15 @@ void RXNSPACE::clear() {
 
 REACTION & RXNSPACE::operator[](RXNIDX idx) {
   assert(idx < rxns.size());
-  return this->rxns[idx];
+  //  return this->rxns[idx];
+  return rxns[idx];
+}
+
+REACTION & RXNSPACE::operator[](RXNID id) {
+  assert(idIn(id));
+  RXNIDX idx = idxFromId(id);
+  REACTION & rRXN = rxns[idx];
+  return rRXN;
 }
 
 /* Note - I implemented this myself so that I automatically reserve the capacity... lets see if it helps make this more efficient */
@@ -406,7 +412,7 @@ void RXNSPACE::change_Lb_and_Ub(RXNID id, double new_lb, double new_ub) {
 }
 
 /* Uses "find" function from map to allow us to declare constant RXNSPACE's
-Return a reaction with a given ID */
+   Return a reaction with a given ID*/ 
 REACTION RXNSPACE::rxnFromId(RXNID id) const {
   int idx = this->idxFromId(id);
   return rxns[idx];
@@ -561,11 +567,13 @@ bool METSPACE::isIn(METIDX idx) const {
   else { return false; }
 }
 
+/*
 METABOLITE  & METSPACE::operator[](int idx) {
   printf("Warning: int instead of METIDX\n");
   assert(0);
   return this->mets[idx];
 }
+*/
 
 METABOLITE & METSPACE::operator[](METIDX idx) {
   assert(idx < mets.size());
@@ -669,6 +677,8 @@ void PROBLEM::clear() {
   growth.clear();
 }
 
+/* WARNING: When I implement the new shortest-path algorithm
+   this class will go away */
 PATH::PATH() {
   /* This flag is how you can tell if there was actually a path found or not - total likelihood
      will be > 0 if a path is found */
@@ -747,35 +757,6 @@ PATHSUMMARY PATHSUMMARY::operator/(PATH &onepath){
   this->likelihood = onepath.totalLikelihood;
   this->outputId = onepath.outputId;
   return *this;
-}
-
-BADIDSTORE::BADIDSTORE() {  badRxnId = -1; }
-
-bool BADIDSTORE::operator<(const BADIDSTORE &rhs) const {
-  BADIDSTORE lhs = *this;
-  /* order first by the reaction ID, then by the size of badMetIds, and finally by their values. */
-  if(lhs.badRxnId < rhs.badRxnId) { return true; }
-  if(lhs.badRxnId > rhs.badRxnId) { return false; }
-  /* badRxnId is equal */
-  if(lhs.badMetIds.size() < rhs.badMetIds.size() ) { return true; }
-  if(lhs.badMetIds.size() > rhs.badMetIds.size() ) { return false; }
-  /* size is equal */
-  for(int i=0; i<lhs.badMetIds.size(); i++) { 
-    if(lhs.badMetIds[i] < rhs.badMetIds[i]) { return true; }
-    if(lhs.badMetIds[i] > rhs.badMetIds[i]) { return false; }
-  }
-  /* Everything is equal (return false) */
-  return false;
-}
-
-bool BADIDSTORE::operator==(const BADIDSTORE &rhs) const {
-  BADIDSTORE lhs = *this;
-  if(lhs.badRxnId != rhs.badRxnId) { return false; }
-  if(lhs.badMetIds.size() != rhs.badMetIds.size()) { return false; }
-  for(int i=0; i<lhs.badMetIds.size(); i++) {
-    if(lhs.badMetIds[i] != rhs.badMetIds[i]) { return false; }
-  }
-  return true;
 }
 
 INNERPOPSTORE::INNERPOPSTORE() { score = 0.0f; }

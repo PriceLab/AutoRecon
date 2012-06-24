@@ -303,7 +303,7 @@ PATHSUMMARY replaceWithRealRxnIds(const PATHSUMMARY &psum, const vector<PATHSUMM
   int origSize = rxnIds.size();
 
   for(int i=0;i<origSize;i++) {
-    REACTION TMPSYN = ProblemSpace.synrxns.rxnFromId((RXNID)abs(rxnIds[i]));
+    REACTION TMPSYN = ProblemSpace.synrxns[(RXNID)abs(rxnIds[i])];
     /* Don't replace if theres no synonyms - but DO replace rxnIds[i] with its 
        absolute value so we actually pull the right reaction out */
     if(TMPSYN.id < _db.MINFACTORSPACING) { 
@@ -363,16 +363,16 @@ void addR(PATHSUMMARY &psum, PROBLEM &ProblemSpace) {
   for(int i=0;i<origSize;i++){
     if(ProblemSpace.synrxns.idIn((RXNID)abs(rxnIds[i]))){continue;}
     if(abs(rxnIds[i]) >= _db.REVFACTOR && abs(rxnIds[i]) < _db.REVFACTOR + _db.MINFACTORSPACING){
-      REACTION TEMP = ProblemSpace.synrxnsR.rxnFromId((RXNID)abs(rxnIds[i]));
+      REACTION TEMP = ProblemSpace.synrxnsR[(RXNID)abs(rxnIds[i])];
       ProblemSpace.synrxns.addReaction(TEMP);
       ProblemSpace.fullrxns.addReaction(TEMP);
     }
     if(abs(rxnIds[i]) >= _db.REVFACTOR + _db.SYNFACTOR
        && abs(rxnIds[i]) < _db.REVFACTOR + _db.SYNFACTOR + _db.MINFACTORSPACING){
-      REACTION TEMP = ProblemSpace.synrxnsR.rxnFromId((RXNID)abs(rxnIds[i]));
+      REACTION TEMP = ProblemSpace.synrxnsR[(RXNID)abs(rxnIds[i])];
       ProblemSpace.synrxns.addReaction(TEMP);
       for(int j=0;j<TEMP.syn.size();j++){
-        REACTION TEMP2 = ProblemSpace.fullrxns.rxnFromId(TEMP.syn[j]);
+        REACTION TEMP2 = ProblemSpace.fullrxns[TEMP.syn[j]];
         TEMP2.id += _db.REVFACTOR;
         TEMP2.net_reversible = TEMP2.net_reversible * (REV)-1;
         ProblemSpace.fullrxns.addReaction(TEMP2);
