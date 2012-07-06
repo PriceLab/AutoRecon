@@ -20,6 +20,8 @@
 #include <string>
 #include <vector>
 
+#define STEP_SIZE 1
+
 using std::vector;
 using std::map;
 using std::string;
@@ -152,8 +154,8 @@ int main(int argc, char *argv[]) {
   for(int i=0;i<100;i++){
     for(int j=0;j<100;j++){
       SCORE1 score12;
-      score12.ngam = 1 * i;
-      score12.gam  = 1 * j;
+      score12.ngam = STEP_SIZE * i;
+      score12.gam  = STEP_SIZE * j;
       //printf("measureScore for NGAM = %1.3f, GAM = %1.3f ...\n",score12.ngam,score12.gam);
       double sc = measureScore(score12, ans, ProblemSpace.growth);
       for(int k=0;k<ProblemSpace.growth.size();k++){
