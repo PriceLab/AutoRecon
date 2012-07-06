@@ -472,7 +472,7 @@ void GoodReversible(PROBLEM &ProblemSpace){
 	from appearing!] */
 	REACTION temp;
 	temp = ProblemSpace.synrxnsR.rxns[i];
-	temp.id += _db.REVFACTOR;
+	temp.id = temp.id + _db.REVFACTOR;
 	temp.init_likelihood = -3; /* BLACK MAGIC */
 	strcat(temp.name,"_REV");
 	ProblemSpace.synrxnsR.addReaction(temp);

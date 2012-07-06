@@ -373,7 +373,7 @@ void addR(PATHSUMMARY &psum, PROBLEM &ProblemSpace) {
       ProblemSpace.synrxns.addReaction(TEMP);
       for(int j=0;j<TEMP.syn.size();j++){
         REACTION TEMP2 = ProblemSpace.fullrxns[TEMP.syn[j]];
-        TEMP2.id += _db.REVFACTOR;
+        TEMP2.id = TEMP2.id + _db.REVFACTOR;
         TEMP2.net_reversible = TEMP2.net_reversible * (REV)-1;
         ProblemSpace.fullrxns.addReaction(TEMP2);
       }

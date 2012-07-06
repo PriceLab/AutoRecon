@@ -325,7 +325,7 @@ void MakeSynList(PROBLEM &ProblemSpace){
   
   for(int i=0;i<synspace.rxns.size();i++){
     if(synspace.rxns[i].syn.size()>1){ 
-      synspace.rxns[i].id += _db.SYNFACTOR;
+      synspace.rxns[i].id = synspace.rxns[i].id + _db.SYNFACTOR;
 
       /* Merge likelihood values.
 	 FIXME: Need to add likelihood priorities here. For now I assume there's never more than one - thing in a list of
@@ -570,7 +570,7 @@ RXNSPACE splitReactions(const RXNSPACE &rxnspace) {
     /* Ensure that the reaction only goes in one direction */
     if(tmp.init_reversible == -1) {
       REACTION newRxn = tmp;
-      newRxn.id += _db.REVFACTOR;
+      newRxn.id = newRxn.id + _db.REVFACTOR;
       newRxn.stoich = tmp.stoich;
       for(int j=0; j<newRxn.stoich.size(); j++) {
         newRxn.stoich[j].rxn_coeff *= -1;
@@ -583,7 +583,7 @@ RXNSPACE splitReactions(const RXNSPACE &rxnspace) {
     if(tmp.init_reversible == 0) {
       REACTION newRxn = tmp;
       newRxn.revPair = tmp.id;
-      newRxn.id += _db.REVFACTOR;
+      newRxn.id = newRxn.id + _db.REVFACTOR;
       newRxn.stoich = tmp.stoich;
       for(int j=0; j<newRxn.stoich.size(); j++) {
         newRxn.stoich[j].rxn_coeff *= -1;

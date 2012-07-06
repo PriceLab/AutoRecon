@@ -9,17 +9,41 @@
 #include <string>
 #include <vector>
 #include "MyConstants.h"
-#include <boost/serialization/strong_typedef.hpp>
+//#include <boost/serialization/strong_typedef.hpp>
 
 using std::vector;
 using std::map;
 using std::string;
 
 /*Basic typedefs*/
-BOOST_STRONG_TYPEDEF(int,METID);
-BOOST_STRONG_TYPEDEF(int,METIDX);
-BOOST_STRONG_TYPEDEF(int,RXNID);
+//BOOST_STRONG_TYPEDEF(int,METID);
+//BOOST_STRONG_TYPEDEF(int,METIDX);
+//BOOST_STRONG_TYPEDEF(int,RXNID);
 
+class METID {
+ public:
+  METID(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  METID(){};
+};
+class METIDX {
+ public:
+  METIDX(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  METIDX(){};
+};
+class RXNID {
+ public:
+  RXNID(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  RXNID(){};
+};
 class REV {
  public:
   REV(int i) { this->i = i; }
@@ -28,7 +52,6 @@ class REV {
   operator int() const { return i; }
   REV(){};
 };
-
 class RXNDIRID {
  public:
   RXNDIRID(int i) { this->i = i; }
@@ -37,11 +60,28 @@ class RXNDIRID {
   operator int() const { return i; }
   RXNDIRID(){};
 };
+class RXNIDX {
+ public:
+  RXNIDX(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  RXNIDX(){};
+};
+class GROWTHIDX {
+ public:
+  GROWTHIDX(int i) { this->i = i; }
+  int i;
+  operator int() { return i; }
+  operator int() const { return i; }
+  GROWTHIDX(){};
+};
 
 //BOOST_STRONG_TYPEDEF(int,RXNDIRID);
-BOOST_STRONG_TYPEDEF(int,RXNIDX);
+//BOOST_STRONG_TYPEDEF(int,RXNIDX);
 //BOOST_STRONG_TYPEDEF(int,GROWID);
-BOOST_STRONG_TYPEDEF(int,GROWTHIDX);
+//BOOST_STRONG_TYPEDEF(int,GROWTHIDX);
+
 REV convertRXNDIRID2REV(RXNDIRID x);
 
 
