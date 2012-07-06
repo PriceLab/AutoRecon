@@ -41,7 +41,7 @@ class RXNDIRID {
 //BOOST_STRONG_TYPEDEF(int,RXNDIRID);
 BOOST_STRONG_TYPEDEF(int,RXNIDX);
 //BOOST_STRONG_TYPEDEF(int,GROWID);
-BOOST_STRONG_TYPEDEF(int,GROWIDX);
+BOOST_STRONG_TYPEDEF(int,GROWTHIDX);
 REV convertRXNDIRID2REV(RXNDIRID x);
 
 
@@ -418,8 +418,8 @@ class SCORE1{
   double gam;
   double ngam;
   vector<REACTION> ETC_adjusted;
-  map<int,double> growthRate;
-  map<int,double> growthScore;
+  map<GROWTHIDX,double> growthRate;
+  map<GROWTHIDX,double> growthScore;
 };
 
 class ANSWER {

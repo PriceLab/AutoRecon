@@ -109,7 +109,7 @@ double measureScore(SCORE1 &score1,vector<ANSWER> &ans, vector<GROWTH> &growth){
       // printf("FBA solving\n");
       vector<double> g = FBA_SOLVE(temp_ans.reactions, temp_ans.metabolites);
       //growth rate
-      score1.growthRate[j] = g[temp_ans.reactions.idxFromId((RXNID)_db.BIOMASS)];
+      score1.growthRate[(GROWTHIDX)j] = g[temp_ans.reactions.idxFromId((RXNID)_db.BIOMASS)];
       //printf("Growth Rate: %f\n",g[0]);
       //printf("saving\n");
       vector<double> temp_vec_double;
@@ -139,7 +139,7 @@ double measureScore(SCORE1 &score1,vector<ANSWER> &ans, vector<GROWTH> &growth){
       double weight = (sim_growth_rates[j][0] + exp_growth_rates[j][0]) * 0.5;
       double temp = evalProtocal1(sim_growth_rates[j],exp_growth_rates[j]) * weight;
       scores.push_back(temp);
-      score1.growthScore[j] = temp;
+      score1.growthScore[(GROWTHIDX)j] = temp;
     }
     //printf("loaded the sim vs exp data\n");
 

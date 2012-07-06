@@ -157,7 +157,7 @@ int main(int argc, char *argv[]) {
       //printf("measureScore for NGAM = %1.3f, GAM = %1.3f ...\n",score12.ngam,score12.gam);
       double sc = measureScore(score12, ans, ProblemSpace.growth);
       for(int k=0;k<ProblemSpace.growth.size();k++){
-	printf("%f\t%f\t%d\t%f\t%f\t%f\n", score12.ngam, score12.gam, k, ProblemSpace.growth[k].growth_rate, score12.growthRate[k], score12.growthScore[k]);
+	printf("%f\t%f\t%d\t%f\t%f\t%f\n", score12.ngam, score12.gam, k, ProblemSpace.growth[k].growth_rate, score12.growthRate[(GROWTHIDX)k], score12.growthScore[(GROWTHIDX)k]);
       }
     }
   }
