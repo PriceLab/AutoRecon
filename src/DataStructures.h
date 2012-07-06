@@ -396,9 +396,10 @@ class PATHSUMMARY{
   long int id;
   METID outputId; /* Output (target component) for the given path - needed to run FBA / magic 
 		   exits */
-  vector<int> growthIdx; /* Which growth does it correspond to? - MB - did we decide on an Id or Idx for 
+  vector<GROWTHIDX> growthIdx; /* Which growth does it correspond to? - MATTB - did we decide on an Id or Idx for 
 		    this? I guess since we'll number the growth ourselves and probably just 
-		    enumerate it will be the same thing */
+		    enumerate it will be the same thing. MATTB - why is this a vector? In case path corresponds
+		    to more than one growth? When does this happen in code? */
   int k_number; /* I assume this is whether this is the 1st, 2nd or kth path in a list */
   vector<RXNDIRID> rxnDirIds;
   vector<RXNID> rxnPriority; /*not even sure what this does   just making it work*/

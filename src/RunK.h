@@ -51,9 +51,9 @@ METID inOutPair(METID metId, const METSPACE &metspace);
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name);
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name, int R);
 void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, int outputId, int K, 
-	   vector<PATHSUMMARY> &result, int direction, int growthIdx);
+	   vector<PATHSUMMARY> &result, int direction, GROWTHIDX growthIdx);
 void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, int outputId, int K, int startingK,
-	   vector<PATHSUMMARY> &result, int direction, int growthIdx);
+	   vector<PATHSUMMARY> &result, int direction, GROWTHIDX growthIdx);
 void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> > > &psum);
 void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> > > &psum);
 
@@ -63,7 +63,7 @@ void ReverseReversible(vector<REACTION> &reaction);
 void AddNeededReversibles(vector<REACTION> &reaction, const PATH &path, map<int,int> rxnIds2Idx);
 
 void Load_Forwards_Reactions(vector<REACTION> &reaction, const vector<int> &known_rxn_ids);
-vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIdx);
+vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, GROWTHIDX growthIdx);
 vector<METID> Load_Inputs_From_Growth(const GROWTH &growth);
 
 REACTION MakeObjRxn(const vector<STOICH> &stoich);

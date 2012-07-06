@@ -155,7 +155,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
 }
 
 /* Function for finding shortest paths to an output */
-void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METID outputId, int K, vector<PATHSUMMARY> &result, int direction, int growthIdx){
+void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METID outputId, int K, vector<PATHSUMMARY> &result, int direction, GROWTHIDX growthIdx){
 
   vector<METID> inputIds;
   vector<PATH> kpaths;
@@ -215,7 +215,7 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METI
    Again, bad practice to copy a function over like this, but it gives
    me a completely separate space to work in. */
 void Run_K2(PROBLEM &ProblemSpace, vector<MEDIA> &media, METID outputId, int K, int startingK,
-	    vector<PATHSUMMARY> &result, int direction, int growthIdx){
+	    vector<PATHSUMMARY> &result, int direction, GROWTHIDX growthIdx){
   //printf("enter\n");fflush(stdout);
   vector<METID> inputIds;
   vector<PATH> kpaths;
@@ -433,7 +433,7 @@ METID inOutPair(METID met_id, const METSPACE &metspace){
   return (METID) -1;
 }
 
-vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, int growthIndex) {
+vector<METID> Load_Outputs_From_Growth(const PROBLEM &parentSpace, GROWTHIDX growthIndex) {
   /* Load outputs from a GROWTH
      START = -1 means pull out everything 
      Put this into a function and call it to avoid possible consistency problems between Dijkstra runs */
