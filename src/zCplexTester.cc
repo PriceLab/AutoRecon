@@ -23,9 +23,24 @@
 using std::vector;
 using std::map;
 using std::string;
+using std::cout;
+using std::endl;
 
 int main(int argc, char *argv[]) {
   printf("\n\n");
+
+  map<RXNID, double> tmap;
+
+  tmap[RXNID(53)] = 3.245;
+  tmap[RXNID(21)] = 9.232;
+  tmap[RXNID(22)] = 72.3;
+  tmap[RXNID(21)] = 1.0;
+
+  map<RXNID, double>::iterator testit = tmap.begin();
+  for(;testit != tmap.end(); ++testit)
+  {
+    cout<<testit->first<<"\t"<<testit->second<<endl;
+  }
 
   /* Main problem structure containing all the metabolites and reactions
      (in fullrxns), their synonym versions (synrxns), and a reversed synonym version
@@ -112,7 +127,7 @@ int main(int argc, char *argv[]) {
 
   SOLVER sol(env, ProblemSpace); 
 
-  sol.setObjective(RXNID(2142));  
+//  sol.setObjective(RXNID(2142));  
   sol.writeProblem("incomplete.lp");
 
   sol.solve();

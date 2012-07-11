@@ -9,11 +9,15 @@ TOPDIR := $(shell pwd)
 OBJDIR := $(TOPDIR)/obj
 $(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
 
+ALL_LIBS = -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
+      -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/concert/lib/x86-64_sles10_4.1/static_pic/ \
+	-L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
+	-L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/concert/lib/x86-64_sles10_4.1/static_pic/
+
 # Compiler, object, library, and header definitions...
 CC = g++
 LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl` \
-      -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
-      -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/concert/lib/x86-64_sles10_4.1/static_pic/ \
+	$(ALL_LIBS) \
       -lilocplex -lconcert -lcplex -lm -lpthread
 
 #-L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/opl/lib/x86-64_sles10_4.1/static_pic/ -lilocplex -lconcert -lopl -lm -lpthread
