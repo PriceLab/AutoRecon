@@ -453,13 +453,14 @@ bool SOLVER::initialize(STOICHMATRIX &stoich, vector<double> &objfn,
 }
 
 
-bool SOLVER::initialize(RXNSPACE &rSpace, RXNID rid, char * objm)
+bool SOLVER::initialize(RXNID rid, char * objm)
 {
   // check that the input sizes are consistent
   if(!rSpace.idIn(rid))
   {
-    cout<<"Reaction ID not in RXNSPACE"<<endl;
+    cout<<"Error: SOLVER init - Reaction ID not in RXNSPACE"<<endl;
     cout<<"ID: "<<int(rid)<<endl;
+    assert(false);
     return 0;
   }
 
@@ -478,7 +479,7 @@ bool SOLVER::initialize(RXNSPACE &rSpace, RXNID rid, char * objm)
     obj = IloMinimize(env);
   }
   else{
-    cout<<"did not specify maximize or minimize"<<endl;
+    cout<<"Error: SOLVER init - did not specify maximize or minimize"<<endl;
     return 0;
   }
   
@@ -563,7 +564,22 @@ bool SOLVER::setCoef(METID mid, RXNID rid, double coef)
     cout<<"METID: "<<int(mid)<<" not in SOLVER"<<endl;
     return 0;
   }
-
+  
+  vector<STOICH>::iterator it = rSpace.rxnPtrFromId(rid)->stoich.begin();
+  vector<STOICH>::iterator endit = rSpace.rxnPtrFromId(rid)->stoich.end();
+  bool success = false;
+  for(; it!=endit; ++it)
+  {
+    if(it->met_id == mid)
+    {
+      it->rxn_coeff = coef;
+      success = true;
+    }
+  }
+  if(!success)
+  {
+    rSpace.rxnPtrFromId(rid)->stoich.push_back(STOICH(mid, coef));
+  }
   mets[ metIdx[mid] ].setLinearCoef(rxns[ rxnIdx[rid] ], coef);
 
   return 1;
@@ -739,6 +755,13 @@ void SOLVER::getObjFn(map<RXNID, double> & rxnVals)
   }
 }
 
+// getRxn - SOLVER
+// Returns the reaction in SOLVER associated with the RXNID
+REACTION SOLVER::getRxn(RXNID id)
+{
+  return rSpace.rxnFromId(id);
+}
+
 // getRxnIDs - SOLVER
 // Input vector will be filled with the RXNIDs corresponding to solution values
 void SOLVER::getRxnIDs(vector<RXNID> & rxnIDs)
@@ -788,6 +811,9 @@ bool SOLVER::setBounds(RXNID id, double lb, double ub)
     cout<<"changeBounds error: Reaction "<<id<<" not in SOLVER"<<endl;
     return 0;
   }
+  REACTION * rptr = rSpace.rxnPtrFromId(id);
+  rptr->lb = lb;
+  rptr->ub = ub;
   rxns[rxnIdx[id] ].setBounds(lb, ub);
   return 1;  
 }
@@ -801,6 +827,7 @@ bool SOLVER::setLB(RXNID id, double lb)
     cout<<"changeLB error: Reaction "<<id<<" not in SOLVER"<<endl;
     return 0;
   }
+  rSpace.rxnPtrFromId(id)->lb = lb;
   rxns[rxnIdx[id] ].setLB(lb);
   return 1;  
 }
@@ -816,6 +843,7 @@ bool SOLVER::setLB(map<RXNID, double> &bounds)
   {
     if(rxnIdx.count(it->first))
     {
+      rSpace.rxnPtrFromId(it->first)->lb = it->second;
       rxns[ rxnIdx[it->first] ].setLB(it->second);
     }
     else
@@ -836,6 +864,7 @@ bool SOLVER::setUB(RXNID id, double ub)
     cout<<"changeUB error: Reaction "<<id<<" not in SOLVER"<<endl;
     return 0;
   }
+  rSpace.rxnPtrFromId(id)->ub = ub;
   rxns[rxnIdx[id] ].setUB(ub);
   return 1;  
 }
@@ -851,6 +880,7 @@ bool SOLVER::setUB(map<RXNID, double> &bounds)
   {
     if(rxnIdx.count(it->first))
     {
+      rSpace.rxnPtrFromId(it->first)->ub = it->second;
       rxns[ rxnIdx[it->first] ].setUB(it->second);
     }
     else
@@ -1058,6 +1088,8 @@ bool SOLVER::addRxn(REACTION &r)
     cout<<"Reaction already in SOLVER"<<endl;
     return 0;
   }
+  // stores reaction in rSpace
+  rSpace.addReaction(r);
   // sets up reaction
   char temp[24];
   IloEnv env = model.getEnv();
@@ -1083,13 +1115,21 @@ bool SOLVER::addRxn(REACTION &r)
   return 1; // SUCCESS
 }
 
-bool SOLVER::addEmptyRxn(RXNID id, double lb, double ub)
+// addEmtpyReaction - SOLVER
+// adds a stoichiometric-empty reaction to the SOLVER
+// The reaction loaded only has ID, LB, UB, and name. Name defaults to ID.
+bool SOLVER::addEmptyRxn(RXNID id, double lb, double ub, char name[])
 {
   // checks if reaction is new
   if(rxnIdx.count(id) ){
     cout<<"Reaction already in SOLVER"<<endl;
     return 0;
   }
+  // creates REACTION for rSpace
+  REACTION tempr;
+  tempr.id = id;
+  tempr.lb = lb;
+  tempr.ub = ub;
   // sets up reaction
   char temp[24];
   IloEnv env = model.getEnv();
@@ -1097,6 +1137,14 @@ bool SOLVER::addEmptyRxn(RXNID id, double lb, double ub)
   rxns.add(IloNumVar(env, lb, ub, temp));
   rxnIDs.push_back(id);
   rxnIdx[id] = rxnsize++; // increments rxnsize
+  // finishes creating REACTION for rSpace and loads it
+  if(!strcmp(name, ""))
+    strcpy(tempr.name, temp);
+  else
+    strcpy(tempr.name, name);
+  rSpace.addReaction(tempr);
+    
+
   return 1; // SUCCESS
 }
 
@@ -1160,6 +1208,7 @@ bool SOLVER::addMet(METID id, vector<RXNID> &reacts, vector<double> &vals,
   // fill with reactions and correlating coefficients
   for(int i=0; i<reacts.size(); i++)
   {
+    rSpace.rxnPtrFromId[reacts[i]]->stoich.push_back(STOICH(id, vals[i]));
     mets[metsize].setLinearCoef(rxns[rxnIdx[reacts[i] ] ], vals[i]);
   }
   

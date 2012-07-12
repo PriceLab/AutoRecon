@@ -106,7 +106,7 @@ class GAPFILLRESULT;
 class ANSWER;
 class SIMULATIONRESULT;
 class KORESULT;
-class SCORE;
+class SCORE1;
 class STOICHMATRIX;
 
 class RXNSPACE{

@@ -76,6 +76,8 @@ private:
   int metsize;
   int rxnsize;
 
+  RXNSPACE rSpace;
+
   vector<RXNID> rxnIDs;
   vector<METID> metIDs;
   map<RXNID, int> rxnIdx;
@@ -107,20 +109,30 @@ public:
         { settings();
           if(!initialize(stoich, objfn, objm, lb, ub))
             cout<<"SOLVER initialization failed."<<endl; } 
+  // Main constructor - Takes ANSWER, default objective reaction
+  SOLVER(IloEnv &env, ANSWER &a, char * objm="Maximize") : model(env),
+         rxns(env), mets(env), cplex(model), rSpace(a.reactions)
+	 { settings() ; if(!initialize( RXNID(_db.BIOMASS), objm))
+           cout<<"SOLVER initialization failed."<<endl; }
+  // Main constructor, specific objective reaction - Takes ANSWER
+  SOLVER(IloEnv &env, ANSWER &a, RXNID r, char * objm="Maximize") : 
+         model(env), rxns(env), mets(env), cplex(model), rSpace(a.reactions)
+	 { settings() ; if(!initialize(r, objm))
+           cout<<"SOLVER initialization failed."<<endl; }
   // Main constructor - Takes PROBLEM, default objective reaction
   SOLVER(IloEnv &env, PROBLEM &p, char * objm="Maximize") : model(env),
-         rxns(env), mets(env), cplex(model) { settings() ;
-         if(!initialize(p.fullrxns, RXNID(_db.BIOMASS), objm))
+         rxns(env), mets(env), cplex(model), rSpace(p.fullrxns)
+	 { settings() ; if(!initialize(RXNID(_db.BIOMASS), objm))
            cout<<"SOLVER initialization failed."<<endl; }
   // Main constructor, specific objective reaction - Takes PROBLEM
   SOLVER(IloEnv &env, PROBLEM &p, RXNID r, char * objm="Maximize") : 
-         model(env), rxns(env), mets(env), cplex(model) { settings() ;
-         if(!initialize(p.fullrxns, r, objm))
+         model(env), rxns(env), mets(env), cplex(model), rSpace(p.fullrxns)
+	 { settings() ; if(!initialize(r, objm))
            cout<<"SOLVER initialization failed."<<endl; }
   // Main constructor, takes RXNSPACE, specific objective reaction
   SOLVER(IloEnv &env, RXNSPACE &rspace, RXNID r, char * objm="Maximize") : 
-         model(env), rxns(env), mets(env), cplex(model) { settings() ;
-         if(!initialize(rspace, r, objm))
+         model(env), rxns(env), mets(env), cplex(model), rSpace(rspace)
+	 { settings() ; if(!initialize(r, objm))
            cout<<"SOLVER initialization failed."<<endl; }
 
   bool initialize(STOICHMATRIX &stoich, vector<double> &objfn, char * objm,
@@ -129,7 +141,7 @@ public:
   bool initialize(STOICHMATRIX &stoich, vector<double> &objfn, char * objm,
                    vector<double> &lb, vector<double> &ub);
   // Main initialization function
-  bool initialize(RXNSPACE & rSpace, RXNID rid, char * objm);
+  bool initialize(RXNID rid, char * objm);
 
   // SOLVER solve function - returns 0 if fail, i think, 1 if success
   // RUN BEFORE ACCESSING SOLUTION - duh.
@@ -180,6 +192,8 @@ public:
   double getObjCoef(RXNID id);
   // Stores the objective coefficients as a map of RXNID and doubles
   void getObjFn(map<RXNID, double> & objfn);
+  // Returns reaction
+  REACTION getRxn(RXNID id);
 
   // USE NEXT THREE FUNCTIONS ONLY AFTER SOLVING!
   // Returns the objective value
@@ -231,7 +245,9 @@ public:
   bool setObjective(map<RXNID, double> &objset);
   // Add Reaction
   bool addRxn(REACTION &r); //needs test
-  bool addEmptyRxn(RXNID id, double lb, double ub); //needs bounds test
+  // adds stoich-empty reaction. RXN only has id, LB, UB, and name(def to ID).
+  bool addEmptyRxn(RXNID id, double lb, double ub, char name[] = ""); 
+                                                   //needs bounds test
   // Add Metabolite
   bool addEmptyMet(METID id, double lb=0, double ub=0); //needs bounds test
   // Adds metabolite to the SOLVER with corresponding reactions and values
