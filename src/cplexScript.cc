@@ -1208,7 +1208,7 @@ bool SOLVER::addMet(METID id, vector<RXNID> &reacts, vector<double> &vals,
   // fill with reactions and correlating coefficients
   for(int i=0; i<reacts.size(); i++)
   {
-    rSpace.rxnPtrFromId[reacts[i]]->stoich.push_back(STOICH(id, vals[i]));
+    rSpace.rxnPtrFromId(reacts[i])->stoich.push_back(STOICH(id, vals[i]));
     mets[metsize].setLinearCoef(rxns[rxnIdx[reacts[i] ] ], vals[i]);
   }
   
