@@ -1,25 +1,31 @@
+//C Stuff
 #include <cassert>
 #include <cstring>
 #include <cstdlib>
 #include <cstdio>
 #include <libxml/parser.h>
 #include <libxml/xmlmemory.h>
-
+//My Stuff
 #include "DataStructures.h"
 #include "MyConstants.h"
 #include "pathUtils.h"
 #include "Printers.h"
 #include "XML_loader.h"
-
+//C++ Stuff
+#include <iostream>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <algorithm>
 #include <map>
 #include <string>
+#include <sstream>
+#include <jsoncpp/json/json.h>
 
 using std::vector;
 using std::map;
 using std::string;
+using namespace std;
 
 void parseMETABOLITE(xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace);
 void parseSTOICH(xmlDocPtr doc, xmlNodePtr cur, vector<STOICH> &stoich);
@@ -67,6 +73,54 @@ void parseALL(char* file1, char* file2, PROBLEM &ProblemSpace){
   return;
 }
 
+void jsonALL (char *met_rxn_filename, char *input_filename, PROBLEM &problem){
+  Json::Value root;   // will contains the root value after parsing.
+  Json::Reader reader;
+
+}
+
+void jsonINPUTFILE (char *input_filename, PROBLEM &problem){
+  ifstream myfile;
+  myfile.open(input_filename);
+
+  myfile.close();
+  return;
+}
+
+void jsonMETRXNFILE (char *met_rxn_filename, PROBLEM &problem){
+  ifstream myfile;
+  myfile.open(met_rxn_filename);
+  Json::Value root;
+  Json::Reader reader;
+  bool parsingSuccessful = reader.parse( myfile, root );
+  if ( !parsingSuccessful ) {
+    // report to the user the failure and their locations in the document.
+    std::cout  << "Failed to parse configuration\n"
+	       << reader.getFormattedErrorMessages();
+    return;
+  }
+  const Json::Value metabolites = root["metabolites"];
+  for (int i=0; i < metabolites.size(); ++i){
+    problem.metabolites.addMetabolite(jsonMETABOLITE(metabolites[i]));
+  }
+
+  myfile.close();
+  return;
+}
+
+METABOLITE jsonMETABOLITE (const Json::Value root) {
+  METABOLITE tempMET;
+  tempMET.id = root["met_id"].asInt();
+  tempMET.name = root["name"].asString();
+  tempMET.secondary_lone = root["secondary_lone"].asInt();
+  const Json::Value secondary_pair = root["secondary_pair"];
+  for (int i=0; i < secondary_pair.size(); ++i){
+    tempMET.secondary_pair.push_back((METID)secondary_pair[i].asInt());}
+  tempMET.noncentral = root["noncentral"].asInt();
+
+  return tempMET;
+}
+
 void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
   xmlChar *key;
   METABOLITE tempm;
@@ -84,7 +138,7 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
       if(key != NULL) {
 	/* Avoid buffer overflows... */
 	assert(strlen((char*)key) <= AR_MAXNAMELENGTH);
-	strcpy(tempm.name,(char*)key); 
+	tempm.name = (char*)key; 
       }
       else { namenull = true; }
       xmlFree(key);
@@ -110,12 +164,15 @@ void parseMETABOLITE (xmlDocPtr doc, xmlNodePtr cur, METSPACE &metspace) {
   /* Handle NULL names */
   if(namenull) { 
     printf("WARNING: Metabolite %d had no name associated. Will assign name based on ID\n", (int)tempm.id);
-    sprintf(tempm.name, "%d", (int)tempm.id);
+    stringstream out;
+    out << tempm.id;
+    tempm.name = out.str();
   }
 
   metspace.addMetabolite(tempm);
   return;
 }
+
 
 void parseSTOICH (xmlDocPtr doc, xmlNodePtr cur, vector<STOICH> &stoich){
   xmlChar *key;
@@ -185,7 +242,7 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
       if(key == NULL) { namenull = true; }
       else {
 	assert(strlen((char*)key) <= AR_MAXNAMELENGTH);
-	strcpy(tempr.name,(char*)key); }
+	tempr.name = (char*)key; }
       xmlFree(key);
     }
     if ((!xmlStrcmp(cur->name, (const xmlChar *)"s"))) {
@@ -225,7 +282,9 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
 
   if(namenull) {
     printf("WARNING: Reaction %d has no name assigned. Will use %d as the name...\n", (int)tempr.id, (int)tempr.id);
-    sprintf(tempr.name, "%d", (int)tempr.id);
+    stringstream out;
+    out << (int)tempr.id;
+    tempr.name = out.str();
   }
 
   /* MATT CHANGE (6-27-11)
@@ -233,7 +292,6 @@ void parseREACTION (xmlDocPtr doc, xmlNodePtr cur, RXNSPACE &rxnspace) {
   if(!tempr.stoich.empty()) {
     rxnspace.addReaction(tempr);
   }
-
 
   return;
 }
@@ -291,14 +349,14 @@ void parseMETAB (xmlDocPtr doc, xmlNodePtr cur, vector<MEDIA> &media) {
     }
     if ( (!xmlStrcmp(cur->name, (const xmlChar *)"name"))) {
       key = xmlNodeListGetString(doc, cur->xmlChildrenNode, 1);
-      strcpy(tempme.name, (char*)key);
+      tempme.name = (char*)key;
       xmlFree(key);
     }
     cur = cur->next;
   }
 
   /* Note - this could print garbage if it also had no name */
-  if(tempme.id == -1) {  printf("WARNING: Metabolite %s had no met ID in the MEDIA file and therefore was skipped\n", tempme.name); }
+  if(tempme.id == -1) {  cout << "WARNING: Metabolite " <<  tempme.name <<" had no met ID in the MEDIA file and therefore was skipped" << endl; }
   else {  media.push_back(tempme);  }
 
   return;
@@ -521,7 +579,7 @@ void Load_Stoic_Part(vector<REACTION> &reaction,
       /* Otherwise just copy it */
       tempPart.met_id = reaction[i].stoich[j].met_id;
       tempPart.rxn_coeff = reaction[i].stoich[j].rxn_coeff;
-      sprintf(tempPart.met_name, "%s", reaction[i].stoich[j].met_name);
+      tempPart.met_name = reaction[i].stoich[j].met_name;
       reaction[i].stoich_part.push_back(tempPart);
     }
   }
@@ -568,11 +626,11 @@ void addMetNameToStoichs(vector<REACTION> &reaction, METSPACE &metspace) {
     REACTION tmpRxn = reaction[i];
     /* Update stoich */
     for(int j=0;j<tmpRxn.stoich.size();j++) {
-      sprintf(reaction[i].stoich[j].met_name, "%s",  metspace[tmpRxn.stoich[j].met_id].name);
+      reaction[i].stoich[j].met_name = metspace[tmpRxn.stoich[j].met_id].name;
     }
     /* Update stoich_part */
     for(int j=0;j<tmpRxn.stoich_part.size();j++) {
-      sprintf(reaction[i].stoich_part[j].met_name, "%s", metspace[tmpRxn.stoich_part[j].met_id].name);
+      reaction[i].stoich_part[j].met_name = metspace[tmpRxn.stoich_part[j].met_id].name;
     }
   }
   return;
@@ -583,7 +641,7 @@ void addMetNameToStoichs(vector<GROWTH> &growth, METSPACE &metspace) {
 
   for(int j=0;j<growth.size();j++){
     for(int i=0;i<growth[j].biomass.size();i++) {
-      sprintf(growth[j].biomass[i].met_name,"%s", metspace[growth[j].biomass[i].met_id].name);
+      growth[j].biomass[i].met_name = metspace[growth[j].biomass[i].met_id].name;
     }
   }
   return;
@@ -649,8 +707,8 @@ void makeMagicBridges(PROBLEM &ProblemSpace) {
 
       /* Add a reaction from A to B (irreversible)  */
       tmp_rxn.id = ctr + flag;
-      sprintf(tmp_rxn.name, "MAGICBRIDGE_%s_%s",  metabolite[i].name, 
-	      metabolite[metId2Idx[metabolite[i].secondary_pair[j]]].name);
+      //sprintf(tmp_rxn.name, "MAGICBRIDGE_%s_%s",  metabolite[i].name, 
+      //      metabolite[metId2Idx[metabolite[i].secondary_pair[j]]].name);
       tmp_rxn.init_reversible = 0; /* Reversible */
       tmp_rxn.net_reversible = tmp_rxn.init_reversible; 
       tmp_rxn.init_likelihood = 1.0f; /* Likely (net_likelihood will be gotten later) */
@@ -659,13 +717,13 @@ void makeMagicBridges(PROBLEM &ProblemSpace) {
       /* A */
       tmp_stoich.met_id = metabolite[i].id;
       tmp_stoich.rxn_coeff = -1;
-      sprintf(tmp_stoich.met_name, "%s", metabolite[i].name);
+      //sprintf(tmp_stoich.met_name, "%s", metabolite[i].name);
       tmp_stoich_vec.push_back(tmp_stoich);
       /* B */
       tmp_stoich.reset();
       tmp_stoich.rxn_coeff = 1;
       tmp_stoich.met_id = metabolite[i].secondary_pair[j];
-      sprintf(tmp_stoich.met_name, "%s", ProblemSpace.metabolites[metabolite[i].secondary_pair[j]].name);
+      //sprintf(tmp_stoich.met_name, "%s", ProblemSpace.metabolites[metabolite[i].secondary_pair[j]].name);
       tmp_stoich_vec.push_back(tmp_stoich);
       
       tmp_rxn.stoich = tmp_stoich_vec;
@@ -734,7 +792,8 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
       numH = ATPM.stoich[i].rxn_coeff;
     }
     /* Not a recgnized reaction */
-    if(!OK) { printf("ERROR: ATP maintenance reaction %s specified by DEBUGFLAGS is not the expected ATP consumption reaction!\n", db.ATPM_name); assert(false); }
+    if(!OK) { //printf("ERROR: ATP maintenance reaction %s specified by DEBUGFLAGS is not the expected ATP consumption reaction!\n", db.ATPM_name); assert(false); 
+    }
   }
 
   /* Add NGAM to the biomass equation (take the number of H's from the provided ATPM reaction) 
@@ -755,9 +814,9 @@ void setUpMaintenanceReactions(PROBLEM &ProblemSpace) {
     if(!requiredPresent[j]) { 
       STOICH tmpStoich;
       //METABOLITE tmpMet = ProblemSpace.metabolites[mustIds[j]];
-      printf("WARNING: Biomass seems to be missing a metabolite %s that is required for NGAM calculations - adding to the biomass equation\n", 
-	     ProblemSpace.metabolites[mustIds[j]].name);
-      sprintf(tmpStoich.met_name, "%s", ProblemSpace.metabolites[mustIds[j]].name);
+      //printf("WARNING: Biomass seems to be missing a metabolite %s that is required for NGAM calculations - adding to the biomass equation\n", 
+      //     ProblemSpace.metabolites[mustIds[j]].name);
+      //sprintf(tmpStoich.met_name, "%s", ProblemSpace.metabolites[mustIds[j]].name);
       tmpStoich.met_id = ProblemSpace.metabolites[mustIds[j]].id;
       tmpStoich.rxn_coeff = 0.0f;
     }
@@ -784,15 +843,16 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
     /* Check biomass */
     for(int j=0; j<growth[i].biomass.size(); j++) {
       METID growthId = growth[i].biomass[j].met_id;
+
       if(!metspace.isIn(growthId)) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the biomass had no corresponding ID in the metabolite file \n", growth[i].biomass[j].met_name);
+	cout << "Inconsistent name: " << growth[i].biomass[j].met_name << " in the biomass had no corresponding ID in the metabolite file" << endl;
 	assert(false);
       }
-      if( strcmp( metspace[growthId].name , growth[i].biomass[j].met_name ) != 0 ) {
+      if( metspace[growthId].name.compare(growth[i].biomass[j].met_name) != 0 ) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the biomass did not correspond with %s in the metabolite file despite both having the same ID \n", 
-	       growth[i].biomass[j].met_name, metspace[growthId].name);
+	cout << "Inconsistent name: " << growth[i].biomass[j].met_name << " in the biomass did not correspond with "
+	     << metspace[growthId].name << " in the metabolite file despite both having the same ID" << endl;
 	assert(false);
       }
     }
@@ -802,13 +862,14 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
       METID growthId = growth[i].byproduct[j].id;
       if(!metspace.isIn(growthId)) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the byproducts had no corresponding ID in the metabolite file \n", growth[i].byproduct[j].name);
+	cout << "Inconsistent name: " << growth[i].byproduct[j].name 
+	     << " in the byproducts had no corresponding ID in the metabolite file" << endl;
 	assert(false);
       }
-      if( strcmp( metspace[growthId].name , growth[i].byproduct[j].name ) != 0 ) {
+      if( metspace[growthId].name.compare(growth[i].byproduct[j].name ) != 0 ) {
 	printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the byproducts did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].byproduct[j].name, 
-	       metspace[growthId].name);
+	cout << "Inconsistent name: " << growth[i].byproduct[j].name << " in the byproducts did not correspond with " 
+	     << metspace[growthId].name << " in the metabolite file despite both having the same ID" << endl;
 	assert(false);
       }
     }
@@ -818,13 +879,14 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
       METID growthId = growth[i].media[j].id;
       if(!metspace.isIn(growthId)) {
         printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-	printf("Inconsistent name: %s in the media had no corresponding ID in the metabolite file \n", growth[i].media[j].name);
+	cout << "Inconsistent name: " << growth[i].media[j].name 
+	     << " in the media had no corresponding ID in the metabolite file" << endl;;
         assert(false);
       }
-      if( strcmp( metspace[growthId].name , growth[i].media[j].name ) != 0 ) {
+      if( metspace[growthId].name.compare(growth[i].media[j].name) != 0 ) {
         printf("ERROR: The provided InputData and Database XML files have inconsistent IDs, this program will now terminate\n");
-        printf("Inconsistent name: %s in the media did not correspond with %s in the metabolite file despite both having the same ID \n", growth[i].media[j].name, 
-	       metspace[growthId].name);
+        cout << "Inconsistent name: " << growth[i].media[j].name << " in the media did not correspond with "
+	     << metspace[growthId].name << " in the metabolite file despite both having the same ID" << endl;;
         assert(false);
       }
     }
@@ -832,21 +894,45 @@ void checkConsistency(const PROBLEM &ProblemSpace) {
 
   /* Test special metabolite and reaction names to make sure they exist */
   int h_id = Name2Ids(metspace.mets, db.H_name);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for H+ in your database, but it not found in the database\n", db.H_name); assert(false); }
+  if(h_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.H_name 
+	 << " is the name for H+ in your database, but it not found in the database" << endl; 
+    assert(false); }
   int h_e_id = Name2Ids(metspace.mets, db.H_plus_E);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for H+[e] in your database, but it not found in the database\n", db.H_plus_E); assert(false); }
+  if(h_e_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.H_plus_E 
+	 << " is the name for H+[e] in your database, but it not found in the database" << endl; 
+    assert(false); }
   int na_id = Name2Ids(metspace.mets, db.Na_name);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for sodium (Na) in your database, but it not found in the database\n", db.Na_name); assert(false); }
+  if(na_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.Na_name 
+	 << " is the name for sodium (Na) in your database, but it not found in the database" << endl; 
+    assert(false); }
   int na_e_id = Name2Ids(metspace.mets, db.Na_plus_E);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for external sodium (Na) in your database, but it not found in the database\n", db.Na_plus_E); assert(false); }
+  if(na_e_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.Na_plus_E 
+	 << " is the name for external sodium (Na) in your database, but it not found in the database" << endl; 
+    assert(false); }  
   int atp_id = Name2Ids(metspace.mets, db.ATP_name);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for ATP in your database, but it not found in the database\n", db.ATP_name); assert(false); }
+  if(atp_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.ATP_name 
+	 << " is the name for ATP in your database, but it not found in the database" << endl; 
+    assert(false); }
   int adp_id = Name2Ids(metspace.mets, db.ADP_name);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for ADP in your database, but it not found in the database\n", db.ADP_name); assert(false); }
+  if(adp_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.ADP_name 
+	 << " is the name for ADP in your database, but it not found in the database" << endl; 
+    assert(false); }
   int pi_id = Name2Ids(metspace.mets, db.PI_name);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for phosphate (pi) in your database, but it not found in the database\n", db.PI_name); assert(false); }
+  if(pi_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.PI_name 
+	 << " is the name for phosphate (pi) in your database, but it not found in the database" << endl; 
+    assert(false); }
   int h2o_id = Name2Ids(metspace.mets, db.H2O_name);
-  if(h_id == -1) { printf("ERROR: DEBUGFLAGS claims metabolite %s is the name for water (h2o) in your database, but it not found in the database\n", db.H2O_name); assert(false); }
+  if(h2o_id == -1) { 
+    cout << "ERROR: DEBUGFLAGS claims metabolite " << db.H2O_name 
+	 << " is the name for water (h2o) in your database, but it not found in the database" << endl; 
+    assert(false); }
 
   printf("Consistency check done - XML files have consistent names and IDs and both inputs are compatible with the DEBUGFLAGS information \n");
 

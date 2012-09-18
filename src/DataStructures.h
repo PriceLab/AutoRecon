@@ -229,7 +229,7 @@ std::ostream& operator<<(std::ostream &out, GROWTH & orig);
 
 struct MEDIA{
   METID id; /* Metabolite id */
-  char name[AR_MAXNAMELENGTH]; /* Metabolie name */
+  string name; /* Metabolie name */
   double rate; /* mmol/gDW/hr 
 		  (uptake rate for media, secretion rate for byproducts */
   bool operator==(const MEDIA &rhs) const;
@@ -252,7 +252,7 @@ class METABOLITE{
  public:
   /* Externally (XML/User) defined parameters */
   METID id; /* Has to be big matrix row index */
-  char name[AR_MAXNAMELENGTH];
+  string name;
 
   /* All of these are for visualization only */
   int input; /* Is it an input?: 0 for no, 1 for yes */
@@ -285,7 +285,7 @@ class STOICH{
   public:
   METID met_id;
   double rxn_coeff;
-  char met_name[AR_MAXNAMELENGTH];
+  string met_name;
   /* Will this be a char or a char []? */
   char compartment;
   
@@ -309,7 +309,7 @@ class REACTION{
   RXNID id; /* ID */
   bool transporter; /* TRUE if it is a transport reaction */
   METID transportedMetabolite; /* Metabolite ID for transported metabolite */
-  char name[AR_MAXNAMELENGTH];
+  string name;
   vector<STOICH> stoich; /* Full chemical reaction */
 
   /* stoich, but without the secondary metabolties (Load_Stoic_Part deals with this) */

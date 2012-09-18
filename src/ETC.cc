@@ -59,8 +59,7 @@ void identifyETCrxns(const PROBLEM &ProblemSpace, vector<RXNID> &ETCrxnIds){
   int k;
   int HE_ids,Na_ids,NaE_ids;
   int HE_coe,Na_coe,NaE_coe;
-  const char *MetNAME;
-  char tempS[4] = {0};
+  string tempS;
   int MetID;
 
   const vector<METABOLITE> &metabolite = ProblemSpace.metabolites.mets;
@@ -78,10 +77,10 @@ void identifyETCrxns(const PROBLEM &ProblemSpace, vector<RXNID> &ETCrxnIds){
       k = 0;
       for(int j=0;j<reaction[i].stoich.size();j++){
 	int MetID   = reaction[i].stoich[j].met_id;
-	const char* MetNAME = reaction[i].stoich[j].met_name;
-	if((int)strlen(MetNAME)>=3){
-	  strncpy(tempS,MetNAME+((int)strlen(MetNAME)-3),3);	
-	  if(strcmp(tempS,_db.E_tag)==0){ k++;}
+	const string MetNAME = reaction[i].stoich[j].met_name;
+	if((int)MetNAME.size()>=3){
+	  tempS.assign(MetNAME,(int)MetNAME.size()-3,3);	
+	  if(tempS.compare(_db.E_tag)==0){ k++;}
 	}
 	if(HE_ids==MetID){
 	  HE_coe = 1;

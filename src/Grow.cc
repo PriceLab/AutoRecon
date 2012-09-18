@@ -64,9 +64,9 @@ ANSWER gapfillWrapper(const PROBLEM &problemSpace, const vector<PATHSUMMARY> &pL
 
   printf("Final Essential exits: \n");
   for(int i=0; i<allEssentialExits.size(); i++) {
-    printf("%s\t", baseModel.fullrxns[allEssentialExits[i]].name);
+    cout << baseModel.fullrxns[allEssentialExits[i]].name << "\t";
   }
-  printf("\n");
+  cout << endl;
   
   /* Add the whichK to the model before running the next growth condition. Hopefully this minimizes the number of
      redundant answers... */
@@ -292,9 +292,9 @@ double innerScore(PROBLEM &model, const PROBLEM &problemSpace, vector<RXNID> &es
   printf("Number of essential exits for given model: %d\n", (int)essential.size());
   printf("Essential exits: \n");
   for(int i=0; i<essential.size(); i++) {
-    printf("%s\t", model.fullrxns.rxnFromId(essential[i]).name);
+    cout << model.fullrxns.rxnFromId(essential[i]).name << "\t";
   }
-  printf("\n");
+  cout << endl;
 
   double totalCost = 0.0f;
   for(int i=0; i<model.fullrxns.rxns.size(); i++) { totalCost += model.fullrxns.rxns[i].current_likelihood;  }
@@ -317,8 +317,8 @@ bool knockoutLethality(PROBLEM &modified, const string &genename) {
    whichK: The k-value for the gapfill results to add */
 void addGapfillResultToProblem(PROBLEM &model, const PROBLEM &problemSpace, const GAPFILLRESULT &gapfillResult, int whichK) {
   if( gapfillResult.deadEndSolutions.size() <= whichK ) {
-    printf("ERROR: Asked for path %d for output metabolite %s but no such path exists!\n", 
-	   whichK, problemSpace.metabolites[gapfillResult.deadMetId].name);
+    cout << "ERROR: Asked for path " << whichK << " for output metabolite " 
+	 << problemSpace.metabolites[gapfillResult.deadMetId].name << " but no such path exists!" << endl;
     assert(false);
   }
   for(int i=0; i<gapfillResult.deadEndSolutions[whichK].size(); i++) {
@@ -352,12 +352,13 @@ vector<RXNID> minimizeExits(PROBLEM &model) {
       exit.lb = 0; exit.ub = 0;
       vector<double> newResult = FBA_SOLVE(model.fullrxns, model.metabolites);
       if( newResult[model.fullrxns.idxFromId((RXNID)_db.BIOMASS)] < _db.GROWTH_CUTOFF ) {     
-	if(_db.DEBUGGAPFILL) { printf("Exit %s predicted essential\n", exit.name); }
+	if(_db.DEBUGGAPFILL) { cout << "Exit " << exit.name << " predicted essential" << endl; }
 	exit.lb = oldLb;
 	exit.ub = oldUb;
 	requiredExits.push_back(exit.id);
       } else {
-	if(_db.DEBUGGAPFILL) { printf("Exit %s predicted nonessential and will be turned off!\n", exit.name); }
+	if(_db.DEBUGGAPFILL) { 
+	  cout << "Exit " << exit.name << " predicted nonessential and will be turned off!" << endl; }
       }
     }
   }
@@ -453,9 +454,9 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
       set<METID>::iterator it = idList.find(model.fullrxns.rxns[i].stoich[0].met_id);
       if(it == idList.end()) {
 	model.fullrxns.change_Lb_and_Ub(model.fullrxns.rxns[i].id, 0.0f, 0.0f);
-	if(_db.DEBUGGAPFILL) { printf("Turned off reaction %s\n", model.fullrxns.rxns[i].name); }
+	if(_db.DEBUGGAPFILL) { cout << "Turned off reaction " << model.fullrxns.rxns[i].name << endl;; }
       } else {
-	if(_db.DEBUGGAPFILL) { printf("Kept on reaction %s\n", model.fullrxns.rxns[i].name); }
+	if(_db.DEBUGGAPFILL) { cout << "Kept on reaction " << model.fullrxns.rxns[i].name << endl; }
       }
     }
   }
@@ -484,8 +485,8 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
     for(int j=0; j<dijkstrasSln.size(); j++) {
       /* FIXME: Why does the fillGapWithDijkstras sometimes give us empty results at the end of vectors with non-empty results? */
       if(dijkstrasSln[j].empty()) { continue; }
-      if(_db.PRINTGAPFILLRESULTS) { printf("Dijkstras solution for exit of metabolite %s (magic exit): \n", 
-					  model.metabolites[*it].name);
+      if(_db.PRINTGAPFILLRESULTS) { cout << "Dijkstras solution for exit of metabolite " << model.metabolites[*it].name
+				    << " (magic exit): " << endl;
 	printRxnsFromIntVector(dijkstrasSln[j], problemSpace.fullrxns);
       }
       completeList.push_back(dijkstrasSln[j]);
@@ -497,7 +498,7 @@ vector<GAPFILLRESULT> gapFindGapFill(PROBLEM &model, const PROBLEM &problemSpace
       dijkstrasSln = fillGapWithDijkstras(model.fullrxns, model.metabolites, tmpProblem, *it, -1, gapfillK);
       for(int j=0; j<dijkstrasSln.size(); j++) {
 	if(_db.PRINTGAPFILLRESULTS) {
-	  printf("Dijkstras solution for exit of metabolite %s (magic entrance): \n", tmpMet.name);
+	  cout << "Dijkstras solution for exit of metabolite " << tmpMet.name << " (magic entrance): \n" << endl;
 	  printRxnsFromIntVector(dijkstrasSln[j], problemSpace.fullrxns); }
 	completeList.push_back(dijkstrasSln[j]); 
       }
@@ -661,8 +662,8 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
   for(int i=0; i<growth.media.size(); i++) {
     RXNID meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.media[i].id);
     if(meId == 0) { 
-      printf("ERROR: No exchange present for media condition %s after calling checkExchangesAndTransports \n", 
-	     model.metabolites[growth.media[i].id].name);
+      cout << "ERROR: No exchange present for media condition " << model.metabolites[growth.media[i].id].name
+	   << " after calling checkExchangesAndTransports" << endl; 
       assert(false);
     }
     model.fullrxns.rxnPtrFromId(meId) -> lb =  -growth.media[i].rate;
@@ -676,8 +677,8 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
   for(int i=0; i<growth.byproduct.size(); i++) {
     RXNID meId = FindExchange4Metabolite(model.fullrxns.rxns, growth.byproduct[i].id);
     if(meId == 0) { 
-      printf("ERROR: No exchange present for byproduct %s after calling checkExchangesAndTransports \n", 
-	     model.metabolites[growth.byproduct[i].id].name);
+      cout << "ERROR: No exchange present for byproduct " << model.metabolites[growth.byproduct[i].id].name
+	   << " after calling checkExchangesAndTransports" << endl; 
       assert(false);
     }
     model.fullrxns.rxnPtrFromId(meId) -> ub =  1000.0f;
@@ -686,7 +687,8 @@ void setSpecificGrowthConditions(PROBLEM &model, const GROWTH &growth) {
       model.fullrxns.rxns[i].net_reversible = 1;
     }
     else{
-      printf("WARNING: %s both a byproduct and a media component.\n",model.metabolites[growth.byproduct[i].id].name);
+      cout << "WARNING: " << model.metabolites[growth.byproduct[i].id].name 
+	   << " both a byproduct and a media component." << endl;
     }
   }
 }

@@ -19,10 +19,13 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <iostream>
+#include <sstream>
 
 using std::vector;
 using std::map;
 using std::string;
+using namespace std;
 
 int main(int argc, char *argv[]) {
   printf("\n\n");
@@ -67,7 +70,7 @@ int main(int argc, char *argv[]) {
     vector<METID> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
     for(int j=0; j<psum[i].size(); j++) { 
       if(psum[i][j].size() == 0) {
-	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", ProblemSpace.metabolites[outputIds[j]].name, i);
+	cout << "WARNING: No paths found to output" << ProblemSpace.metabolites[outputIds[j]].name << " under growth condition" << i << " so making it a secondary_lone " << endl;
 	ProblemSpace.metabolites.metPtrFromId(outputIds[j])->secondary_lone = 1;
       }
     }
@@ -111,15 +114,21 @@ int main(int argc, char *argv[]) {
   printf("Making pre-gapfill results files...\n");
   /* Visualize if requested */
   if(_db.VISUALIZEPATHS) {  
-    char outpath[1028];
-    sprintf(outpath, "./%s/UnSynPaths", _myoutputdir);
+    string outpath;
+    stringstream out;
+    out << "./" << _myoutputdir << "/UnSynPaths";
+    outpath = out.str();
     visualizePathSummary2File(outpath, "UnSynPaths", flat_unsyn, ProblemSpace, false); 
   }
   if(_db.OUTPUTPATHRESULTS) {
-    char outpath[1028];
-    sprintf(outpath, "./%s/PATH_rxns_report", _myoutputdir);
+    string outpath;
+    stringstream out;
+    out << "./" << _myoutputdir << "/PATH_rxns_report"; 
+    outpath = out.str();
     PATHS_rxns_out(outpath, flat_unsyn, ProblemSpace);
-    sprintf(outpath, "./%s/PATH_mets_report", _myoutputdir);
+    stringstream out2;
+    out2 << "./" << _myoutputdir << "/PATH_mets_report";
+    outpath = out2.str();
     PATHS_mets_out(outpath, flat_unsyn, ProblemSpace);
   }
   printf("...done\n");

@@ -46,7 +46,8 @@ int main(int argc, char *argv[]) {
 
   FILE* fid = fopen("RxnLikelihoodTable", "w");
   for(int i=0; i<ProblemSpace.fullrxns.rxns.size(); i++) {
-    fprintf(fid, "%s\t%1.5f\n", ProblemSpace.fullrxns.rxns[i].name, ProblemSpace.fullrxns.rxns[i].current_likelihood);
+    fprintf(fid, "%s\t%1.5f\n", ProblemSpace.fullrxns.rxns[i].name.c_str(), 
+	    ProblemSpace.fullrxns.rxns[i].current_likelihood);
   }
   fclose(fid);
 
@@ -75,7 +76,8 @@ int main(int argc, char *argv[]) {
     vector<METID> outputIds = Load_Outputs_From_Growth(ProblemSpace, i);
     for(int j=0; j<psum[i].size(); j++) { 
       if(psum[i][j].size() == 0) {
-	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", ProblemSpace.metabolites[outputIds[j]].name, i);
+	printf("WARNING: No paths found to output %s under growth condition %d so making it a secondary_lone \n", 
+	       ProblemSpace.metabolites[outputIds[j]].name.c_str(), i);
 	ProblemSpace.metabolites.metPtrFromId(outputIds[j])->secondary_lone = 1;
       }
     }
@@ -112,7 +114,7 @@ int main(int argc, char *argv[]) {
   vector<PATHSUMMARY> flat_unsyn = flattenPsum(unSynPsum);
   for(int i=0; i<flat_unsyn.size(); i++) {
     char fileName[1028];
-    sprintf(fileName, "./%s/%s_k%d.tsv", _myoutputdir, ProblemSpace.metabolites.getMetObj(flat_unsyn[i].outputId).name, flat_unsyn[i].k_number);
+    sprintf(fileName, "./%s/%s_k%d.tsv", _myoutputdir, ProblemSpace.metabolites.getMetObj(flat_unsyn[i].outputId).name.c_str(), flat_unsyn[i].k_number);
     ONEPATH_adj_list(fileName, flat_unsyn[i], ProblemSpace);
   }
 

@@ -22,7 +22,7 @@ void printIntMap(map<int, int> intMap);
 
 /* Reaction and metabolite printers */
 void printGROWTHinputs(const GROWTH &growth);
-void printRxnFormula(const REACTION &rxn, char* stoichString, bool printStoichPart);
+void printRxnFormula(const REACTION &rxn, string stoichString, bool printStoichPart);
 
 void printMetsFromIntVector(const vector<int> &intVector, const PROBLEM &ProblemSpace);
 void printMETABOLITEinputs(const METABOLITE &metabolite);
@@ -56,10 +56,10 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace, RXNSPACE 
 void PrintGapfillResult(const vector<GAPFILLRESULT> &res, const PROBLEM &problemSpace, const vector<int> &kToPrint);
 
 /* Generate output files */
-void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns);
-void PATHS_rxns_out(const char* filename, const vector<PATHSUMMARY> &psum, const PROBLEM &problem);
-void PATHS_mets_out(const char* filename, const vector<PATHSUMMARY> &psum, const PROBLEM &problem);
-void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBLEM &problem);
-void ANNOTATIONS_out(const char* filename, const vector<REACTION> &annotated_reaction_list);
+void MATLAB_out(const string fileName, const vector<REACTION> &InRxns);
+void PATHS_rxns_out(const string filename, const vector<PATHSUMMARY> &psum, const PROBLEM &problem);
+void PATHS_mets_out(const string filename, const vector<PATHSUMMARY> &psum, const PROBLEM &problem);
+void ONEPATH_adj_list(const string fileName, const PATHSUMMARY &psum, const PROBLEM &problem);
+void ANNOTATIONS_out(const string filename, const vector<REACTION> &annotated_reaction_list);
 
 #endif

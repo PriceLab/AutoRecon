@@ -19,6 +19,7 @@
 #include <map>
 #include <queue>
 #include <vector>
+#include <iomanip>
 
 /* Tests Growth via FBA component by component for a growth condition */
 int ComponentTest(const PROBLEM &theModel){
@@ -76,7 +77,7 @@ int ComponentTest(const PROBLEM &theModel){
     sprintf(matlab_str,"matlab_out_%d.mat",i);
     MATLAB_out(matlab_str,tempModel.fullrxns.rxns);
 
-    printf("Running FBA on %s\n",biomass.stoich[i].met_name);
+    cout << "Running FBA on " << biomass.stoich[i].met_name << endl;
     vector<double> fbaResult = FBA_SOLVE(tempModel.fullrxns.rxns,tempModel.metabolites);
     //Print
     /*
@@ -97,8 +98,9 @@ int ComponentTest(const PROBLEM &theModel){
       //Try free cofactors
       FeedEnergy(tempModel,1.0f);
       for(int j=0;j<tempModel.fullrxns.rxns.size();j++){
-	printf("== %d %d %4.0f %4.0f %s\n",j,(int)tempModel.fullrxns.rxns[j].id,
-	       tempModel.fullrxns.rxns[j].lb, tempModel.fullrxns.rxns[j].ub, tempModel.fullrxns.rxns[j].name);
+	cout << "== " << j << " " << tempModel.fullrxns.rxns[j].id << " " 
+	     << setw(4) << tempModel.fullrxns.rxns[j].lb << " " << setw(4) << tempModel.fullrxns.rxns[j].ub
+	     << " " << tempModel.fullrxns.rxns[j].name << endl;
       }
       vector<double> fbaResult3 = FBA_SOLVE(tempModel.fullrxns.rxns,tempModel.metabolites);
       PROBLEM fluxonly3 = reportFlux(tempModel,fbaResult3);
@@ -109,9 +111,9 @@ int ComponentTest(const PROBLEM &theModel){
     vector<PATH> kpaths;
     adjustLikelihoods(tempModel.synrxns.rxns, 1.0f, -1.0f, 1.1f, -3.0f, false);
 
-    printf("Running kShortest: %d %d %d %s %d\n",(int)tempModel.synrxns.rxns.size(),
-	   (int)tempModel.metabolites.mets.size(),(int)inputs.mets.size(),
-	   tempModel.metabolites[outputId].name, Kq);
+    cout << "Running kShortest: " << tempModel.synrxns.rxns.size() << " "
+	 << tempModel.metabolites.mets.size() << " " << inputs.mets.size() << " "
+	 << tempModel.metabolites[outputId].name << " " << Kq;
     /*
     printf("tempModel: %d\n",(int)tempModel.synrxns.rxns.size());
     /*Print everything rxnModel

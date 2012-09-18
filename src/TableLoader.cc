@@ -41,7 +41,7 @@ PROBLEM readReactionTable(const char* filename) {
     rxn_coeff = atof(rxnCoeffStr);
 
     STOICH curStoich;
-    sprintf(curStoich.met_name, "%s", metName);
+    curStoich.met_name = metName;
     curStoich.met_id = metId;
     curStoich.rxn_coeff = rxn_coeff;
 
@@ -55,7 +55,7 @@ PROBLEM readReactionTable(const char* filename) {
       newrxn.id = rxnId;
       newrxn.init_reversible = net_reversible;
       newrxn.net_reversible = net_reversible;
-      sprintf(newrxn.name, "%s", rxnName);      
+      newrxn.name = rxnName;      
       newrxn.stoich.push_back(curStoich);
       if(!secondary) {
 	newrxn.stoich_part.push_back(curStoich);
@@ -68,7 +68,7 @@ PROBLEM readReactionTable(const char* filename) {
       /* Note - because we're curating now, the secondary and secondary_pair fields became useless */
       METABOLITE newmet;
       newmet.id = metId;
-      sprintf(newmet.name, "%s", metName);
+      newmet.name = metName;
       fullmets.addMetabolite(newmet);
     }
     /* This is needed to ensure that anything that is treated as a secondary potentially gets a magic entrance. */
@@ -114,7 +114,7 @@ void readLikelihoodTable(PROBLEM &ProblemSpace, const char* filename) {
 /* Find a reaction by name and return the ID (-1 if none is found) */
 RXNID rxnByName(const RXNSPACE &rxnspace, const char* name) {
   for(int i=0; i<rxnspace.rxns.size(); i++) {
-    if(strcmp(rxnspace.rxns[i].name, name) == 0) {
+    if(rxnspace.rxns[i].name.compare(name) == 0) {
       return rxnspace.rxns[i].id;
     }
   }

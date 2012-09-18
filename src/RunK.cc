@@ -20,6 +20,8 @@
 #include <omp.h>
 #include <set>
 #include <vector>
+#include <string>
+#include <sstream>
 
 using std::vector;
 using std::map;
@@ -90,9 +92,8 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
       if(ProblemSpace.synrxns.rxns[i].syn.size() > 1) {
 	printf("SYN %d: ", (int) ProblemSpace.synrxns.rxns[i].id);
 	for(int j=0;j<ProblemSpace.synrxns.rxns[i].syn.size();j++) {
-	  printf("%s(%d) ;  ", 
-		 ProblemSpace.fullrxns.rxnFromId(ProblemSpace.synrxns.rxns[i].syn[j]).name, 
-		 (int) ProblemSpace.synrxns.rxns[i].syn[j]);
+	  cout << ProblemSpace.fullrxns.rxnFromId(ProblemSpace.synrxns.rxns[i].syn[j]).name 
+	       << "(" << (int) ProblemSpace.synrxns.rxns[i].syn[j] << ") ";
 	}
 	printf("\n");
       }
@@ -102,7 +103,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   if(_db.DEBUGSYN) {
     printf("METRXNRELATIONS:\n");
     for(int i=0;i<ProblemSpace.metabolites.mets.size();i++) {
-      printf("%s:  ", ProblemSpace.metabolites.mets[i].name);
+      cout << ProblemSpace.metabolites.mets[i].name << ":  ";
       printVector(ProblemSpace.metabolites.mets[i].rxnsInvolved_nosec);
     }
   }
@@ -184,8 +185,10 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METI
   if(_db.VISUALIZEPATHS) {
     #pragma omp parallel for
     for(int j=0;j<kpaths.size();j++){
-      char outpath[2056];
-      sprintf(outpath, "./%s/path_%s_k%d.dot", _myoutputdir, ProblemSpace.metabolites[outputId].name, j);
+      string outpath;
+      stringstream out;
+      out << _myoutputdir << ProblemSpace.metabolites[outputId].name << j;
+      outpath = out.str();
       VisualizePath2File(outpath, outpath, kpaths[j], ProblemSpace, 1);
     }
   }
@@ -269,10 +272,10 @@ void FirstKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY> 
     vector<vector<PATHSUMMARY> > tempP2;
     for(int j=0;j<outputIds.size();j++){
       if(_db.DEBUGPATHS) {
-	printf("FirstKPass: growth %d of %d   output %d(%s) of %d\n",i+1,(int)ProblemSpace.growth.size(),j+1,
-	       ProblemSpace.metabolites[outputIds[j]].name,
-	       (int)outputIds.size());
-      }
+	cout << "FirstKPass: growth " << i+1 << " of " << (int)ProblemSpace.growth.size() 
+	     << "   output " << j+1 << "(" << ProblemSpace.metabolites[outputIds[j]].name << ") of "
+	     << (int)outputIds.size() << endl;
+	}
       vector<PATHSUMMARY> tempP1;
       Run_K(ProblemSpace,ProblemSpace.growth[i].media,ProblemSpace.synrxns,outputIds[j],K,tempP1,1, i);
       if(_db.DEBUGPATHS) { printf("FirstKPass: %d paths found\n",(int)tempP1.size()); }
@@ -309,9 +312,9 @@ void SecondKPass(PROBLEM &ProblemSpace, int K, vector<vector<vector<PATHSUMMARY>
   for(int i=0;i<psum.size();i++){
     for(int j=0;j<psum[i].size();j++){
       if(_db.DEBUGPATHS) {
-	printf("SecondKPass: growth %d of %d   output %s (%d of %d)\n",i+1,(int)psum.size(),
-	       ProblemSpace.metabolites[outputIds[i][j]].name, 
-	       j+1,(int)psum[i].size());
+	cout << "SecondKPass: growth " << i+1 << " of " << (int)psum.size() << "   output "
+	     << ProblemSpace.metabolites[outputIds[i][j]].name << " ( " << j+1 << " of " 
+	     << (int)psum[i].size() << " )" << endl;
       }
 
       /* Less paths were originally found than requested. */
@@ -339,24 +342,22 @@ REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* nam
 Changed to return a REACTION to make it more portable / save on memory in various places */
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name, int R){
   REACTION rxn_add;
-  char *temp = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
   rxn_add.net_reversible = R;
   rxn_add.id = _db.BLACKMAGICFACTOR + met_id;
 
-  sprintf(temp,"%s%s","MagicExit_",name);
-  strcpy(rxn_add.name,temp);
+  stringstream out;
+  out << "MagicExit_" << name;
+  rxn_add.name = out.str();
 
 
   stoich_add.met_id = met_id;
   stoich_add.rxn_coeff = -1;
-  sprintf(stoich_add.met_name,"%s",name);
+  stoich_add.met_name = name;
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
-
-  free(temp);
 
   return rxn_add;
 }
@@ -364,28 +365,27 @@ REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* nam
 /* Could probably flush this out a bit more - should never use this except to add exchanges
 for secondary metabolites. The difference from MagicExit is that this one includes a flux
 bound AND adds a transporter. MagicExit just uses the default. Also the init_likelihood is different.  */
-REACTION GrowthExit(const vector<REACTION> &reaction, int met_id, int reversible, double fluxBound, const char* name){
+REACTION GrowthExit(const vector<REACTION> &reaction, int met_id, int reversible, double fluxBound, const string name){
   REACTION rxn_add;
   STOICH stoich_add;
-  char* temp = (char*) malloc( sizeof(char)*AR_MAXNAMELENGTH); 
 
   rxn_add.init_likelihood = -2;
 
   /* could be an issue in case of long met names */
-  sprintf(temp, "%s%s", "GrowthExit_", name); 
-  strcpy(rxn_add.name,temp);
+  stringstream out;
+  out << "GrowthExit_" << name; 
+  rxn_add.name = out.str();
   rxn_add.init_reversible = reversible;
   rxn_add.net_reversible = reversible;
   rxn_add.id = _db.BLACKMAGICFACTOR + met_id;
   stoich_add.met_id = met_id;
   stoich_add.rxn_coeff = -1;
-  sprintf(stoich_add.met_name,"%s",name);
+  stoich_add.met_name = name;
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
   if(reversible > 0) { rxn_add.lb = 0.0f; } else { rxn_add.lb = -fluxBound; }
   if(reversible < 0) { rxn_add.ub = 0.0f; } else { rxn_add.ub = fluxBound;  }
 
-  free(temp);
   return rxn_add;
 }
 
@@ -394,7 +394,7 @@ as specified in the vector<stoich> */
 REACTION MakeObjRxn(const vector<STOICH> &stoichVec) {
   REACTION obj;
   obj.id = _db.BIOMASS;
-  strcpy(obj.name, "BIOMASS_CUST");
+  obj.name = "BIOMASS_CUST";
   obj.stoich = stoichVec;
   obj.stoich_part = stoichVec;
   obj.net_reversible = 1;
@@ -415,17 +415,19 @@ REACTION MakeBiomassFromGrowth(const GROWTH &growth){
    metabolite in the opposite compartment. Returns the matching met ID or -1 if it fails to find a match */
 METID inOutPair(METID met_id, const METSPACE &metspace){ 
   int flag;
+  string tempS;
   bool isExternal = isExternalMet(metspace[met_id].name, _db.E_tag);
-  char tempS[AR_MAXNAMELENGTH] = {0};
   if(isExternal){
-    strncpy(tempS,metspace[met_id].name,(int)strlen(metspace[met_id].name)-3);
+    tempS.assign(metspace[met_id].name,0,metspace[met_id].name.size()-_db.E_tag.size());
+    cout << tempS << endl;
   } else {
-    strcat(tempS,metspace[met_id].name);
-    strcat(tempS,_db.E_tag);
+    stringstream out;
+    out << metspace[met_id].name << _db.E_tag;
+    tempS = out.str();
   }
 
   for(int i=0;i<metspace.mets.size();i++){
-    if(strcmp(tempS,metspace.mets[i].name)==0){
+    if(tempS.compare(metspace.mets[i].name)==0){
       return metspace.mets[i].id;
     } 
   }
@@ -474,7 +476,9 @@ void GoodReversible(PROBLEM &ProblemSpace){
 	temp = ProblemSpace.synrxnsR.rxns[i];
 	temp.id = temp.id + _db.REVFACTOR;
 	temp.init_likelihood = -3; /* BLACK MAGIC */
-	strcat(temp.name,"_REV");
+	stringstream out;
+	out << temp.name << "_REV";
+	temp.name = out.str();
 	ProblemSpace.synrxnsR.addReaction(temp);
 	ProblemSpace.synrxnsR.changeReversibility(temp.id, temp.init_reversible * (REV) -1);
       }

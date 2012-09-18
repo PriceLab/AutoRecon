@@ -19,7 +19,7 @@
 #include <vector>
 #include <map>
 #include <stdio.h>
-#include <stdlib.h>
+#include <cstdlib>
 #include <string.h>
 
 /* Makes a simulatable model out of a vector of PATHSUMMARY, including magic exits for everything

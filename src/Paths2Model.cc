@@ -276,9 +276,10 @@ vector<RXNID> fillMagicBridges(const PATHSUMMARY &currentPsum,
   }
 
   if(_db.DEBUGBRIDGES) {
-    printf("Suggested reaction(s) to fill magic exit %s:\n", bridge.name);
+    cout << "Suggested reaction(s) to fill magic exit " << bridge.name << ":" << endl;
     for(int i=0; i<suggestedRxnIds.size(); i++) {
-      printf("%s(%1.3f)\t", ProblemSpace.fullrxns.rxnFromId(suggestedRxnIds[i]).name, ProblemSpace.fullrxns.rxnFromId(suggestedRxnIds[i]).init_likelihood);
+      printf("%s(%1.3f)\t", ProblemSpace.fullrxns.rxnFromId(suggestedRxnIds[i]).name.c_str(), 
+	     ProblemSpace.fullrxns.rxnFromId(suggestedRxnIds[i]).init_likelihood);
     }
     printf("\n");
   }
@@ -537,7 +538,11 @@ void checkExchangesAndTransporters(PROBLEM &working, const PROBLEM &ProblemSpace
     // Could cause issues if someone passes both a metabolite and its pair as mets to check so we check for that 
     // condition here  
     METID pairId = inOutPair(metsToCheck[i], allMets);
-    if(pairId == -1) { printf("ERROR: Metabolite %s (%d) has no internal metabolite\n", allMets[metsToCheck[i]].name, (int)metsToCheck[i]); throw; }
+    if(pairId == -1) { 
+      cout << "ERROR: Metabolite " << allMets[metsToCheck[i]].name << " (" << (int)metsToCheck[i] 
+	   << ") has no internal metabolite" << endl;
+      throw; 
+    }
     if(!workingMets.isIn(pairId)) {
       workingMets.addMetabolite(allMets[pairId]);
     }

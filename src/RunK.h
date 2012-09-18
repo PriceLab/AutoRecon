@@ -70,7 +70,7 @@ REACTION MakeObjRxn(const vector<STOICH> &stoich);
 REACTION MakeBiomassFromGrowth(const GROWTH &growth);
 
 REACTION GrowthExit(const vector<REACTION> &reaction, int met_id, int reversible, 
-		    double fluxBound, const char* name);
+		    double fluxBound, const string name);
 void adjustLikelihoods(vector<REACTION> &rxnList, double spont_likely, double black_magic_likely, double hard_include_likely, double no_likely, bool adjustNonspecial);
 void calcMetRxnRelations(const RXNSPACE &rxnspace, METSPACE &mets);
 void calcMetRxnRelations_nosec(const RXNSPACE &rxns, METSPACE &mets);

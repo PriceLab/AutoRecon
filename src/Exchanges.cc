@@ -7,6 +7,9 @@
 #include<cstdio>
 #include<cstdlib>
 #include<vector>
+#include<iostream>
+#include<sstream>
+#include<string>
 
 /* Functions */
 
@@ -68,8 +71,7 @@ void FeedEnergy(PROBLEM &Model,double flux_bound){
 	Model.synrxns.addReaction(new_exchange);
 	id = new_exchange.id;
       }
-      printf("* %d %d %s*\n",(int)Model.metabolites.mets[i].id,(int)j,
-	     Model.metabolites.mets[i].name);
+      cout << "* " << (int)Model.metabolites.mets[i].id << " " << (int)j << " " << Model.metabolites.mets[i].name;
       Model.fullrxns.change_Lb_and_Ub(id, -flux_bound, flux_bound);
     }
   }
@@ -78,7 +80,6 @@ void FeedEnergy(PROBLEM &Model,double flux_bound){
 
 REACTION MagicExchange(METABOLITE met,double flux_bound,int dir){
   REACTION rxn_add;
-  char *temp = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
@@ -86,17 +87,17 @@ REACTION MagicExchange(METABOLITE met,double flux_bound,int dir){
   rxn_add.id = _db.MISSINGEXCHANGEFACTOR + met.id;
 
   /* Size of string could be a problem but for now I left this since we don't want 30 extra spaces in everything... */
-  sprintf(temp,"%s%s","MagicEx_",met.name);
-  strcpy(rxn_add.name,temp);
+  std::stringstream out;
+  out << "MagicEx_" << met.name;
+  rxn_add.name = out.str();
   stoich_add.met_id = met.id;
   stoich_add.rxn_coeff = -1;
-  sprintf(stoich_add.met_name,"%s",met.name);
+  stoich_add.met_name = met.name;
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
 
   if(dir <= 0) {  rxn_add.lb = -flux_bound; } else { rxn_add.lb = 0.0f; }
   if(dir >= 0) {  rxn_add.ub = flux_bound;  } else { rxn_add.ub = 0.0f; }
-  free(temp);
   return rxn_add;
 }
 
@@ -161,14 +162,13 @@ RXNID FindTransport4Metabolite(const vector<REACTION> &reaction, const METSPACE 
 }
 
 REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, 
-			char* name, int R){
+			string name, int R){
   return MagicTransport(reaction,metspace,met_id,&name[0],R,1000.0f);
 }
 
 REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, 
-			char* name, int R, double bound){
+			string name, int R, double bound){
   REACTION rxn_add;
-  char *temp = (char *) malloc(sizeof(char) * AR_MAXNAMELENGTH);
   STOICH stoich_add;
 
   rxn_add.init_likelihood = -3;
@@ -177,18 +177,19 @@ REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspa
   rxn_add.id = _db.MISSINGTRANSPORTFACTOR + met_id;
 
   /* Size of string could be a problem but for now I left this since we don't want 30 extra spaces in everything... */
-  sprintf(temp,"%s%s","MagicTran_",name);
-  strcpy(rxn_add.name,temp);
+  stringstream out;
+  out << "MagicTran_" << name;
+  rxn_add.name = out.str();
   stoich_add.met_id = met_id;
   stoich_add.rxn_coeff = -1;
-  sprintf(stoich_add.met_name,"%s",name);
+  stoich_add.met_name = name;
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
   stoich_add.met_id = inOutPair(met_id,metspace);
   if(stoich_add.met_id==-1){
-    printf("MagicTransport: ERROR - NO COMPLEMENTARY METABOLITE: %d %s\n",(int)met_id,name);}
+    cout << "MagicTransport: ERROR - NO COMPLEMENTARY METABOLITE: " << (int)met_id << " " << name << endl;}
   stoich_add.rxn_coeff = 1;
-  sprintf(stoich_add.met_name, "%s", metspace[stoich_add.met_id].name);
+  stoich_add.met_name = metspace[stoich_add.met_id].name;
   rxn_add.stoich.push_back(stoich_add);
   rxn_add.stoich_part.push_back(stoich_add);
   if(R <= 0) { rxn_add.lb = -bound; } else { rxn_add.lb = 0.0f; }
@@ -196,7 +197,6 @@ REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspa
 
   //Problem here is that there are sometimes transporters that involve multiple metabolites.
   //So I want to force the flux to use those if it has to rather than rely on the MagicTrans reactions
-  free(temp);
   return rxn_add;
 }
 
@@ -237,7 +237,7 @@ void GetTransportReactions(vector<METID> metIds, vector<int> rxnDirections, cons
   const METSPACE &metspace = ProblemSpace.metabolites;
 
   for(int i=0;i<metIds.size();i++) {
-    if(strcmp(metspace[metIds[i]].name, _db.H_name) != 0) {
+    if(metspace[metIds[i]].name.compare(_db.H_name) != 0) {
       /* FindTransport4Metabolite already looks for the most likely and also will account for direction. */
       RXNID temp = FindTransport4Metabolite(reaction,metspace,metIds[i],rxnDirections[i]);
       if(temp == -1){
@@ -264,7 +264,7 @@ void GetExchangeReactions(vector<METID> metIdList, vector<int> dirs, const PROBL
 
   exchanges.clear();
 
-  char *name = (char*) malloc(sizeof(char)*AR_MAXNAMELENGTH);
+  string name;
 
   for(int i=0;i<metIdList.size();i++) {
     /* Returns an existing reaction ID if possible */
@@ -274,7 +274,7 @@ void GetExchangeReactions(vector<METID> metIdList, vector<int> dirs, const PROBL
 
     if(temp==-1) {
       if(metspace.isIn(metIdList[i])) {
-	sprintf(name, "%s", ProblemSpace.metabolites[metIdList[i]].name);
+	name = ProblemSpace.metabolites[metIdList[i]].name;
 	TMPRXN = GrowthExit(rxnspace.rxns, metIdList[i], dirs[i], 1000, name); 
       } else {
 	/* Add the exchange anyway, but warn the user about possible perils... */
@@ -282,8 +282,9 @@ void GetExchangeReactions(vector<METID> metIdList, vector<int> dirs, const PROBL
 	printf("You should replace this with the METABOLITE entry in the full metabolite vector later. If you are using the full metabolite vector this indicates a major problem. \n");
 	printf("Offending metID: %d\n", (int)metIdList[i]);
 	tmpMet.id = metIdList[i];
-	sprintf(tmpMet.name, "UNKNOWN_ID %d", (int)tmpMet.id);
-	sprintf(name, "%s", tmpMet.name);
+	stringstream out;
+	out << "UNKNOWN_ID %d" << (int)tmpMet.id;
+	name = out.str();
 	TMPRXN = GrowthExit(rxnspace.rxns, metIdList[i], dirs[i], 1000, name);
       }
     } else {
@@ -293,7 +294,6 @@ void GetExchangeReactions(vector<METID> metIdList, vector<int> dirs, const PROBL
     TMPRXN.init_likelihood = -2.0f;
     exchanges.addReaction(TMPRXN);
   }
-  free(name);
   return;
 }
 

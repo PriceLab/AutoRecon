@@ -3,9 +3,12 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <string>
 //#include "DataStructures.h"
 
 #define AR_MAXNAMELENGTH 256
+
+using namespace std;
 
 extern char _myoutputdir[AR_MAXNAMELENGTH];
 
@@ -49,16 +52,16 @@ class DEBUGFLAGS{
   int BRIDGEMETFACTOR;
   int BIOMASS;
   /* Database conventions */
-  char E_tag[8];
-  char H_name[8];
-  char Na_name[8];
-  char Na_plus_E[16];
-  char H_plus_E[16];
-  char ATPM_name[16];
-  char ATP_name[8];
-  char ADP_name[8];
-  char H2O_name[8];
-  char PI_name[8];
+  string E_tag;
+  string H_name;
+  string Na_name;
+  string Na_plus_E;
+  string H_plus_E;
+  string ATPM_name;
+  string ATP_name;
+  string ADP_name;
+  string H2O_name;
+  string PI_name;
 
   double FLUX_CUTOFF;
   double GROWTH_CUTOFF;

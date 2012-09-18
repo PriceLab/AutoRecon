@@ -10,17 +10,17 @@
 #include <iterator>
 #include <map>
 #include <vector>
+#include <cmath>
 
 using std::vector;
 using std::map;
 
-bool isExternalMet(const char *name, const char *E_tag) {
+bool isExternalMet(const string name, const string E_tag) {
   /* I assume that E_tag cannot be more than 8 characters long */
-  char tempS[8] = {0};
-  if(strlen(name) < strlen(E_tag)) { return false; }
+  if(name.size() < E_tag.size()) { return false; }
   /* Check for E_tag at the end of the metabolite name */
-  strncpy(tempS,name+((int)strlen(name)-strlen(E_tag)),strlen(E_tag));
-  if(strcmp(tempS, E_tag) != 0 ) {  return false;  }
+  string tempS(name,name.size()-E_tag.size(),E_tag.size());
+  if(tempS.compare(E_tag) != 0 ) {  return false;  }
   return true;
 }
 
@@ -200,18 +200,18 @@ int instoich(METID id, const vector<STOICH> &list){
 }
 
 /* Convert a metabolite name to an ID. Returns -1 on failure */
-METID Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name){
+METID Name2Ids(const vector<METABOLITE> &metabolite, const string met_name){
   for(int i=0;i<metabolite.size();i++){
-    if(strcmp(met_name,metabolite[i].name)==0){
+    if(met_name.compare(metabolite[i].name)==0){
       return metabolite[i].id;
     }
   }
   return (METID) -1;
 }
 
-RXNID Name2Ids(const vector<REACTION> &reaction, const char *rxn_name) {
+RXNID Name2Ids(const vector<REACTION> &reaction, const string rxn_name) {
   for(int i=0;i<reaction.size();i++){
-    if(strcmp(rxn_name,reaction[i].name)==0){
+    if(rxn_name.compare(reaction[i].name)==0){
       return reaction[i].id;
     }
   }

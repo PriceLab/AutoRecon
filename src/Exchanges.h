@@ -8,8 +8,8 @@ void LoadAllExchanges(PROBLEM &ProblemSpace);
 void FeedTheBeast(RXNSPACE &inModel,GROWTH &growth);
 void FeedEnergy(PROBLEM &Model,double flux_bound);
 
-REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, char *name, int R);
-REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, char *name, int R,double bound);
+REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, string name, int R);
+REACTION MagicTransport(const vector<REACTION> &reaction, const METSPACE &metspace, METID met_id, string name, int R,double bound);
 REACTION MagicExchange(METABOLITE met,double flux_bound,int dir);
 
 void GetExchangeReactions(vector<METID> metIdList, vector<int> directions, const PROBLEM &ProblemSpace, RXNSPACE &exchanges);

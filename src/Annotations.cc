@@ -61,7 +61,8 @@ map<string, vector<VALUESTORE> > GeneAnnotations(RXNSPACE &rxnspace, double cut,
   if(_db.PRINTANNOTATIONS) {
     for(int i=0;i<small_list.size();i++){
       for(int j=0;j<small_list[i].annote.size();j++){
-	printf("%s %s %f\n",small_list[i].name,small_list[i].annote[j].genename.c_str(),small_list[i].annote[j].probability);
+	cout << small_list[i].name << " " << small_list[i].annote[j].genename << " " 
+	     << small_list[i].annote[j].probability << endl;
       }
     }
   }

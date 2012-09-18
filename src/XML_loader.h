@@ -3,9 +3,14 @@
 
 /* C++ library */
 #include "DataStructures.h"
+#include <jsoncpp/json/json.h>
 
 using std::vector;
 using std::map;
+
+//Shift to JSON
+METABOLITE jsonMETABOLITE (const Json::Value root);
+void jsonMETRXNFILE (char *met_rxn_filename, PROBLEM &problem);
 
 /* From XML_loader.c - parseALL is the wrapper for the other smaller functions */
 void parseALL(char* file1, char* file2, PROBLEM &ProblemSpace);

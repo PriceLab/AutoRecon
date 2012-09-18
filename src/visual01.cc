@@ -3,6 +3,7 @@
 #include <cstring>
 #include <map>
 #include <string>
+#include <sstream>
 #include <vector>
 
 /* Personal libaries */
@@ -19,7 +20,7 @@ using std::string;
 /* Generates a .dot file to be viewed after a 
    "dot -Tpng dotfile.dot > pngfile.png" command */
 void Paths2Dot(FILE *dotput, const METSPACE &metspace,
-	       const RXNSPACE &rxnspace, const char *label){
+	       const RXNSPACE &rxnspace, const string label){
 
   const vector<METABOLITE> &incl_mets = metspace.mets;
   const vector<REACTION> &incl_rxns = rxnspace.rxns;
@@ -33,7 +34,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
   fprintf(dotput,"ranksep = 1 ;\n");
   fprintf(dotput,"rankdir = LR ;\n");
   fprintf(dotput,"mincross = 2.0 ;\n");
-  fprintf(dotput,"label = \"%s\" ; \n",label);
+  fprintf(dotput,"label = \"%s\" ; \n",label.c_str());
 
   /* MET nodes - creates all MET nodes involved in reactions */
   for(int i=0;i<numMETs;i++){
@@ -41,7 +42,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
       if(incl_mets[i].input!=1 && incl_mets[i].output!=1){
 
 	if(incl_mets[i].secondary_pair.empty() && incl_mets[i].secondary_lone == 0) {
-	  fprintf(dotput,"\"%s\" [shape=ellipse,margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] ; \n",incl_mets[i].name);
+	  fprintf(dotput,"\"%s\" [shape=ellipse,margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] ; \n",incl_mets[i].name.c_str());
 	}
 
 	if(incl_mets[i].secondary_lone != 0) { continue; }
@@ -56,7 +57,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	  if(printName) { break; }
 	}
 	if(printName) { */
-	  fprintf(dotput,"\"%s\" [shape=ellipse,margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] ; \n",incl_mets[i].name);
+	fprintf(dotput,"\"%s\" [shape=ellipse,margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] ; \n",incl_mets[i].name.c_str());
 	  /*	} */
       }
     }
@@ -65,13 +66,13 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
   /* Double circles for INPUTS & OUTPUTS */
   for(int i=0;i<numMETs;i++){
     if(incl_mets[i].input==1 || incl_mets[i].output==1){
-      fprintf(dotput,"node [shape=doublecircle,label=\"%s\",margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] \"%s\" ; \n",incl_mets[i].name,incl_mets[i].name);}}
+      fprintf(dotput,"node [shape=doublecircle,label=\"%s\",margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] \"%s\" ; \n",incl_mets[i].name.c_str(),incl_mets[i].name.c_str());}}
 
   /* Double circles around BIOMASS */
   int bm = -9;
   for(int i=0;i<numRXNs;i++){
     if(incl_rxns[i].id==_db.BIOMASS){
-      fprintf(dotput,"node [shape=doublecircle,label=\"%s\",margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] \"%s\" ; \n",incl_rxns[i].name,incl_rxns[i].name);
+      fprintf(dotput,"node [shape=doublecircle,label=\"%s\",margin=0,regular=1,style=filled,fillcolor=orange1,fontsize=12,height=0,width=0] \"%s\" ; \n",incl_rxns[i].name.c_str(),incl_rxns[i].name.c_str());
       bm = i; break;}}
 
   /* BLANK metabolites - used to set up the dangling secondaries that make things MUCH easier to read. */
@@ -88,7 +89,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	if(metId2Count.find(MET.id)==metId2Count.end()) { metId2Count[MET.id] = 0; }
 	metId2Count[MET.id] += 1;
 	int count = metId2Count[MET.id];
-	fprintf(dotput,"\"%s_BLANK%d\" [shape=ellipse,label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] ; \n",MET.name,count);
+	fprintf(dotput,"\"%s_BLANK%d\" [shape=ellipse,label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] ; \n",MET.name.c_str(),count);
       }
     }
   }
@@ -102,48 +103,51 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
       if(incl_rxns[i].stoich_part[j].rxn_coeff<0){l++;}
     }
     if(l>0 && k==0){
-      fprintf(dotput,"subgraph cluster_%s { \n",incl_rxns[i].name);
-      fprintf(dotput,"label = \"%s\" ; \n",incl_rxns[i].name);
+      fprintf(dotput,"subgraph cluster_%s { \n",incl_rxns[i].name.c_str());
+      fprintf(dotput,"label = \"%s\" ; \n",incl_rxns[i].name.c_str());
       fprintf(dotput,"margin = 0 ; \n");
       fprintf(dotput,"fontsize = 12 ; \n");
       //fprintf(dotput,"color = blue ; \n");
-      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name,"_in");
-      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name,"_out");
+      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name.c_str(),"_in");
+      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name.c_str(),"_out");
       fprintf(dotput,"} \n");
       good = 1;
     }
     if(k>0 && l==0){
-      fprintf(dotput,"subgraph cluster_%s { \n",incl_rxns[i].name);
-      fprintf(dotput,"label = \"%s\" ; \n",incl_rxns[i].name);
+      fprintf(dotput,"subgraph cluster_%s { \n",incl_rxns[i].name.c_str());
+      fprintf(dotput,"label = \"%s\" ; \n",incl_rxns[i].name.c_str());
       fprintf(dotput,"margin = 0 ; \n");
       fprintf(dotput,"fontsize = 12 ; \n");
       //fprintf(dotput,"color = blue ; \n");
-      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name,"_in");
-      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name,"_out");
+      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name.c_str(),"_in");
+      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name.c_str(),"_out");
       fprintf(dotput,"} \n");
       //fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=none,label=\"\",margin=0,regular=1,fontsize=8] ; \n",incl_rxns[i].name,"_in",incl_rxns[i].name,"_out");
       good = 1;
     }
     if(l>0 && k>0){
-      fprintf(dotput,"subgraph cluster_%s { \n",incl_rxns[i].name);
-      fprintf(dotput,"label = \"%s\" ; \n",incl_rxns[i].name);
+      fprintf(dotput,"subgraph cluster_%s { \n",incl_rxns[i].name.c_str());
+      fprintf(dotput,"label = \"%s\" ; \n",incl_rxns[i].name.c_str());
       fprintf(dotput,"margin = 0 ; \n");
       fprintf(dotput,"fontsize = 12 ; \n");
       //fprintf(dotput,"color = blue ; \n");
-      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name,"_in");
-      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name,"_out");
+      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name.c_str(),"_in");
+      fprintf(dotput,"node [label=\"\",margin=0,regular=1,style=filled,fillcolor=white,fontsize=6,height=0,width=0] \"%s%s\" ; \n",incl_rxns[i].name.c_str(),"_out");
       fprintf(dotput,"} \n");
       //fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=none,label=\"\",margin=0,regular=1,fontsize=8] ; \n",incl_rxns[i].name,"_in",incl_rxns[i].name,"_out");
       good = 1;
     }
     if(good == 1) {
       if(incl_rxns[i].net_reversible==0) {
-	      fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=both,label=\"\",margin=0,regular=1,fontsize=8] ; \n",incl_rxns[i].name,"_in",incl_rxns[i].name,"_out"); }
+	fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=both,label=\"\",margin=0,regular=1,fontsize=8] ; \n",
+		incl_rxns[i].name.c_str(),"_in",incl_rxns[i].name.c_str(),"_out"); }
       else if(incl_rxns[i].net_reversible==1) {
-	      fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=forward,label=\"\",margin=0,regular=1,fontsize=8] ; \n",incl_rxns[i].name,"_in",incl_rxns[i].name,"_out");
+	      fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=forward,label=\"\",margin=0,regular=1,fontsize=8] ; \n",
+		      incl_rxns[i].name.c_str(),"_in",incl_rxns[i].name.c_str(),"_out");
       }
       else if(incl_rxns[i].net_reversible==-1) {
-	      fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=back,label=\"\",margin=0,regular=1,fontsize=8] ; \n",incl_rxns[i].name,"_in",incl_rxns[i].name,"_out");
+	      fprintf(dotput,"\"%s%s\" -> \"%s%s\" [dir=back,label=\"\",margin=0,regular=1,fontsize=8] ; \n",
+		      incl_rxns[i].name.c_str(),"_in",incl_rxns[i].name.c_str(),"_out");
       }
     }
   }
@@ -154,7 +158,7 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
   if(bm >= 0) {
     for(int i=0;i<incl_rxns[bm].stoich.size();i++){
       fprintf(dotput,"\"%s\" -> \"%s\" [weight=1] ; \n",
-	      incl_rxns[bm].stoich[i].met_name,incl_rxns[bm].name);}
+	      incl_rxns[bm].stoich[i].met_name.c_str(),incl_rxns[bm].name.c_str());}
   }
 
   /* Normal Reactions */
@@ -173,22 +177,22 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s_BLANK%d\" -> \"%s%s\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].name,"_in",
-		    incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].name.c_str(),"_in",
+		    incl_rxns[i].stoich_part[j].met_name.c_str());
 	  } else if(hasValidSecondaryPair(incl_rxns[i], metspace, MET.id)) {
 	    /* We DON'T need to print the secondaries here since we're looping through the whole thing anyway
 	       and we'll hit the other half of the pair on the way around (and the pairs are labeled both ways) */
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s_BLANK%d\" -> \"%s%s\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].name,"_in",
-		    incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].name.c_str(),"_in",
+		    incl_rxns[i].stoich_part[j].met_name.c_str());
 	  } else {
 	    fprintf(dotput,"\"%s\" -> \"%s%s\" [dir=none,weight=1] ; \n",
-		    incl_rxns[i].stoich_part[j].met_name,
-		    incl_rxns[i].name,"_in");
+		    incl_rxns[i].stoich_part[j].met_name.c_str(),
+		    incl_rxns[i].name.c_str(),"_in");
 	  }
 	}
 	if(incl_rxns[i].net_reversible==0 
@@ -198,19 +202,19 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s%s\" -> \"%s_BLANK%d\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].name, "_out", 
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].name.c_str(), "_out", 
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].stoich_part[j].met_name.c_str());
 	  } else if(hasValidSecondaryPair(incl_rxns[i], metspace, MET.id)) {
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s%s\" -> \"%s_BLANK%d\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].name, "_out", 
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].stoich_part[j].met_name); 
+		    incl_rxns[i].name.c_str(), "_out", 
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].stoich_part[j].met_name.c_str()); 
 	  } else {
 	    fprintf(dotput,"\"%s%s\" -> \"%s\" [dir=none,weight=1] ; \n",
-		    incl_rxns[i].name, "_out", incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].name.c_str(), "_out", incl_rxns[i].stoich_part[j].met_name.c_str());
 	  }
 	}
 	if((incl_rxns[i].stoich_part[j].rxn_coeff<0 
@@ -223,23 +227,23 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s_BLANK%d\" -> \"%s%s\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].name,"_in",
-		    incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].name.c_str(),"_in",
+		    incl_rxns[i].stoich_part[j].met_name.c_str());
 	  } else if(hasValidSecondaryPair(incl_rxns[i], metspace, MET.id)) {
 	    /* We DON'T need to print the secondaries here since we're looping through the whole thing anyway
 	       and we'll hit the other half of the pair on the way around (and the pairs are labeled both ways) */
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s_BLANK%d\" -> \"%s%s\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].name,"_in",
-		    incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].name.c_str(),"_in",
+		    incl_rxns[i].stoich_part[j].met_name.c_str());
 	  } else {
 	    // Not a secondary metabolite
 	    fprintf(dotput,"\"%s\" -> \"%s%s\" [dir=none,weight=1] ; \n",
-		    incl_rxns[i].stoich_part[j].met_name,
-		    incl_rxns[i].name,"_in");
+		    incl_rxns[i].stoich_part[j].met_name.c_str(),
+		    incl_rxns[i].name.c_str(),"_in");
 	  }
 	}
 	
@@ -253,21 +257,21 @@ void Paths2Dot(FILE *dotput, const METSPACE &metspace,
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s%s\" -> \"%s_BLANK%d\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].name, "_out", 
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].stoich_part[j].met_name); 
+		    incl_rxns[i].name.c_str(), "_out", 
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].stoich_part[j].met_name.c_str()); 
 	  } else if(hasValidSecondaryPair(incl_rxns[i], metspace, MET.id)) {
 	    int count = metId2Count[MET.id];
 	    metId2Count[MET.id] -= 1;
 	    fprintf(dotput,"\"%s%s\" -> \"%s_BLANK%d\" [dir=none,weight=1,label=\"%s\",fontsize=14] ; \n",
-		    incl_rxns[i].name, "_out", 
-		    incl_rxns[i].stoich_part[j].met_name, count,
-		    incl_rxns[i].stoich_part[j].met_name); 
+		    incl_rxns[i].name.c_str(), "_out", 
+		    incl_rxns[i].stoich_part[j].met_name.c_str(), count,
+		    incl_rxns[i].stoich_part[j].met_name.c_str()); 
 	  } else {
 	    // Not a secondary metabolite
 	    fprintf(dotput,"\"%s%s\" -> \"%s\" [dir=none,weight=1] ; \n",
-		    incl_rxns[i].name, "_out", 
-		    incl_rxns[i].stoich_part[j].met_name);
+		    incl_rxns[i].name.c_str(), "_out", 
+		    incl_rxns[i].stoich_part[j].met_name.c_str());
 	  }
 	}
       }
@@ -350,13 +354,13 @@ useSynRxns = true --> pull out reactions from ProblemSpace.synrxns
 useSynRxns = false --> pull out reactions from ProblemSpace.fullrxns 
 
 Which you use depends on where the PATH came from. */
-void VisualizePath2File(const char *fileName, const char *label, const PATH &path, 
+void VisualizePath2File(const string fileName, const string label, const PATH &path, 
 			const PROBLEM &ProblemSpace, int useSynRxns){
   //use SynRxns, 0 = fullrxns, 1 = synrxns, 2 = synrxnsR
   RXNSPACE workingRxns;
   METSPACE workingMets;
 
-  FILE *dotput = fopen(fileName, "w");
+  FILE *dotput = fopen(fileName.c_str(), "w");
   if(dotput==NULL) { printf("Unable to open DOT file in VisualizePath2File \n");fflush(stdout);
     return;}
 
@@ -374,13 +378,15 @@ void VisualizePath2File(const char *fileName, const char *label, const PATH &pat
           false - use fullrxns (assumes that you want to use stoich, and copies that over to stoich_part before calling the paths2Dot file)
 
 */
-void visualizePathSummary2File(const char* fileBase, const char* label, const vector<PATHSUMMARY> &psum, const PROBLEM &ProblemSpace, int useSyn) {
+void visualizePathSummary2File(const string fileBase, const string label, const vector<PATHSUMMARY> &psum, 
+			       const PROBLEM &ProblemSpace, int useSyn) {
   
   for(int i=0; i<psum.size(); i++) {
-    char fileName[2056];
-    sprintf(fileName, "%s%s.dot", fileBase, ProblemSpace.metabolites.getMetObj(psum[i].outputId).name);
+    stringstream out;
+    out << fileBase << ProblemSpace.metabolites.getMetObj(psum[i].outputId).name;
+    string fileName = out.str();
 
-    FILE* dotput = fopen(fileName, "w");
+    FILE* dotput = fopen(fileName.c_str(), "w");
 
     vector<PATHSUMMARY> tmpP; tmpP.push_back(psum[i]);
 

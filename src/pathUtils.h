@@ -3,7 +3,7 @@
 
 #include "DataStructures.h"
 
-bool isExternalMet(const char *name, const char* E_tag);
+bool isExternalMet(const string name, const string E_tag);
 
 /* Vector utilities */
 bool anyVec(const vector<bool> &vec);
@@ -37,8 +37,8 @@ void MakeSynList(PROBLEM &ProblemSpace);
 double rxnCoeff(const RXNSPACE &rxnspace, int rxnId, int metId);
 
 /* Utility functions */
-METID Name2Ids(const vector<METABOLITE> &metabolite, const char *met_name);
-RXNID Name2Ids(const vector<REACTION> &reaction, const char *rxn_name);
+METID Name2Ids(const vector<METABOLITE> &metabolite, const string met_name);
+RXNID Name2Ids(const vector<REACTION> &reaction, const string rxn_name);
 
 vector<PATHSUMMARY> flattenPsum(const vector<vector<vector<PATHSUMMARY> > > &from);
 vector<PATHSUMMARY> uniquePsum(const vector<PATHSUMMARY> &from);

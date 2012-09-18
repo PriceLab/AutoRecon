@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <glpk.h>
 #include <vector>
+#include <iomanip>
 
 #include "DataStructures.h"
 #include "Exchanges.h"
@@ -125,8 +126,15 @@ void GLPKDATA::FVA_SOLVE(vector<double> &minFlux, vector<double> &maxFlux, doubl
   int status = FastFVA(minFlux, maxFlux, optPercentage);
   assert(status == 0);
 
+  cout.setf(ios::fixed, ios::floatfield);
+  cout.setf(ios::showpoint);
+  cout.precision(3);
+
   for(int i=0; i<rxnsUsed.rxns.size(); i++) { 
-    if(_db.DEBUGFVA) { printf("FVA rxn %s min = %4.5f max = %4.3f lb = %4.3f ub = %4.3f\n", rxnsUsed.rxns[i].name, minFlux[i], maxFlux[i], rxnsUsed.rxns[i].lb, rxnsUsed.rxns[i].ub); }
+    if(_db.DEBUGFVA) { 
+      cout << "FVA rxn " << rxnsUsed.rxns[i].name << " min = " << setw(8) << minFlux[i] 
+	   << " max = " << setw(8) << maxFlux[i] << " lb = " << setw(8) << rxnsUsed.rxns[i].lb 
+	   << " ub = " << setw(8) << rxnsUsed.rxns[i].ub << endl; }
   }
 
   return;
@@ -205,7 +213,10 @@ int GLPKDATA::gapFindLinprog(vector<RXNID> &usedExits) {
   /* Add needed magic exits to the list of exits that are used */
   for(int i=0; i<result.size(); i++) {
     if( rougheq(result[i], 0.0f, _db.FLUX_CUTOFF)) { continue; }
-    if( _db.DEBUGGAPFILL ) { printf("Reaction %s - gapFindLinprog result = %4.3f\n", rxnsUsed.rxns[i].name, result[i]); }
+    if( _db.DEBUGGAPFILL ) { 
+      cout.precision(3);
+      cout << "Reaction " << rxnsUsed.rxns[i].name << " - gapFindLinprog result = " << setw(8) << result[i]; 
+    }
     if(rxnsUsed.rxns[i].id < _db.BLACKMAGICFACTOR || rxnsUsed.rxns[i].id > _db.BLACKMAGICFACTOR + _db.MINFACTORSPACING) { continue; }
     /* If the min flux is close to 0 ignore it - it is not needed (1E-5 is OK as long as we do the conditioning step above making all the coeffs = 1) */
     usedExits.push_back(rxnsUsed.rxns[i].id);
@@ -445,16 +456,17 @@ void GLPKDATA::initialize(const METSPACE &metspace, const RXNSPACE &rxnspace, ve
 /* Print out all those lovely private variables */
 void GLPKDATA::printPrivateStuff() {
   for(int i=1; i<numcols + 1; i++) {
-    printf("REACTION: %s ... ", rxnsUsed.rxns[i-1].name);
+    cout << "REACTION: " << rxnsUsed.rxns[i-1].name << " ..." << endl;
     printf("LB = %4.3f; UB = %4.3f \n", lb[i], ub[i]);
   }
   for(int i=0; i< totalDataSize; i++) {
     printf("Reaction INDEX %d (NAME: %s ) and metabolite INDEX %d (NAME: %s) had coefficient %4.3f\n", 
-	   ja[i+1]-1  , rxnsUsed.rxns[ja[i+1]-1].name, ia[i+1]-1, metsUsed.mets[ia[i+1] - 1].name, ar[i+1]);
+	   ja[i+1]-1  , rxnsUsed.rxns[ja[i+1]-1].name.c_str(), ia[i+1]-1, 
+	   metsUsed.mets[ia[i+1] - 1].name.c_str(), ar[i+1]);
   }
   printf("OBJECTIVES:\n");
   for(int i=0; i<objIdx.size(); i++){
-    printf("%s (coefficient = %4.3f)\n", rxnsUsed.rxns[objIdx[i]-1].name, objCoef[i]);
+    printf("%s (coefficient = %4.3f)\n", rxnsUsed.rxns[objIdx[i]-1].name.c_str(), objCoef[i]);
   }
 
 }

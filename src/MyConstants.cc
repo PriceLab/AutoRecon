@@ -80,19 +80,19 @@ DEBUGFLAGS::DEBUGFLAGS() {
   BRIDGEMETFACTOR = 100000; /* For bridge (_MB) metabolites [used after gapfilling] */
 
   /* Database conventions for important metabolites and reactions, and for compartment names (no compartment = no _x_ tag) */
-  strcpy(E_tag, "_e_");
-  strcpy(H_name, "h");
-  strcpy(Na_name, "na1");
-  sprintf(H_plus_E, "%s%s", H_name, E_tag);
-  sprintf(Na_plus_E,"%s%s", Na_name, E_tag);
+  E_tag = "_e_";
+  H_name = "h";
+  Na_name = "na1";
+  H_plus_E = H_name + E_tag;
+  Na_plus_E = Na_name + E_tag;
 
   /* Non-growth associated ATP maintenance reaction */
-  strcpy(ATPM_name, "ATPM");
+  ATPM_name = "ATPM";
   /* Growth-associated maintenance - we need these in order to modify the ATPM value of the biomass equation - along with H_name above */
-  strcpy(ATP_name, "atp");
-  strcpy(ADP_name, "adp");
-  strcpy(H2O_name, "h2o");
-  strcpy(PI_name, "pi");
+  ATP_name = "atp";
+  ADP_name = "adp";
+  H2O_name = "h2o";
+  PI_name = "pi";
 
 }
 

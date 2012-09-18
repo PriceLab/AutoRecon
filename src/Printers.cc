@@ -4,13 +4,14 @@
 #include <map>
 #include <set>
 #include <vector>
+#include <sstream>
+#include <iomanip>
+#include <iostream>
 
 #include "DataStructures.h"
 #include "Printers.h"
 
-using std::map;
-using std::set;
-using std::vector;
+using namespace std;
 
 /**************** Generic printers **************/
 
@@ -78,7 +79,7 @@ void printIntSet(const set<int> &mySet) {
 
 /***************** Metablite / reaction printers ****************/
 
-void printRxnFormula(const REACTION &rxn, char* rxnString, bool printStoichPart) {
+void printRxnFormula(const REACTION &rxn, string rxnString, bool printStoichPart) {
   vector<STOICH> st;
   if(printStoichPart) {
     st = rxn.stoich_part;
@@ -92,32 +93,33 @@ void printRxnFormula(const REACTION &rxn, char* rxnString, bool printStoichPart)
     if(rxnCoeff < 0.0f) {
       rxnCoeff *= -1;
     }
-    char oneReactantString[96];
-    sprintf(oneReactantString, "%1.4f %s", rxnCoeff, st[i].met_name);
-    strcat(rxnString, oneReactantString);
+    string oneReactantString;
+    stringstream out;
+    out << setprecision(5) << rxnCoeff << " " << st[i].met_name;
+    rxnString += oneReactantString;
 
     if(i != st.size() - 1) {
       if(st[i+1].rxn_coeff * st[i].rxn_coeff < 0.0f) {
         if(rxn.net_reversible == -1) {
-          strcat(rxnString, " <-- ");
+          rxnString += " <-- ";
         } else if(rxn.net_reversible == 0) {
-          strcat(rxnString, " <=> ");
+          rxnString += " <=> ";
         } else {
-          strcat(rxnString, " --> ");
+          rxnString += " --> ";
         }
         arrowDone = true;
       } else {
-        strcat(rxnString, " + ");
+        rxnString += " + ";
       }
     }
   }
   if(!arrowDone) {
     if(rxn.net_reversible == -1) {
-      strcat(rxnString, " <-- ");
+      rxnString += " <-- ";
     } else if(rxn.net_reversible == 0) {
-      strcat(rxnString, " <=> ");
+      rxnString += " <=> ";
     } else {
-      strcat(rxnString, " --> ");
+      rxnString += " --> ";
     }
   }
   return;
@@ -126,7 +128,7 @@ void printRxnFormula(const REACTION &rxn, char* rxnString, bool printStoichPart)
 
 void printMETABOLITEinputs(const METABOLITE &metabolite){
   printf("\tid: %05d\n",(int)metabolite.id);
-  printf("\tname: %s\n",metabolite.name);
+  cout << "\tname: " << metabolite.name << endl;;
   printf("\tinput: %d  ",metabolite.input);
   if(metabolite.input==0){ printf("(NO)\n");} else{printf("(YES)\n");}
   printf("\toutput: %d  ",metabolite.output);
@@ -169,9 +171,10 @@ void printGROWTHinputs(const GROWTH &growth){
 
 void printSynRxns(const RXNSPACE &synrxns, const RXNSPACE &fullrxns) {
   for(int i=0; i<synrxns.rxns.size(); i++) {
-    printf("Reaction %s (rev=%d) synrxns: ", synrxns.rxns[i].name, (int)synrxns.rxns[i].net_reversible);
+    cout << "Reaction " << synrxns.rxns[i].name << " (rev=" << synrxns.rxns[i].net_reversible << ") synrxns: ";
     for(int j=0; j<synrxns.rxns[i].syn.size(); j++) {
-      printf("%s (rev=%d); ", fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).name, (int)fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).net_reversible);
+      cout << fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).name 
+	   << " rev = " << (int)fullrxns.rxnFromId(synrxns.rxns[i].syn[j]).net_reversible;
     }
     printf("\n");
   }
@@ -179,7 +182,7 @@ void printSynRxns(const RXNSPACE &synrxns, const RXNSPACE &fullrxns) {
 
 void printREACTIONintermediates(const REACTION &reaction, int print_type){
   printf("\tid: %05d\n",(int)reaction.id);
-  printf("\tname: %s\n",reaction.name);
+  cout << "\tname: " << reaction.name << endl;
   printf("\treversible: %d  ",(int)reaction.net_reversible);
   if(reaction.net_reversible==0){ printf("(YES)\n");}
   if(reaction.net_reversible==-1){ printf("(NO - BACKWARDS)\n");}
@@ -238,14 +241,14 @@ void printSTOICHIOMETRY_by_id(const vector<STOICH> &stoich, int num_met, int rev
   /* Print reaction */
   i=0;
   while(tempv[i].rxn_coeff<0){
-    printf("%2.2f %s ",tempv[i].rxn_coeff,tempv[i].met_name);
+    printf("%2.2f %s ",tempv[i].rxn_coeff,tempv[i].met_name.c_str());
     if(tempv[i+1].rxn_coeff<0){ printf("+ ");}
     i++;}
   if(rev==-1){ printf(" <--  ");}
   if(rev==0) { printf(" <--> ");}
   if(rev==1) { printf("  --> ");}
   while(tempv[i].rxn_coeff>0 && i<tempv.size()){
-    printf("%2.2f %s ",tempv[i].rxn_coeff,tempv[i].met_name);
+    printf("%2.2f %s ",tempv[i].rxn_coeff,tempv[i].met_name.c_str());
     if(i!=(tempv.size()-1)){ printf("+ ");}
     i++;}
   printf("\n");
@@ -257,7 +260,7 @@ void printREACTIONvector(const vector<REACTION> &reaction, int print_type) {
 
 void printREACTIONinputs(const REACTION &reaction, int print_type){
   printf("\tid: %05d\n",(int)reaction.id);
-  printf("\tname: %s\n",reaction.name);
+  cout << "\tname: " << reaction.name << endl;
   printf("\tinit_reversible: %d  ",(int)reaction.init_reversible);
   if(reaction.init_reversible==0){ printf("(YES)\n");}
   if(reaction.init_reversible==-1){ printf("(NO - BACKWARDS)\n");}
@@ -308,8 +311,10 @@ void printREACTIONinputs(const REACTION &reaction, int print_type){
 
 void printRxnsFromIntVector(const vector<RXNID> &intVector, const RXNSPACE &rxnspace) {
   if(intVector.empty()) {printf("EMPTY\n"); return;}
+  cout.precision(8);
   for(int i=0;i<intVector.size();i++){
-    printf("%s(%4.3f) ", rxnspace.rxnFromId(intVector[i]).name, rxnspace.rxnFromId(intVector[i]).init_likelihood);
+    cout << rxnspace.rxnFromId(intVector[i]).name << "(" << setw(8) 
+	 << rxnspace.rxnFromId(intVector[i]).init_likelihood << ")" << endl;
   }
   printf("\n");
 }
@@ -317,7 +322,7 @@ void printRxnsFromIntVector(const vector<RXNID> &intVector, const RXNSPACE &rxns
 void printRxnsFromIntVector(const vector<RXNDIRID> &intVector, const RXNSPACE &rxnspace) {
   if(intVector.empty()) {printf("EMPTY\n"); return;}
   for(int i=0;i<intVector.size();i++){
-    printf("%s(%4.3f) ", rxnspace.rxnFromId((RXNID) abs(intVector[i])).name, 
+    printf("%s(%4.3f) ", rxnspace.rxnFromId((RXNID) abs(intVector[i])).name.c_str(), 
 	   rxnspace.rxnFromId((RXNID) abs(intVector[i])).init_likelihood);
   }
   printf("\n");
@@ -326,7 +331,7 @@ void printRxnsFromIntVector(const vector<RXNDIRID> &intVector, const RXNSPACE &r
 void printRxnsFromIntSet(const set<RXNID> &intSet, const RXNSPACE &rxnspace) {
   if(intSet.empty()) { printf("EMPTY\n"); return; }
   for(set<RXNID>::iterator it=intSet.begin(); it!=intSet.end(); it++) {
-    printf("%s(%4.3f) ", rxnspace.rxnFromId(*it).name, rxnspace.rxnFromId(*it).init_likelihood);
+    cout << rxnspace.rxnFromId(*it).name << "(" << rxnspace.rxnFromId(*it).init_likelihood << ") ";
   }
   printf("\n");
   return;
@@ -336,7 +341,7 @@ void printRxnsFromIntSet(const set<RXNID> &intSet, const RXNSPACE &rxnspace) {
 void printMetsFromIntVector(const vector<METID> &Vector, const PROBLEM &ProblemSpace) {
   if(Vector.empty()) {printf("EMPTY\n"); return;}
   for(int i=0;i<Vector.size();i++){
-    printf("%s ", ProblemSpace.metabolites[Vector[i]].name);
+    cout << ProblemSpace.metabolites[Vector[i]].name << " ";
   }
   printf("\n");
 }
@@ -350,7 +355,7 @@ void printDoubleVector_rxns(const RXNSPACE &rxnspace, const vector<double> &doub
   }
   for(int i=0; i<doubleVec.size(); i++) {
     if(doubleVec[i] > 0.0001 || doubleVec[i] < -0.0001) {
-      printf("%s\t%1.3f\n", rxnspace.rxns[i].name, doubleVec[i]);
+      printf("%s\t%1.3f\n", rxnspace.rxns[i].name.c_str(), doubleVec[i]);
     }
   }
   return;
@@ -365,7 +370,7 @@ void printDoubleVector_mets(const METSPACE &metspace, const vector<double> &doub
   }
   for(int i=0; i<doubleVec.size(); i++) {
     if(doubleVec[i] > 0.0001 || doubleVec[i] < -0.0001) {
-      printf("%s\t%1.3f\n", metspace.mets[i].name, doubleVec[i]);
+      printf("%s\t%1.3f\n", metspace.mets[i].name.c_str(), doubleVec[i]);
     }
   }
   return;
@@ -375,7 +380,7 @@ void printDoubleVector_mets(const METSPACE &metspace, const vector<double> &doub
 void printMetsFromStoich(vector<STOICH> a){
   int i;
   for(i=0;i<a.size();i++){
-    printf("%s ",a[i].met_name);
+    cout << a[i].met_name << " ";
   }
   printf("\n");
   return;
@@ -389,7 +394,7 @@ void printNetReactionVector(const vector<NETREACTION> &netReactions, const PROBL
     printf("ETC %d: ", i);
     for(int j=0; j<netReactions[i].rxnDirIds.size(); j++) {
       REACTION tmpRxn = problemSpace.fullrxns.rxnFromId((RXNID)abs(netReactions[i].rxnDirIds[j]));
-      printf("%s(%4.3f)\t", tmpRxn.name, tmpRxn.init_likelihood);
+      printf("%s(%4.3f)\t", tmpRxn.name.c_str(), tmpRxn.init_likelihood);
     }
     printf("\n");
   }
@@ -467,7 +472,8 @@ void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace) {
 /* ALso prints reaction likelihoods from rxnspace (why do we need this if the rxnspace is also found in PROBLEMSPACE?) */
 void printPathResults(const vector<PATH> &path, PROBLEM &ProblemSpace, RXNSPACE &rxnspace) {
   for(unsigned int i=0;i<path.size();i++) {
-    printf("Path number: %d corresponding to output %s...\n", i, ProblemSpace.metabolites[path[i].outputId].name);
+    cout << "Path number: " << i << " corresponding to output " << ProblemSpace.metabolites[path[i].outputId].name
+	 << " ..." << endl;
     printf("Inputs required to reach output: "); 
     printMetsFromIntVector(path[i].inputIds,ProblemSpace);
     printf("Number of reactions: ");
@@ -509,10 +515,10 @@ void PrintPathSummary2(const vector<vector<vector<PATHSUMMARY> > > &psum, PROBLE
 void PrintGapfillResult(const vector<GAPFILLRESULT> &res, const PROBLEM &problemSpace, const vector<int> &kToPrint) {
   for(int j=0; j<res.size(); j++) {
     if(res[j].deadEndSolutions.size() == 0) { continue; }
-    printf("%s (k=%d) --> ", problemSpace.metabolites[res[j].deadMetId].name, kToPrint[j]);
+    printf("%s (k=%d) --> ", problemSpace.metabolites[res[j].deadMetId].name.c_str(), kToPrint[j]);
     for(int n=0; n<res[j].deadEndSolutions[kToPrint[j]].size(); n++) {
       REACTION tmp = problemSpace.fullrxns.rxnFromId(res[j].deadEndSolutions[kToPrint[j]][n]);
-      printf("%s(%4.3f)\t", tmp.name, tmp.init_likelihood);
+      printf("%s(%4.3f)\t", tmp.name.c_str(), tmp.init_likelihood);
     }
     printf("\n");
   }
@@ -521,12 +527,12 @@ void PrintGapfillResult(const vector<GAPFILLRESULT> &res, const PROBLEM &problem
 /******************** Output files ***************/
 
 /* Output reactions in InRxns to a text file (including name and direction) */
-void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns){
+void MATLAB_out(const string fileName, const vector<REACTION> &InRxns){
   unsigned int i,j,k;
   STOICH temps;
   vector<STOICH> stoich;
   FILE* output;
-  output = fopen(fileName, "w");
+  output = fopen(fileName.c_str(), "w");
 
   for(i=0;i<InRxns.size();i++){
 
@@ -552,12 +558,12 @@ void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns){
     }
 
     /* 1st column: Print out name */
-    fprintf(output,"%s\t",InRxns[i].name);
+    fprintf(output,"%s\t",InRxns[i].name.c_str());
 
     /* 2nd column: Print out reaction */
     for(j=0,k=0;j<stoich.size();j++){
       if(stoich[j].rxn_coeff < 0.0f){
-        fprintf(output,"%1.8f %s",-stoich[j].rxn_coeff,stoich[j].met_name);
+        fprintf(output,"%1.8f %s",-stoich[j].rxn_coeff,stoich[j].met_name.c_str());
         if((j+1) < stoich.size() && stoich[j+1].rxn_coeff < 0.0f){ fprintf(output," + ");}
       }
       /* If either 1) the sign changes between the current and next STOICH, or
@@ -570,7 +576,7 @@ void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns){
         if(InRxns[i].net_reversible==-1){fprintf(output," <-- ");}
       }
       if(stoich[j].rxn_coeff > 0.0f){
-        fprintf(output,"%1.8f %s",stoich[j].rxn_coeff,stoich[j].met_name);
+        fprintf(output,"%1.8f %s",stoich[j].rxn_coeff,stoich[j].met_name.c_str());
         if((j+1) < stoich.size()){ fprintf(output," + ");}
       }
     }
@@ -600,13 +606,13 @@ void MATLAB_out(const char* fileName, const vector<REACTION> &InRxns){
 }
 
 /* Report reactions involved in psum (AFTER unsynonymizing - if you try this before unsyn it will die a horrible death) */
-void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const PROBLEM &problem) {
+void PATHS_rxns_out(const string fileName, const vector<PATHSUMMARY> &psum, const PROBLEM &problem) {
 
   const RXNSPACE &rxnspace = problem.fullrxns;
   const METSPACE &metspace = problem.metabolites;
 
   /* Reactions */
-  FILE* output = fopen(fileName, "w");
+  FILE* output = fopen(fileName.c_str(), "w");
 
   fprintf(output, "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
 	  "PSUM ID", "GROWTH CONDITION", "TARGET METABOLITE", "K (#th shortest)", "REACTION", "RXNDIRID", "LIKELIHOOD");
@@ -614,7 +620,8 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
   for(int i=0; i<psum.size(); i++) {
     for(int j=0; j<psum[i].rxnDirIds.size(); j++) {
       fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%d\t%4.3f\n",
-	      (long int)psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j])).name, (int)psum[i].rxnDirIds[j], 
+	      (long int)psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name.c_str(), psum[i].k_number, 
+	      rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j])).name.c_str(), (int)psum[i].rxnDirIds[j], 
 	      rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j])).init_likelihood);
     }
   }
@@ -626,8 +633,8 @@ void PATHS_rxns_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
 /* After un-synonymizing: Output an adjacency-list for the data in the PSUM:
    Reaction   metabolite  direction  edge weight [default: current_likelihood] 
 direction is 0 if it is a reversible edge, -1 means metabolite --> reaction, and +1 means reaction --> metabolite */
-void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBLEM &problem) {
-  FILE* output = fopen(fileName, "w");
+void ONEPATH_adj_list(const string fileName, const PATHSUMMARY &psum, const PROBLEM &problem) {
+  FILE* output = fopen(fileName.c_str(), "w");
   fprintf(output, "%s\t%s\t%s\t%s\n", "REACTION", "METABOLITE", "DIRECTION", "EDGEWEIGHT");
   for(int i=0; i<psum.rxnDirIds.size(); i++) {
     REACTION tmprxn = problem.fullrxns.rxnFromId((RXNID)abs(psum.rxnDirIds[i]));
@@ -641,7 +648,7 @@ void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBL
 	dir = 1;
       } else { dir = -1; }
       fprintf(output, "%s\t%s\t%d\t%1.4f\n", 
-	      tmprxn.name, tmprxn.stoich[j].met_name, dir, tmprxn.current_likelihood);
+	      tmprxn.name.c_str(), tmprxn.stoich[j].met_name.c_str(), dir, tmprxn.current_likelihood);
     }
   }
   fflush(output);
@@ -653,11 +660,11 @@ void ONEPATH_adj_list(const char* fileName, const PATHSUMMARY &psum, const PROBL
  and for the synonymized version from Dijkstras it should be synrxns, etc.
 
 This format can be easily sorted and checked e.g. for what reactions are foudn in what paths */
-void PATHS_mets_out(const char* fileName, const vector<PATHSUMMARY> &psum, const PROBLEM &problem) {
+void PATHS_mets_out(const string fileName, const vector<PATHSUMMARY> &psum, const PROBLEM &problem) {
   const RXNSPACE &rxnspace = problem.fullrxns;
   const METSPACE &metspace = problem.metabolites;
   /* Reactions */
-  FILE* output = fopen(fileName, "w");
+  FILE* output = fopen(fileName.c_str(), "w");
 
   fprintf(output, "%s\t%s\t%s\t%s\t%s\n",
 	  "PSUM ID", "GROWTH CONDITION", "TARGET METABOLITE", "K (#th shortest)", "METABOLITE", "REACTION containing metabolite");
@@ -667,7 +674,8 @@ void PATHS_mets_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
       REACTION tmp = rxnspace.rxnFromId((RXNID)abs(psum[i].rxnDirIds[j]));
       for(int k=0; k<tmp.stoich.size(); k++) {
 	fprintf(output, "%ld\t%d\t%s\t%d\t%s\t%s\n",
-		psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name, psum[i].k_number, metspace[tmp.stoich[k].met_id].name, tmp.name);
+		psum[i].id, psum[i].growthIdx[0], metspace[psum[i].outputId].name.c_str(), psum[i].k_number, 
+		metspace[tmp.stoich[k].met_id].name.c_str(), tmp.name.c_str());
       }
     }
   }
@@ -677,12 +685,14 @@ void PATHS_mets_out(const char* fileName, const vector<PATHSUMMARY> &psum, const
 }
 
 
-void ANNOTATIONS_out(const char* filename, const vector<REACTION> &annotated_reaction_list) {
-  FILE* output = fopen(filename, "w");
+void ANNOTATIONS_out(const string filename, const vector<REACTION> &annotated_reaction_list) {
+  FILE* output = fopen(filename.c_str(), "w");
   fprintf(output, "%s\t%s\t%s\n", "REACTION", "ANNOTATION", "GENE_PROBABILITY");
   for(int i=0; i<annotated_reaction_list.size(); i++) {
     for(int j=0; j<annotated_reaction_list[i].annote.size(); j++) {
-      fprintf(output, "%s\t%s\t%4.3f\n", annotated_reaction_list[i].name, annotated_reaction_list[i].annote[j].genename.c_str(), annotated_reaction_list[i].annote[j].probability);
+      fprintf(output, "%s\t%s\t%4.3f\n", annotated_reaction_list[i].name.c_str(), 
+	      annotated_reaction_list[i].annote[j].genename.c_str(), 
+	      annotated_reaction_list[i].annote[j].probability);
     }
   }
   fclose(output);
