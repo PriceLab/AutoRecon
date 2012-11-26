@@ -46,7 +46,7 @@ class MAGICRESULT{
   }
 };
 
-void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace);
+void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace, Problem& problem);
 METID inOutPair(METID metId, const METSPACE &metspace);
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name);
 REACTION MagicExit(const vector<REACTION> &reaction, int met_id, const char* name, int R);

@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
   vector<vector<vector<PATHSUMMARY> > > psum;
 
   printf("Setting up problem inputs...\n");fflush(stdout);
-  InputSetup(argc,argv,ProblemSpace);
+//  InputSetup(argc,argv,ProblemSpace);
   printf("...done \n");fflush(stdout);
   
   /* I tried to move this to inputSetup as well but it gave me a compile error

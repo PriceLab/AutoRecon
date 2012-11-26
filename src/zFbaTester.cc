@@ -31,6 +31,7 @@ int main(int argc, char *argv[]) {
   
       All three sets of reactions share the same metabolites (metabolites) */
   PROBLEM ProblemSpace;
+  Problem problem;
 
   /* Number of K-shortest paths (forward if possible, backward otherwise) */
   int K = _db.INITIAL_K;
@@ -39,7 +40,7 @@ int main(int argc, char *argv[]) {
   vector<vector<vector<PATHSUMMARY> > > psum;
 
   printf("Setting up problem inputs...\n");fflush(stdout);
-  InputSetup(argc,argv,ProblemSpace);
+  InputSetup(argc,argv,ProblemSpace,problem);
   printf("...done \n");fflush(stdout);
 
   printSynRxns(ProblemSpace.synrxns, ProblemSpace.fullrxns);

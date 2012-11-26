@@ -2,8 +2,10 @@
 #define _PATHUTILS
 
 #include "DataStructures.h"
+#include "Models.h"
 
 bool isExternalMet(const string name, const string E_tag);
+bool isExternalCompound(ModelCompoundPtr compound, Problem& problem);
 
 /* Vector utilities */
 bool anyVec(const vector<bool> &vec);

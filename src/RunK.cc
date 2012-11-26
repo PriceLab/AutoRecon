@@ -9,6 +9,7 @@
 #include "shortestPath.h"
 #include "visual01.h"
 #include "XML_loader.h"
+#include "FileLoader.h"
 
 #include <algorithm>
 #include <cassert>
@@ -28,7 +29,7 @@ using std::map;
 using std::set;
 
 /* Does all input parsing and hum-drum vector filling */
-void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
+void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace, Problem& problem) {
 
   if(_db.DEBUGSYN){printf("entering InputSetup\n");}
   if(argc < 4 || argc > 5){
@@ -55,6 +56,7 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   /* Set number of threads specified in user inputs */
   omp_set_num_threads(atoi(argv[1]));
 
+#if 0
   /* likelihoods.xml */
   char* docName = argv[2];
   /* input.xml */
@@ -63,6 +65,12 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
   /* Parse XML files and do some of the initial setup steps (which should be moved here) */
   parseALL(docName, docName2, ProblemSpace);
   ProblemSpace.fullrxns.rxnMap();
+#endif
+
+  // Parse JSON files.
+  loadBiochemistryFile(argv[2], problem.biochem);
+  loadModelFile(argv[3], problem.model);
+  validateProblem(problem);
 
   /* Ensure that exchangers and transprots exist for everything in the GROWTH conditions (media and byproducts) */
   vector<GROWTH> &growth = ProblemSpace.growth;
@@ -79,9 +87,11 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace) {
     }
   }
 
-  PROBLEM TMPproblem(ProblemSpace.fullrxns, ProblemSpace);
+  PROBLEM TMPproblem(ProblemSpace.fullrxns, ProblemSpace); // Make a temporary problem space as a copy of the working problem space
+  // Metabolites (compounds) added to working problem space.
   checkExchangesAndTransporters(ProblemSpace, TMPproblem, metsToCheck, dirs);
   TMPproblem.clear();
+  // MBM TMPproblem is discarded here
 
   MakeSynList(ProblemSpace);
   makeMagicBridges(ProblemSpace);
