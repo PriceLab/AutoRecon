@@ -15,7 +15,7 @@ bool loadModelFile(const char* filename, MetabolicModel& model)
 	Json::Reader reader;
 	if (reader.parse(myfile, root) == false)
 	{
-		cout << "Failed to parse file " << filename << "\n" << reader.getFormattedErrorMessages();
+		cout << "Failed to parse file " << filename << "\n" << reader.getFormatedErrorMessages();
 		return false;
 	}
 	myfile.close();
@@ -93,7 +93,7 @@ bool loadBiochemistryFile(const char* filename, Biochemistry& biochem)
 	Json::Reader reader;
 	if (reader.parse(myfile, root) == false)
 	{
-		cout << "Failed to parse file " << filename << "\n" << reader.getFormattedErrorMessages();
+		cout << "Failed to parse file " << filename << "\n" << reader.getFormatedErrorMessages();
 		return false;
 	}
 	myfile.close();

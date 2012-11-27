@@ -96,7 +96,7 @@ void jsonMETRXNFILE (char *met_rxn_filename, PROBLEM &problem){
   if ( !parsingSuccessful ) {
     // report to the user the failure and their locations in the document.
     std::cout  << "Failed to parse configuration\n"
-	       << reader.getFormattedErrorMessages();
+	       << reader.getFormatedErrorMessages();
     return;
   }
   const Json::Value metabolites = root["metabolites"];
