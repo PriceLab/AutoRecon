@@ -9,14 +9,15 @@ TOPDIR := $(shell pwd)
 OBJDIR := $(TOPDIR)/obj
 $(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
 
-ALL_LIBS = -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
+#ALL_LIBS = -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
       -L tmp/ILOG/CPLEX_Studio_AcademicResearch122/concert/lib/x86-64_sles10_4.1/static_pic/ \
 	-L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/cplex/lib/x86-64_sles10_4.1/static_pic/ \
 	-L /home/mattb112885/ILOG/CPLEX_Studio_AcademicResearch122/concert/lib/x86-64_sles10_4.1/static_pic/
 
 # Compiler, object, library, and header definitions...
 CC = g++
-LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl` \
+LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl` 
+#\
 	$(ALL_LIBS) \
       -lilocplex -lconcert -lcplex -lm -lpthread
 
@@ -29,19 +30,21 @@ OBJS = obj/DataStructures.o obj/XML_loader.o \
        obj/RunK.o obj/visual01.o obj/Grow.o obj/Exchanges.o \
        obj/ETC.o obj/Modularity.o obj/Components.o obj/genericLinprog.o \
        obj/Printers.o obj/Paths2Model.o obj/Annotations.o obj/MyConstants.o \
-       obj/score.o obj/TableLoader.o obj/cplexScript.o
+       obj/score.o obj/TableLoader.o 
+#obj/cplexScript.o
        
 HDRS =  src/DataStructures.h src/Grow.h src/pathUtils.h \
         src/RunK.h src/visual01.h src/kShortest.h src/shortestPath.h \
 	src/XML_loader.h src/Exchanges.h src/ETC.h src/Modularity.h \
 	src/Components.h src/genericLinprog.h src/Printers.h \
 	src/Paths2Model.h src/Annotations.h src/MyConstants.h \
-	src/score.h src/TableLoader.h src/cplexScript.h
+	src/score.h src/TableLoader.h 
+#src/cplexScript.h
         
 
-all: FbaTester-NC FbaTester CplexTester
+all: FbaTester-NC FbaTester 
+#CplexTester
 
-# Note - you require a "cc" file to compile into an object file using this command...will it work without one?
 obj/%.o: src/%.cc $(HDRS)
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -o $@ 
 
