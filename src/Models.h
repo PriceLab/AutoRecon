@@ -827,4 +827,6 @@ public:
 
 };
 
+typedef std::tr1::shared_ptr<Problem> ProblemPtr;
+
 #endif // _MODELS_H

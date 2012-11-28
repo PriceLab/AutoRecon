@@ -31,7 +31,7 @@ HDRS =  src/DataStructures.h src/Grow.h src/pathUtils.h \
 	src/score.h src/TableLoader.h src/FileLoader.h src/Models.h 
         
 
-all: FbaTester-NC FbaTester
+all: Main
 
 # Note - you require a "cc" file to compile into an object file using this command...will it work without one?
 obj/%.o: src/%.cc $(HDRS)
@@ -44,6 +44,9 @@ clout:
 	rm outputs/*
 
 # Every program should be listed here (follow example):
+
+Main: obj/main.o $(OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/main.o $(LIBS)
 
 FbaTester: obj/zFbaTester.o $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/zFbaTester.o $(LIBS)
