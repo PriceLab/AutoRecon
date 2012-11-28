@@ -20,14 +20,14 @@ OBJS = obj/DataStructures.o obj/XML_loader.o \
        obj/shortestPath.o obj/kShortest.o obj/pathUtils.o \
        obj/RunK.o obj/visual01.o obj/Grow.o obj/Exchanges.o \
        obj/ETC.o obj/Modularity.o obj/Components.o obj/genericLinprog.o \
-       obj/Printers.o obj/Paths2Model.o obj/Annotations.o obj/MyConstants.o \
+       obj/Printers.o obj/Paths2Model.o obj/MyConstants.o \
        obj/score.o obj/TableLoader.o obj/FileLoader.o obj/Models.o 
        
 HDRS =  src/DataStructures.h src/Grow.h src/pathUtils.h \
         src/RunK.h src/visual01.h src/kShortest.h src/shortestPath.h \
 	src/XML_loader.h src/Exchanges.h src/ETC.h src/Modularity.h \
 	src/Components.h src/genericLinprog.h src/Printers.h \
-	src/Paths2Model.h src/Annotations.h src/MyConstants.h \
+	src/Paths2Model.h src/MyConstants.h \
 	src/score.h src/TableLoader.h src/FileLoader.h src/Models.h 
         
 
@@ -47,30 +47,3 @@ clout:
 
 Main: obj/main.o $(OBJS)
 	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/main.o $(LIBS)
-
-FbaTester: obj/zFbaTester.o $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/zFbaTester.o $(LIBS)
-
-FbaTester-NC: obj/zFbaTester-NC.o $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/zFbaTester-NC.o $(LIBS)
-
-PathUtilsTester: obj/zPathUtilsTester.o $(OBJS)
-	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zPathUtilsTester.o ${LIBS}
-
-ETC_check-NC: obj/zETC_check-NC.o $(OBJS)
-	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zETC_check-NC.o ${LIBS}
-
-BottleneckTester-MB: obj/zBottleneckTester-MB.o $(OBJS)
-	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zBottleneckTester-MB.o ${LIBS}
-
-MfaTester: obj/zShortestMfaTester.o $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/zShortestMfaTester.o $(LIBS)
-
-VisualTester: obj/zVisualTester.o $(OBJS)
-	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zVisualTester.o ${LIBS}
-
-ModularityCheck-NC: obj/zModularityCheck.o $(OBJS)
-	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zModularityCheck.o ${LIBS}
-
-TableTester: obj/zNewRxnTableTester.o $(OBJS)
-	${CC} ${CFLAGS} ${INCLUDES} -o $@ ${OBJS} obj/zNewRxnTableTester.o ${LIBS}
