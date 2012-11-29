@@ -1,13 +1,10 @@
 #include "DataStructures.h"
 #include "kShortest.h"
-#include "genericLinprog.h"
 #include "MyConstants.h"
-#include "Paths2Model.h"
 #include "pathUtils.h"
 #include "Printers.h"
 #include "RunK.h"
 #include "shortestPath.h"
-#include "visual01.h"
 #include "XML_loader.h"
 #include "FileLoader.h"
 
@@ -56,111 +53,9 @@ void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace, Problem& problem)
   /* Set number of threads specified in user inputs */
   omp_set_num_threads(atoi(argv[1]));
 
-#if 0
-  /* likelihoods.xml */
-  char* docName = argv[2];
-  /* input.xml */
-  char* docName2 = argv[3];
-
-  /* Parse XML files and do some of the initial setup steps (which should be moved here) */
-  parseALL(docName, docName2, ProblemSpace);
-  ProblemSpace.fullrxns.rxnMap();
-#endif
-
-  // Parse JSON files.
   loadBiochemistryFile(argv[2], problem.biochem);
   loadModelFile(argv[3], problem.model);
   validateProblem(problem);
-
-  /* Ensure that exchangers and transprots exist for everything in the GROWTH conditions (media and byproducts) */
-  vector<GROWTH> &growth = ProblemSpace.growth;
-  vector<int> dirs;
-  vector<METID> metsToCheck;
-  for(int i=0;i<growth.size();i++) {
-    for(int j=0;j<growth[i].media.size();j++) {
-      dirs.push_back(0); /* Note we want to allow media to be imported OR exported... (especially important for H+ because transporters depend on it) */
-      metsToCheck.push_back(growth[i].media[j].id);
-    }
-    for(int j=0;j<growth[i].byproduct.size();j++) {
-      dirs.push_back(1); /* ... but anything NOT in the media must be only exported */
-      metsToCheck.push_back(growth[i].byproduct[j].id);
-    }
-  }
-
-  PROBLEM TMPproblem(ProblemSpace.fullrxns, ProblemSpace); // Make a temporary problem space as a copy of the working problem space
-  // Metabolites (compounds) added to working problem space.
-  checkExchangesAndTransporters(ProblemSpace, TMPproblem, metsToCheck, dirs);
-  TMPproblem.clear();
-  // MBM TMPproblem is discarded here
-
-  MakeSynList(ProblemSpace);
-  makeMagicBridges(ProblemSpace);
-  ProblemSpace.synrxns.rxnMap();
-
-  if(_db.DEBUGSYN){
-    for(int i=0; i<ProblemSpace.synrxns.rxns.size();i++) {
-      if(ProblemSpace.synrxns.rxns[i].syn.size() > 1) {
-	printf("SYN %d: ", (int) ProblemSpace.synrxns.rxns[i].id);
-	for(int j=0;j<ProblemSpace.synrxns.rxns[i].syn.size();j++) {
-	  cout << ProblemSpace.fullrxns.rxnFromId(ProblemSpace.synrxns.rxns[i].syn[j]).name 
-	       << "(" << (int) ProblemSpace.synrxns.rxns[i].syn[j] << ") ";
-	}
-	printf("\n");
-      }
-    }
-  }
-
-  if(_db.DEBUGSYN) {
-    printf("METRXNRELATIONS:\n");
-    for(int i=0;i<ProblemSpace.metabolites.mets.size();i++) {
-      cout << ProblemSpace.metabolites.mets[i].name << ":  ";
-      printVector(ProblemSpace.metabolites.mets[i].rxnsInvolved_nosec);
-    }
-  }
-
-  /* Load synrxnsR (syn reactions in opposite direction) */
-  GoodReversible(ProblemSpace);
-
-  for(int i=0;i<ProblemSpace.metabolites.mets.size();i++){
-    if(ProblemSpace.metabolites.mets[i].noncentral==1){
-      ProblemSpace.cofactors.addMetabolite(ProblemSpace.metabolites.mets[i]);
-    }
-  }
-
-  /* Load cofactor list */
-  for(int i=0; i<ProblemSpace.metabolites.mets.size(); i++) {
-    if(ProblemSpace.metabolites.mets[i].secondary_lone == 1) {
-      ProblemSpace.secondaryLones.addMetabolite(ProblemSpace.metabolites.mets[i]);
-    }
-  }
-
-  /* Needed for ETC chain - find out what reactions each noncentral cofactor (ProblemSpace.cofactors) comes from */
-  calcMetRxnRelations(ProblemSpace.fullrxns,ProblemSpace.cofactors);
-  calcMetRxnRelations(ProblemSpace.fullrxns,ProblemSpace.metabolites);
-
-  /* Add the full biomass equation */
-  REACTION fullBiomass;
-  /* FIXME: Only looks at 0'th growth for now... */
-  fullBiomass = MakeBiomassFromGrowth(ProblemSpace.growth[0]);
-  ProblemSpace.fullrxns.addReaction(fullBiomass);
-
-
-  /* Ensure that GAM and NGAM can be properly tuned (applies to fullrxns only) */
-  setUpMaintenanceReactions(ProblemSpace);
-
-  /* Adjust likelihoods into Dijkstras-compatible distances (including accounting for special flags for spontaneous,
-     etc. */
-  if(_db.PARSIMONY) {
-    for(int i=0; i<ProblemSpace.synrxns.rxns.size(); i++) { ProblemSpace.synrxns.rxns[i].current_likelihood = 1;}
-    for(int i=0; i<ProblemSpace.synrxnsR.rxns.size(); i++) { ProblemSpace.synrxnsR.rxns[i].current_likelihood = 1; }
-    for(int i=0; i<ProblemSpace.fullrxns.rxns.size(); i++) { ProblemSpace.fullrxns.rxns[i].current_likelihood = 1; }
-  } else {
-    /* void adjustLikelihoods(vector<REACTION> &rxnList, double spont_likely, double black_magic_likely,
-       double hard_include_likely, double no_likely, bool adjustNonspecial) */
-    adjustLikelihoods(ProblemSpace.synrxns.rxns, 1.0f, -3.0f, 1.1f, -10.0f, true);
-    adjustLikelihoods(ProblemSpace.synrxnsR.rxns,  1.0f, -3.0f, 1.1f, -10.0f, true);
-    adjustLikelihoods(ProblemSpace.fullrxns.rxns, 1.0f, -3.0f, 1.1f, -10.0f, true);
-  }
 
   return;
 }
@@ -190,17 +85,6 @@ void Run_K(PROBLEM &ProblemSpace, vector<MEDIA> &media, RXNSPACE &rxnspace, METI
   /* Optional Intermediate Print Statement */
   if(_db.DEBUGPATHS){
     printPathResults(kpaths,ProblemSpace,rxnspace);
-  }
-
-  if(_db.VISUALIZEPATHS) {
-    #pragma omp parallel for
-    for(int j=0;j<kpaths.size();j++){
-      string outpath;
-      stringstream out;
-      out << _myoutputdir << ProblemSpace.metabolites[outputId].name << j;
-      outpath = out.str();
-      VisualizePath2File(outpath, outpath, kpaths[j], ProblemSpace, 1);
-    }
   }
 
   for(int i=0;i<kpaths.size();i++){

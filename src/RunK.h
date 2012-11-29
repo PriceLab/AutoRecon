@@ -3,9 +3,7 @@
 
 #include "DataStructures.h"
 #include "shortestPath.h"
-#include "genericLinprog.h"
 #include "pathUtils.h"
-#include "visual01.h"
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

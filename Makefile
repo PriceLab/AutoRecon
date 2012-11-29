@@ -18,17 +18,17 @@ INCLUDES =-Isrc `pkg-config --cflags libxml-2.0` -I /opt/local/include/ \
       -I /usr/include -I /usr/local/include 
 OBJS = obj/DataStructures.o obj/XML_loader.o \
        obj/shortestPath.o obj/kShortest.o obj/pathUtils.o \
-       obj/RunK.o obj/visual01.o obj/Grow.o obj/Exchanges.o \
-       obj/ETC.o obj/Modularity.o obj/Components.o obj/genericLinprog.o \
-       obj/Printers.o obj/Paths2Model.o obj/MyConstants.o \
-       obj/score.o obj/TableLoader.o obj/FileLoader.o obj/Models.o 
+       obj/RunK.o obj/Exchanges.o \
+       obj/Modularity.o  \
+       obj/Printers.o obj/MyConstants.o \
+       obj/TableLoader.o obj/FileLoader.o obj/Models.o 
        
-HDRS =  src/DataStructures.h src/Grow.h src/pathUtils.h \
-        src/RunK.h src/visual01.h src/kShortest.h src/shortestPath.h \
-	src/XML_loader.h src/Exchanges.h src/ETC.h src/Modularity.h \
-	src/Components.h src/genericLinprog.h src/Printers.h \
-	src/Paths2Model.h src/MyConstants.h \
-	src/score.h src/TableLoader.h src/FileLoader.h src/Models.h 
+HDRS =  src/DataStructures.h src/pathUtils.h \
+        src/RunK.h src/kShortest.h src/shortestPath.h \
+	src/XML_loader.h src/Exchanges.h src/Modularity.h \
+	src/Printers.h \
+	src/MyConstants.h \
+	src/TableLoader.h src/FileLoader.h src/Models.h 
         
 
 all: Main
@@ -37,13 +37,14 @@ all: Main
 obj/%.o: src/%.cc $(HDRS)
 	$(CC) -c $< $(CFLAGS) $(INCLUDES) -o $@ 
 
+# Every program should be listed here (follow example):
+
+Main: obj/main.o $(OBJS)
+	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/main.o $(LIBS)
+
 clean:
 	rm obj/*.o
 
 clout:
 	rm outputs/*
 
-# Every program should be listed here (follow example):
-
-Main: obj/main.o $(OBJS)
-	$(CC) $(CFLAGS) $(INCLUDES) -o $@ $(OBJS) obj/main.o $(LIBS)
