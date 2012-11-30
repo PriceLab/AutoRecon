@@ -1,5 +1,8 @@
 #include "FileLoader.h"
 #include "Models.h"
+
+#include <cstdlib>
+#include <cstdio>
 #include <iostream>
 
 using namespace std;
@@ -7,6 +10,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
   if (argc != 3) {
     cout << "Usage: ./a.out [biochem_json] [model_json] " << endl;
+    exit(EXIT_FAILURE);
   }
   // Parse JSON files.
   Problem problem;
