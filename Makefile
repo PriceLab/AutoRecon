@@ -18,12 +18,11 @@ INCLUDES = -I /opt/local/include/ \
 OBJS = obj/DataStructures.o \
        obj/pathUtils.o \
        obj/RunK.o  \
-       obj/Printers.o obj/MyConstants.o \
+       obj/MyConstants.o \
        obj/FileLoader.o obj/Models.o 
        
 HDRS =  src/DataStructures.h src/pathUtils.h \
         src/RunK.h \
-	src/Printers.h \
 	src/MyConstants.h \
 	src/FileLoader.h src/Models.h 
         
