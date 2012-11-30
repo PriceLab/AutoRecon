@@ -19,16 +19,15 @@ INCLUDES =-Isrc `pkg-config --cflags libxml-2.0` -I /opt/local/include/ \
 OBJS = obj/DataStructures.o obj/XML_loader.o \
        obj/shortestPath.o obj/kShortest.o obj/pathUtils.o \
        obj/RunK.o obj/Exchanges.o \
-       obj/Modularity.o  \
        obj/Printers.o obj/MyConstants.o \
-       obj/TableLoader.o obj/FileLoader.o obj/Models.o 
+       obj/FileLoader.o obj/Models.o 
        
 HDRS =  src/DataStructures.h src/pathUtils.h \
         src/RunK.h src/kShortest.h src/shortestPath.h \
-	src/XML_loader.h src/Exchanges.h src/Modularity.h \
+	src/XML_loader.h src/Exchanges.h \
 	src/Printers.h \
 	src/MyConstants.h \
-	src/TableLoader.h src/FileLoader.h src/Models.h 
+	src/FileLoader.h src/Models.h 
         
 
 all: Main
