@@ -1,6 +1,5 @@
 #include "MyConstants.h"
 #include "pathUtils.h"
-#include "XML_loader.h"
 
 #include <algorithm>
 #include <cassert>

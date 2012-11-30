@@ -12,19 +12,17 @@ $(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
 
 # Compiler, object, library, and header definitions...
 CC = g++
-LIBS = `pkg-config --libs libxml-2.0` -lglpk `pkg-config --libs gsl` \
-      -lm -lpthread -ljsoncpp	
-INCLUDES =-Isrc `pkg-config --cflags libxml-2.0` -I /opt/local/include/ \
+LIBS = -ljsoncpp	
+INCLUDES = -I /opt/local/include/ \
       -I /usr/include -I /usr/local/include 
-OBJS = obj/DataStructures.o obj/XML_loader.o \
-       obj/shortestPath.o obj/kShortest.o obj/pathUtils.o \
-       obj/RunK.o obj/Exchanges.o \
+OBJS = obj/DataStructures.o \
+       obj/pathUtils.o \
+       obj/RunK.o  \
        obj/Printers.o obj/MyConstants.o \
        obj/FileLoader.o obj/Models.o 
        
 HDRS =  src/DataStructures.h src/pathUtils.h \
-        src/RunK.h src/kShortest.h src/shortestPath.h \
-	src/XML_loader.h src/Exchanges.h \
+        src/RunK.h \
 	src/Printers.h \
 	src/MyConstants.h \
 	src/FileLoader.h src/Models.h 
