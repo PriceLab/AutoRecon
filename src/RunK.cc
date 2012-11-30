@@ -1,4 +1,3 @@
-#include "DataStructures.h"
 #include "MyConstants.h"
 #include "pathUtils.h"
 #include "RunK.h"
@@ -21,7 +20,7 @@ using std::map;
 using std::set;
 
 /* Does all input parsing and hum-drum vector filling */
-void InputSetup(int argc, char *argv[], PROBLEM &ProblemSpace, Problem& problem) {
+void InputSetup(int argc, char *argv[], Problem& problem) {
 
   if(_db.DEBUGSYN){printf("entering InputSetup\n");}
   if(argc < 4 || argc > 5){

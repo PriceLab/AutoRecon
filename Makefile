@@ -15,13 +15,12 @@ CC = g++
 LIBS = -ljsoncpp	
 INCLUDES = -I /opt/local/include/ \
       -I /usr/include -I /usr/local/include 
-OBJS = obj/DataStructures.o \
-       obj/pathUtils.o \
+OBJS = obj/pathUtils.o \
        obj/RunK.o  \
        obj/MyConstants.o \
        obj/FileLoader.o obj/Models.o 
        
-HDRS =  src/DataStructures.h src/pathUtils.h \
+HDRS =  src/pathUtils.h \
         src/RunK.h \
 	src/MyConstants.h \
 	src/FileLoader.h src/Models.h 
