@@ -93,3 +93,13 @@ map<ReactionPtr, vector<ReactionPtr> > computeSynonyms(Problem &problem) {
 
   return synList;
 }
+
+void findPaths(Problem &problem, map<ReactionPtr, vector<ReactionPtr> > synonymList, CompoundPtr biomassComponent ) {
+  //! In this function we use the MFA toolkit to construct a maximum-likelihood
+  //! FBA problem from the biochemsitry within the input Problem structure
+  //! and solve it.
+  //!
+  //! biomassComponent is a compound for which we want to require production.
+
+  return;
+}
