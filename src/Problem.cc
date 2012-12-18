@@ -232,7 +232,7 @@ MetabolicModelPtr Problem::findPaths(SynonymMap synonymList, MediaPtr media, int
 	//! This ensures that we are using the same target as the ModelSEED
 	//! and thus that we can directly compare the results of our algorithms.
 
-	//! Step 1 - compute a list of target metabolite\compartment pairs from the biomass equations.
+	//! Step 1 - compute a list of target metabolite/compartment pairs from the biomass equations.
 	vector<BiomassTarget> targetList;
 
 	// There can be multiple biomass equations...

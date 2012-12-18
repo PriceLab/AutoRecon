@@ -122,7 +122,7 @@ public:
 	//! ??
 	int protons;
 
-	// Universally unique identifier to biochemistry reaction.
+	//! Universally unique identifier to biochemistry reaction.
 	string reactionUuid;
 
 	//! Pointer to model compartment.

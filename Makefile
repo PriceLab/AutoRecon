@@ -39,7 +39,12 @@ Main: obj/main.o $(OBJS)
 
 clean:
 	rm obj/*.o
+	rm -r doc
 
 clout:
 	rm outputs/*
+	
+doc:
+	doxygen Doxyfile >doxy.out 2>&1
+	
 

@@ -23,7 +23,7 @@ public:
 
 	ModelCompound(Json::Value val);
 
-	// Universally unique identifier to model compartment.
+	//! Universally unique identifier to model compartment.
 	string modelCompartmentUuid;
 
 	//! Universally unique identifier to biochemistry compound.

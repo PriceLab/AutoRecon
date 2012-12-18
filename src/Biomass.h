@@ -73,8 +73,8 @@ public:
 	//! Portion of a gram of this biomass that is protein (expressed as a fraction of 1.0).
 	double protein;
 
-	// List of compounds in biomass.
-	vector<BiomassCompoundPtr> biomassCompoundList; // Should this be a map keyed by model compound uuid?
+	//! List of compounds in biomass.
+	vector<BiomassCompoundPtr> biomassCompoundList; //! \todo Should this be a map keyed by model compound uuid?
 
 	//! Last modification date.
 	string modDate;

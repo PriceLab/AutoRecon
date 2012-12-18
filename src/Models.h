@@ -74,7 +74,7 @@ public:
 	//! Last modification date.
 	string modDate;
 
-	// Map of model compartments where key is model compartment uuid.
+	//! Map of model compartments where key is model compartment uuid.
 	ModelCompartmentMap modelCompartmentList;
 
 	//! Map of model compounds where key is model compound uuid.
