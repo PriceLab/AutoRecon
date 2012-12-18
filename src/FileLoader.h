@@ -2,6 +2,8 @@
 #define _FILELOADER_H
 
 #include "Models.h"
+#include "Biochemistry.h"
+#include "Problem.h"
 
 bool loadModelFile(const char* filename, MetabolicModel& model);
 

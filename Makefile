@@ -15,11 +15,15 @@ CC = g++
 LIBS = -ljsoncpp
 INCLUDES = -I /opt/local/include/ \
       -I /usr/include -I /usr/local/include 
-OBJS = obj/pathUtils.o \
-       obj/FileLoader.o obj/Models.o 
+OBJS = obj/pathUtils.o obj/Problem.o \
+       obj/Models.o obj/AliasSet.o obj/Biochemistry.o obj/Biomass.o \
+       obj/Compartment.o obj/Compound.o obj/Cue.o obj/Media.o obj/ModelCompartment.o \
+       obj/ModelCompound.o obj/ModelReaction.o obj/Reaction.o obj/Reagent.o
        
-HDRS =  src/pathUtils.h \
-	src/FileLoader.h src/Models.h 
+HDRS =  src/pathUtils.h src/Problem.h \
+	src/Models.h src/AliasSet.h src/Biochemistry.h src/Biomass.h \
+	src/Compartment.h src/Compound.h src/Cue.h src/Media.h src/ModelCompartment.h \
+	src/ModelCompound.h src/ModelReaction.h src/Reaction.h src/Reagent.h
         
 
 all: Main

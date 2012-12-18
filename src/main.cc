@@ -1,5 +1,5 @@
 #include "FileLoader.h"
-#include "Models.h"
+#include "Problem.h"
 #include "pathUtils.h"
 
 #include <cstdlib>
@@ -10,7 +10,8 @@
 
 using namespace std;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   if (argc != 4) {
     cout << "Usage: ./a.out [biochem_json] [model_json] [Desired_media_name]" << endl;
     cout << "Desired_media_name is the name of one of the biochemistry medias or its UUID." << endl;
@@ -19,26 +20,33 @@ int main(int argc, char *argv[]) {
 
   //! Parse JSON files.
   Problem problem;
+  if (problem.biochem->loadFromFile(argv[1]) == false)
+  {
+	  exit(EXIT_FAILURE);
+  }
+  if (problem.model->loadFromFile(argv[2]) == false)
+  {
+	  exit(EXIT_FAILURE);
+  }
+  if (problem.validate() == false)
+  {
+	  exit(EXIT_FAILURE);
+  }
 
-  loadBiochemistryFile(argv[1], problem.biochem);
-  loadModelFile(argv[2], problem.model);
-  validateProblem(problem);
+  //! Identify synonymous reactions in the biochemistry.
+  SynonymMap rxnSynonyms;
+  problem.biochem->findSynonyms(rxnSynonyms);
 
-  //! Identify synonymous reactions
-  map<ReactionPtr, vector<ReactionPtr> > rxnSynonyms = computeSynonyms(problem);
-
-
-  //! FIXME - Use user input to
-  //! identify which media condition from the biomchemistry object
-  //! to use with the path-finding algortihm.
-  MediaPtr media = findMedia(argv[3]);
-
-  //! Use the biomass objective identified in the model JSON object
-  //! passed into this function.
-  //! This ensures that we are using the same target as the ModelSEED
-  //! and thus that we can directly compare the results of our algorithms.
-
-  vector<BiomassPtr> biomassList = problem.model.biomassList;
+  //! Identify which media condition from the biomchemistry object
+  //! to use with the path-finding algorithm.
+  MediaPtr media;
+  bool found = problem.biochem->findMedia(argv[3], media);
+  if (!found)
+  {
+	  cout << "FAILED media " << argv[3] << " was not found in biochemistry" << endl;
+	  exit(EXIT_FAILURE);
+  }
+  cout << "Desired media " << *media << endl;
 
   //! This is the function I have set up for you to call the MFA toolkit
   //! and get solutions back
@@ -46,7 +54,7 @@ int main(int argc, char *argv[]) {
   //! I'd suggest we find out what data structure they're using to store
   //! results in the MFA toolkit and use the same one.
   //!
-  MetabolicModel newModel = findPaths(problem, rxnSynonyms, media, biomassList);
+  MetabolicModelPtr newModel = problem.findPaths(rxnSynonyms, media, 1);
 
   return 0;
 }

@@ -2,6 +2,11 @@
 #define _PATHUTILS
 
 #include "Models.h"
+#include "Problem.h"
+#include "ModelCompound.h"
+#include "Reaction.h"
+#include "Media.h"
+#include "Biomass.h"
 #include <set>
 #include <map>
 #include <string>
