@@ -12,13 +12,17 @@ AliasSet::AliasSet(Json::Value val)
 	Json::Value::Members members = aliases.getMemberNames();
 	for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); iter++)
 	{
-		vector<string> uuidList;
+		vector<string> uuids;
 		Json::Value alias = aliases[*iter];
 		for (int index = 0; index < alias.size(); index++)
 		{
-			uuidList.push_back(alias[index].asString());
+			uuids.push_back(alias[index].asString());
 		}
-		aliasList.insert(pair<string,vector<string> >(*iter, uuidList));
+		aliasList.insert(pair<string,vector<string> >(*iter, uuids));
+		for (int index = 0; index < uuids.size(); index++)
+		{
+			uuidList.insert(pair<string,string>(uuids[index], *iter));
+		}
 	}
 }
 

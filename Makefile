@@ -12,7 +12,7 @@ $(shell [ -d "$(OBJDIR)" ] || mkdir -p $(OBJDIR))
 
 # Compiler, object, library, and header definitions...
 CC = g++
-LIBS = -ljsoncpp
+LIBS = -ljsoncpp -lboost_filesystem -lboost_system
 INCLUDES = -I /opt/local/include/ \
       -I /usr/include -I /usr/local/include 
 OBJS = obj/pathUtils.o obj/Problem.o \

@@ -9,6 +9,9 @@
 
 using namespace std;
 
+typedef map<string, vector<string> >::iterator AliasMapIterator;
+typedef map<string,string>::iterator UuidMapIterator;
+
 //! Alias set (do not understand this yet).
 
 class AliasSet
@@ -38,8 +41,11 @@ public:
 	//! ??
 	string className;
 
-	//! ??
+	//! Hash of ids with vector of object uuids as values.
 	map<string,vector<string> > aliasList;
+
+	//! Hash of object uuids with ids as values.
+	map<string,string> uuidList;
 
 };
 

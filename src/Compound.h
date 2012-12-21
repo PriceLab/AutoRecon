@@ -1,14 +1,19 @@
 #ifndef _COMPOUND_H
 #define _COMPOUND_H
 
+#include "AliasSet.h"
 #include <string>
 #include <tr1/memory>
 #include <ostream>
 #include <map>
 #include <vector>
 #include <jsoncpp/json/json.h>
+#include <cstdlib>
 
 using namespace std;
+
+//! Type string for Compound objects.
+static const string CompoundType = "Compound";
 
 //! Compound in biochemistry domain.
 
@@ -21,8 +26,29 @@ public:
 
 	Compound(Json::Value val);
 
+	//! \brief Build a string that represents the object for database table.
+	//! \param[in] aliasSet Pointer to aliasSet for looking up id.
+	//! \return String that represents object.
+
+	string toDBString(AliasSetPtr aliasSet);
+
+	//! \brief Get Gibbs free energy error bound as a number.
+	//! \return Gibbs free energy error bound value.
+
+	double deltaGErrValue(void) { return atof(deltaGErr.c_str()); }
+
+	//! \brief Get Gibbs free energy as a number.
+	//! \return Gibbs free energy value.
+
+	double deltaGValue(void) { return atof(deltaG.c_str()); }
+
+	//! \brief Get mass as a number.
+	//! \return Mass value.
+
+	double massValue(void) { return atof(mass.c_str()); }
+
 	//! Error bound on Gibbs free energy computation for compound (kcal/mol).
-	double deltaGErr;
+	string deltaGErr;
 
 	//! Hash of cue uuids with cue coefficients as values.
 	map<string,int> cueList;
@@ -43,7 +69,7 @@ public:
 	string abbreviation;
 
 	//! Atomic mass of the compound at pH 7.
-	double mass;
+	string mass;
 
 	//! True if universal cofactor (e.g. water/H+).
 	bool isCofactor;
@@ -52,7 +78,7 @@ public:
 	string cksum;
 
 	//! Computed Gibbs free energy of formation for compound at pH 7 (kcal/mol).
-	double deltaG;
+	string deltaG;
 
 	//! Formula for the compound at pH 7.
 	string formula;

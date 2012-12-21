@@ -1,20 +1,30 @@
 #include "Compound.h"
-#include <stdlib.h>
+#include <cstdlib>
+#include <sstream>
 
 Compound::Compound(Json::Value val)
 {
 	defaultCharge = atoi(val["defaultCharge"].asString().c_str());
 	isCofactor = atoi(val["isCofactor"].asString().c_str());
-	deltaG = atof(val["deltaG"].asString().c_str());
+	if (val["deltaG"] != Json::Value::null)
+	{
+		deltaG = val["deltaG"].asString();
+	}
 	name = val["name"].asString();
 	cksum = val["cksum"].asString();
 	uuid = val["uuid"].asString();
 	formula = val["formula"].asString();
-	mass = atof(val["mass"].asString().c_str());
+	if (val["mass"] != Json::Value::null)
+	{
+		mass = val["mass"].asString();
+	}
 	modDate = val["modDate"].asString();
 	abbreviation = val["abbreviation"].asString();
 	unchargedFormula = val["unchargedFormula"].asString();
-	deltaGErr = atof(val["deltaGErr"].asString().c_str());
+	if (val["deltaGErr"] != Json::Value::null)
+	{
+		deltaGErr = val["deltaGErr"].asString();
+	}
 	Json::Value cues = val["cues"];
 	Json::Value::Members cueMembers = cues.getMemberNames();
 	for (Json::Value::Members::iterator iter = cueMembers.begin(); iter != cueMembers.end(); iter++)
@@ -59,6 +69,24 @@ Compound::Compound(Json::Value val)
 	{
 		structureUuidList.push_back(structureUuids[index].asString());
 	}
+}
+
+string Compound::toDBString(AliasSetPtr aliasSet)
+{
+	string id;
+	UuidMapIterator found = aliasSet->uuidList.find(uuid);
+	if (found != aliasSet->uuidList.end())
+	{
+		id = found->second;
+	}
+	else
+	{
+		id = uuid;
+	}
+	ostringstream line;
+	line << abbreviation << "\t" << defaultCharge << "\t" << deltaG << "\t" << deltaGErr << "\t" <<
+			formula << "\t" << id << "\t" << mass << "\t" << name;
+	return line.str();
 }
 
 std::ostream& operator<<(std::ostream& out, Compound& obj)

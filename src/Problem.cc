@@ -1,5 +1,6 @@
 #include "Problem.h"
 #include "Utility.h"
+#include "pathUtils.h"
 
 typedef pair<CompoundPtr,CompartmentPtr> BiomassTarget;
 
@@ -259,6 +260,7 @@ MetabolicModelPtr Problem::findPaths(SynonymMap synonymList, MediaPtr media, int
 	//! Lets talk about this next week.
 
 	//! Step 3 - Hook up to MFA toolkit
+	runMFAToolkit(biochem);
 
 	//! Step 4 - Find K solutions (K isn't a parameter yet but it will be soon)
 

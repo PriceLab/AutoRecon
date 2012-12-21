@@ -6,7 +6,11 @@
 #include <ostream>
 #include <map>
 #include <vector>
+#include <cstdlib>
 #include "Reagent.h"
+
+//! Type string for Reaction objects.
+static const string ReactionType = "Reaction";
 
 //! Reaction in biochemistry domain.
 
@@ -19,6 +23,27 @@ public:
 
 	Reaction(Json::Value val);
 
+	//! \brief Create the reaction equation.
+	//! \return Equation string.
+
+	string createEquation(void);
+
+	//! \brief Build a string that represents the object for database table.
+	//! \param[in] aliasSet Pointer to aliasSet for looking up id.
+	//! \return String that represents object.
+
+	string toDBString(AliasSetPtr aliasSet);
+
+	//! \brief Get Gibbs free energy error bound as a number.
+	//! \return Gibbs free energy error bound value.
+
+	double deltaGErrValue(void) { return atof(deltaGErr.c_str()); }
+
+	//! \brief Get Gibbs free energy as a number.
+	//! \return Gibbs free energy value.
+
+	double deltaGValue(void) { return atof(deltaG.c_str()); }
+
 	//! Additional information about reaction, generally indicating whether reaction is balanced and/or lumped.
 	//! \note CI means charge imbalance, MI means mass imbalance, HI means hydrogen imbalance, SP means
 	//!       spontaneous reactions, UN means unknown, FO means ?, RC means ?.
@@ -28,7 +53,7 @@ public:
 	string direction;
 
 	//! Error bound on Gibbs free energy computation for compound (kcal/mol).
-	double deltaGErr;
+	string deltaGErr;
 
 	//! List of cues for reaction.
 	map<string,string> cueList;
@@ -49,7 +74,7 @@ public:
 	string cksum;
 
 	//! Computed Gibbs free energy of formation for compound at pH 7 (kcal/mol).
-	double deltaG;
+	string deltaG;
 
 	//! Number of protons absorbed by this reaction at pH 7.
 	double defaultProtons;
@@ -68,6 +93,9 @@ public:
 
 	//! Universally unique identifier.
 	string uuid;
+
+	//! Generated reaction equation.
+	string equation;
 
 };
 

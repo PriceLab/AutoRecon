@@ -1,7 +1,12 @@
 #include "Biochemistry.h"
 #include "Utility.h"
 #include <fstream>
+#include <iostream>
 #include <omp.h>
+#include <boost/filesystem.hpp>
+
+using namespace boost::filesystem;
+using namespace std;
 
 typedef map<ReactionPtr, vector<CompoundPtr> > NetReactionMap;
 typedef pair<ReactionPtr, vector<CompoundPtr> > NetReactionMapValue;
@@ -20,7 +25,7 @@ bool Biochemistry::loadFromFile(const char* filename)
 	// Parse the biochemistry json file.
 	cout << "Loading biochemistry from '" << filename << "' ... " << endl;
 	ifstream myfile;
-	myfile.open(filename);
+	myfile.open(filename, ios::in);
 	if (myfile.fail())
 	{
 		cout << "  FAILED Error opening biochemistry file" << endl;
@@ -120,7 +125,10 @@ bool Biochemistry::loadFromFile(const char* filename)
 	}
 #if 0
 	cout << "Added " << aliasSetList.size() << " alias sets" << endl;
-	cout << "First alias set is " << endl << *aliasSetList[0] << endl;
+	for (int index = 0; index < aliasSetList.size(); index++)
+	{
+		cout << "Alias set is " << endl << *aliasSetList[index] << endl;
+	}
 #endif
 
 	cout << "  done (" << timer.stop() << " seconds)"<< endl;
@@ -219,7 +227,7 @@ void Biochemistry::findSynonyms(SynonymMap& synonymList)
 
 	// Iterate over the reactions and identify the synonym reactions.
 	//! \todo This is a candidate for parallelization.
-	#pragma omp parallel shared(synonymList)
+//	#pragma omp parallel shared(synonymList)
 	{
 		int threadId = omp_get_thread_num();
 		int numThreads = omp_get_num_threads();
@@ -242,7 +250,7 @@ void Biochemistry::findSynonyms(SynonymMap& synonymList)
 					synonyms.push_back(nrIter->first);
 				}
 			}
-			#pragma omp critical
+//			#pragma omp critical
 			synonymList.insert(SynonymMapValue(reaction,synonyms)); // This needs sync
 		}
 
@@ -263,6 +271,85 @@ bool Biochemistry::findMedia(const string value, MediaPtr& media)
 	}
 
 	return false;
+}
+
+bool Biochemistry::printDBFiles(const string directory, bool forcePrint)
+{
+	boost::system::error_code ec;
+
+	// Create the directory if it does not exist.
+	if (!exists(directory))
+	{
+		create_directory(directory, ec);
+		if (ec.value() != 0)
+		{
+			cout << "FAILED Error creating directory for DB files: " << ec.message() << endl;
+			return false;
+		}
+	}
+
+	// Build the path to the compounds database table file.
+	path compoundsFileName = directory / uuid;
+	compoundsFileName += "-compounds.tbl";
+
+	// Print to compounds file if it does not exist or force print is true.
+	if (!exists(compoundsFileName) || forcePrint)
+	{
+		// Find the alias set for compounds in the name space.
+		AliasSetPtr aliasSet = queryAliasSet(defaultNameSpace, CompoundType);
+
+		// Create the file with all the compounds from the list.
+		ofstream compoundsFile(compoundsFileName.c_str(), ios::out);
+		if (compoundsFile.fail())
+		{
+			cout << "FAILED Error creating compounds DB file '" << compoundsFileName.native() << "'" << endl;
+			return false;
+		}
+		compoundsFile << "abbrev\tcharge\tdeltaG\tdeltaGErr\tformula\tid\tmass\tname" << endl;
+		for (CompoundMapIterator iter = compoundList.begin(); iter != compoundList.end(); iter++)
+		{
+			compoundsFile << iter->second->toDBString(aliasSet) << endl;
+		}
+		compoundsFile.close();
+	}
+
+	// Build the path to the reactions database table file.
+	path reactionsFileName = directory / uuid;
+	reactionsFileName += "-reactions.tbl";
+
+	// Print to reactions file if it does not exist or force print is true.
+	if (!exists(reactionsFileName) || forcePrint)
+	{
+		// Find the alias set for compounds in the name space.
+		AliasSetPtr aliasSet = queryAliasSet(defaultNameSpace, ReactionType);
+
+		// Create the file with all the compounds from the list.
+		ofstream reactionsFile(reactionsFileName.c_str(), ios::out);
+		if (reactionsFile.fail())
+		{
+			cout << "FAILED Error creating reactions DB file '" << reactionsFileName.native() << "'" << endl;
+			return false;
+		}
+		reactionsFile << "abbrev\tdeltaG\tdeltaGErr\tequation\tid\tname\treversibility\tstatus\thermoreversibility" << endl;
+		for (ReactionMapIterator iter = reactionList.begin(); iter != reactionList.end(); iter++)
+		{
+			reactionsFile << iter->second->toDBString(aliasSet) << endl;
+		}
+		reactionsFile.close();
+	}
+
+	return true;
+}
+
+AliasSetPtr Biochemistry::queryAliasSet(string nameSpace, string type)
+{
+	AliasSetPtr aliasSet;
+	for (AliasSetVectorIterator iter = aliasSetList.begin(); iter != aliasSetList.end(); iter++)
+	{
+		aliasSet = *iter;
+		if ((aliasSet->name == nameSpace) && (aliasSet->className == type)) break;
+	}
+	return aliasSet;
 }
 
 std::ostream& operator<<(std::ostream& out, Biochemistry& obj)

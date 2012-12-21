@@ -33,6 +33,7 @@ typedef pair<ReactionPtr, vector<ReactionPtr> > SynonymMapValue;
 typedef map<ReactionPtr, vector<ReactionPtr> >::iterator SynonymMapIterator;
 
 typedef vector<MediaPtr>::iterator MediaVectorIterator;
+typedef vector<AliasSetPtr>::iterator AliasSetVectorIterator;
 
 //! Biochemistry domain data.
 
@@ -67,6 +68,15 @@ public:
 	//! \return True when media is found.
 
 	bool findMedia(const string name, MediaPtr& media);
+
+	//! \brief Print compounds and reactions to files for flux balance analysis.
+	//! \param[in] directory Path to directory to store files.
+	//! \param[in] forcePrint When true print to the file even if it already exists.
+	//! \return True when successful.
+
+	bool printDBFiles(const string directory, bool forcePrint);
+
+	AliasSetPtr queryAliasSet(string nameSpace, string type);
 
 	//! Version of domain data.
 	int version;

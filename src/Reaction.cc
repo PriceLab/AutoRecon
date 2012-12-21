@@ -1,11 +1,15 @@
 #include "Reaction.h"
 #include <cstdlib>
+#include <sstream>
 
 Reaction::Reaction(Json::Value val)
 {
 	status = val["status"].asString();
 	direction = val["direction"].asString();
-	deltaGErr = atof(val["deltaGErr"].asString().c_str());
+	if (val["deltaGErr"] != Json::Value::null)
+	{
+		deltaGErr = val["deltaGErr"].asString();
+	}
 	Json::Value cues = val["cues"];
 	Json::Value::Members members = cues.getMemberNames();
 	try
@@ -31,7 +35,10 @@ Reaction::Reaction(Json::Value val)
 	modDate = val["modDate"].asString();
 	abbreviation = val["abbreviation"].asString();
 	cksum = val["cksum"].asString();
-	deltaG = atof(val["deltaG"].asString().c_str());
+	if (val["deltaG"] != Json::Value::null)
+	{
+		deltaG = val["deltaG"].asString();
+	}
 	defaultProtons = atoi(val["defaultProtons"].asString().c_str());
 	Json::Value reagents = val["reagents"];
 	for (Json::ValueIterator iter = reagents.begin(); iter != reagents.end(); iter++)
@@ -43,6 +50,33 @@ Reaction::Reaction(Json::Value val)
 	thermoReversibility = val["thermoReversibility"].asString();
 	GPR = val["GPR"].asString();
 	uuid = val["uuid"].asString();
+}
+
+string Reaction::createEquation(void)
+{
+	if (!equation.empty())
+	{
+		return equation;
+	}
+	return equation;
+}
+
+string Reaction::toDBString(AliasSetPtr aliasSet)
+{
+	string id;
+	UuidMapIterator found = aliasSet->uuidList.find(uuid);
+	if (found != aliasSet->uuidList.end())
+	{
+		id = found->second;
+	}
+	else
+	{
+		id = uuid;
+	}
+	ostringstream line;
+	line << abbreviation << "\t" << deltaG << "\t" << deltaGErr << "\t" << createEquation() << "\t" <<
+			id << "\t" << name << "\t" << direction << "\t" << status << "\t" << thermoReversibility;
+	return line.str();
 }
 
 std::ostream& operator<<(std::ostream& out, Reaction& obj)
